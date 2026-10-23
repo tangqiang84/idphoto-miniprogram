@@ -13,6 +13,7 @@ const {
   headMetricsFromLandmarks, headMetricsFromBBox,
   ratioWithinWindow, analyzeFace,
 } = require('../face');
+const { planOutput, MIN_WORK_EDGE, MAX_WORK_EDGE } = require('../compose');
 
 test('规格库：一寸 300dpi 像素正确 (25mm→295, 35mm→413)', () => {
   const px = getPixelSize('one-inch', 300);
@@ -603,4 +604,142 @@ test('人脸定位：analyzeFace 关键点不可信时不回退到估算（避�
     points: pts, bbox: { x: 0, y: 0, w: 100, h: 200 }, imageWidth: 200, imageHeight: 200,
   });
   assert.strictEqual(a.ok, false);
+});
+
+// ==================== 输出构图规划（600dpi 开放，2026-10-23） ====================
+
+test('构图规划：300dpi 目标的工作图长边取质量下限 800（不放大源图）', () => {
+  // 源图 3000×4000（手机原图）→ 一寸 300dpi = 295×413
+  const p = planOutput(3000, 4000, 295, 413);
+  assert.ok(p);
+  // 工作图长边 = 800（质量下限），不超上限
+  assert.strictEqual(Math.max(p.workW, p.workH), MIN_WORK_EDGE);
+  // 源图远大于目标 → 不需要放大
+  assert.strictEqual(p.upscale, false);
+  assert.strictEqual(p.srcTooSmall, false);
+});
+
+test('构图规划：600dpi 目标必须提升工作图（不能沿用 800px 上限）', () => {
+  // 大二寸 600dpi = 827×1252（600dpi 下目标长边最大的一档）
+  const p = planOutput(3000, 4000, 827, 1252);
+  assert.ok(p);
+  // 工作图长边必须 ≥ 目标长边，否则输出是「从 800px 放大来的假印刷级」
+  assert.ok(Math.max(p.workW, p.workH) >= 1252, `工作图长边应 ≥1252，实际 ${Math.max(p.workW, p.workH)}`);
+  assert.ok(Math.max(p.workW, p.workH) <= MAX_WORK_EDGE);
+  // 裁剪窗口像素 ≥ 目标像素（不放大）
+  assert.ok(p.sw >= 827 - 0.5 && p.sh >= 1252 - 0.5);
+  assert.strictEqual(p.upscale, false);
+});
+
+test('构图规划：600dpi 时若源图分辨率不足，标记 srcTooSmall 并给出提示', () => {
+  // 源图仅 600×800，远不够 600dpi 目标
+  const p = planOutput(600, 800, 827, 1252);
+  assert.ok(p);
+  assert.strictEqual(p.srcTooSmall, true);
+  assert.ok(p.reason.includes('原图分辨率不足'));
+});
+
+test('构图规划：裁剪窗口保持目标宽高比且居中', () => {
+  const p = planOutput(3000, 4000, 295, 413);
+  assert.ok(p);
+  const winRatio = p.sw / p.sh;
+  const tgtRatio = 295 / 413;
+  assert.ok(Math.abs(winRatio - tgtRatio) < 0.001);
+  // 居中：左右余量相等、上下余量相等
+  assert.ok(Math.abs((p.workW - p.sw) / 2 - p.sx) < 1e-6);
+  assert.ok(Math.abs((p.workH - p.sh) / 2 - p.sy) < 1e-6);
+});
+
+test('构图规划：工作图长边不超过性能上限（内存保护）', () => {
+  // 超大源图 8000×10000 → 600dpi 目标
+  const p = planOutput(8000, 10000, 827, 1252);
+  assert.ok(p);
+  assert.ok(Math.max(p.workW, p.workH) <= MAX_WORK_EDGE);
+  assert.ok(p.workW * p.workH <= 2200000);
+});
+
+test('构图规划：缺参返回 null', () => {
+  assert.strictEqual(planOutput(0, 100, 295, 413), null);
+  assert.strictEqual(planOutput(100, 100, 0, 413), null);
+});
+
+// ==================== 600dpi 合规判定分档 ====================
+
+test('合规引擎：600dpi 的文件大小降级为提示项，不判不通过', () => {
+  // 一寸 600dpi = 590×827；给一个超 200KB 的文件（600dpi 印刷级必然超 300dpi 口径上限）
+  const r = check('one-inch', {
+    widthPx: 590, heightPx: 827, dpi: 600, fileKb: 260, bg: 'white',
+  });
+  const fs = r.checks.find((c) => c.key === 'filesize');
+  assert.ok(fs);
+  assert.strictEqual(fs.level, 'advisory');
+  assert.strictEqual(fs.pass, false, '事实：260KB 确实超 200KB 上限');
+  // 但不参与通过判定 → 整份报告仍 pass
+  assert.strictEqual(r.pass, true);
+  assert.strictEqual(r.suggestions.length, 0);
+});
+
+test('合规引擎：300dpi 的文件大小仍严格判定并阻断', () => {
+  const r = check('one-inch', {
+    widthPx: 295, heightPx: 413, dpi: 300, fileKb: 260, bg: 'white',
+  });
+  const fs = r.checks.find((c) => c.key === 'filesize');
+  assert.strictEqual(fs.level, 'required');
+  assert.strictEqual(fs.pass, false);
+  assert.strictEqual(r.pass, false);
+  assert.ok(r.suggestions.includes('文件大小'));
+});
+
+test('合规引擎：600dpi 时尺寸/底色等 required 项仍严格判定', () => {
+  // 底色错 → 必须判不通过（不能因 600dpi 而全线放松）
+  // 注意：不能用 one-inch 构造「底色错」——它的 bg 允许 blue/blueLight/red，
+  //       蓝底本身合规。必须用**底色受限**的规格（驾驶证仅白底）才构得成 required 项失败。
+  const spec = getSpec('driver-license');
+  const t600 = getPixelSize(spec, 600);
+  const r = check('driver-license', {
+    widthPx: t600.width, heightPx: t600.height, dpi: 600, fileKb: 260, bg: 'blue',
+  });
+  assert.strictEqual(r.pass, false, '600dpi 不得放松底色判定');
+  assert.ok(r.suggestions.includes('底色'));
+  // 反向：白底 → 尺寸/底色/dpi 全过，KB 为 advisory 不阻断
+  const r2 = check('driver-license', {
+    widthPx: t600.width, heightPx: t600.height, dpi: 600, fileKb: 260, bg: 'white',
+  });
+  assert.strictEqual(r2.pass, true);
+  const fs = r2.checks.find((c) => c.key === 'filesize');
+  assert.strictEqual(fs.level, 'advisory');
+});
+
+test('合规引擎：600dpi 目标像素约为 300dpi 的两倍（mm→px 舍入，容差 ≤1px）', () => {
+  const s300 = getPixelSize('one-inch', 300);
+  const s600 = getPixelSize('one-inch', 600);
+  // 说明：25mm@300dpi = 295.28 → 295；25mm@600dpi = 590.55 → 591。
+  // mm→px 换算在两次 round 后**不严格成 2 倍**（差 1px），属正常舍入效应而非缺陷。
+  assert.ok(Math.abs(s600.width - s300.width * 2) <= 1, `宽度 ${s600.width} vs ${s300.width * 2}`);
+  assert.ok(Math.abs(s600.height - s300.height * 2) <= 1, `高度 ${s600.height} vs ${s300.height * 2}`);
+  // 但倍数关系必须落在合理区间（1.9~2.1）
+  assert.ok(s600.width / s300.width > 1.9 && s600.width / s300.width < 2.1);
+});
+
+// ==================== 换装双线性采样（600dpi 放大） ====================
+
+test('换装：suitCompose 双线性混合后不产生黑边（半透明边界不渗染）', () => {
+  // 模板：2×1，左半红不透明，右半透明
+  const tpl = new Uint8ClampedArray([
+    255, 0, 0, 255,
+    0, 0, 0, 0,
+  ]);
+  // 前景：白色人体
+  const w = 4, h = 2;
+  const rgba = new Uint8ClampedArray(w * h * 4).fill(255);
+  const alpha = new Float32Array(w * h).fill(1);
+  // 放置框放大到 4×2（模板被放大 2 倍，边界落在插值区）
+  const place = { x: 0, y: 0, w: 4, h: 2 };
+  const out = suitCompose(rgba, alpha, w, h, tpl, 2, 1, place);
+  // 左半应为红色调；右半应保留白色（模板透明处不覆盖）
+  const left = out[0], right = out[(w - 1) * 4];
+  assert.ok(left > 200, `左半应接近红，实测 ${left}`);
+  assert.ok(right > 200, `右半应保留前景白（无黑边渗染），实测 ${right}`);
+  // 输入不被修改
+  assert.strictEqual(rgba[0], 255);
 });

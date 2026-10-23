@@ -5,7 +5,9 @@ import {
   requiredConsents, buildConsentRecord,
   segment, composite, compositeTransparent,
   buildCloudFnAdapter,
+  planOutput,
   BG, getSpec, getPixelSize, listSpecs,
+  DPI_STD, DPI_HD,
 } from '../../services';
 
 // T2 单独换底色：已有照片只换底（真实功能，非占位）
@@ -15,9 +17,9 @@ import {
 // 与 T1 的差异（PRD J2）：不强制规格、不做合规预审。
 // 功能范围（PRD C 章，2026-10-23 与 owner 确认）：四色底 + 自定义 HEX 色值 + 透明底 PNG；渐变底暂缓。
 // 隐私合规：授权默认【不勾选】，未集齐授权不启动处理（对应 PRD AC5）。
+//
+// 【2026-10-23 owner 决策】MVP 不设付费档，300/600dpi 两档全部免费（T2 亦开放 600dpi）。
 const TOOL = 'T2';
-const MAX_EDGE = 800; // 端侧逐像素抠图的性能保护：工作图长边上限
-const DPI = 300;
 
 type BgKey = 'white' | 'blue' | 'blueLight' | 'red' | 'gray';
 
@@ -35,6 +37,7 @@ export default function ToolBg() {
 
   const specs = listSpecs();
   const [specIndex, setSpecIndex] = useState(-1); // -1 = 保持原图尺寸（不裁剪）
+  const [dpi, setDpi] = useState(DPI_STD);
   const [bg, setBg] = useState<BgKey>('white');
   const [useTransparent, setUseTransparent] = useState(false);
   const [customHex, setCustomHex] = useState('');
@@ -43,6 +46,7 @@ export default function ToolBg() {
   const [msg, setMsg] = useState('');
   const [preview, setPreview] = useState('');
   const [outInfo, setOutInfo] = useState('');
+  const [planNote, setPlanNote] = useState('');
 
   const toggleConsent = (id: string) => {
     setGranted((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -73,6 +77,7 @@ export default function ToolBg() {
     }
     setBusy(true);
     setMsg('读取图片…');
+    setPlanNote('');
     try {
       const anyTaro: any = Taro;
       if (typeof anyTaro.createOffscreenCanvas !== 'function') {
@@ -88,10 +93,23 @@ export default function ToolBg() {
       const path = pick.tempFilePaths[0];
       const info: any = await Taro.getImageInfo({ src: path });
 
-      // 2. 缩放到工作尺寸（长边 <= MAX_EDGE）
-      const scale = Math.min(1, MAX_EDGE / Math.max(info.width, info.height));
-      const w = Math.max(1, Math.round(info.width * scale));
-      const h = Math.max(1, Math.round(info.height * scale));
+      // 2. 规划输出构图
+      //    选了规格 → 按目标像素（含 600dpi）动态规划工作图与裁剪窗口；
+      //    未选规格（保持原图尺寸）→ 工作图长边上限 800px（端侧抠图性能保护）。
+      let w: number, h: number;
+      let plan: any = null;
+      if (specIndex >= 0) {
+        const target = getPixelSize(getSpec(specs[specIndex].id)!, dpi)!;
+        plan = planOutput(info.width, info.height, target.width, target.height);
+        if (!plan) throw new Error('图片尺寸读取失败，请换一张照片');
+        w = plan.workW;
+        h = plan.workH;
+        setPlanNote(plan.reason || '');
+      } else {
+        const scale = Math.min(1, 800 / Math.max(info.width, info.height));
+        w = Math.max(1, Math.round(info.width * scale));
+        h = Math.max(1, Math.round(info.height * scale));
+      }
 
       // 3. 离屏 canvas 取像素
       const canvas = anyTaro.createOffscreenCanvas({ type: '2d', width: w, height: h });
@@ -130,26 +148,16 @@ export default function ToolBg() {
       imageData.data.set(composed);
       ctx.putImageData(imageData, 0, 0);
 
-      // 6. 导出：默认保持原图尺寸；用户选了规格则居中裁剪到该规格
+      // 6. 导出：默认保持原图尺寸；用户选了规格则裁剪到该规格（含 600dpi）
       const isTransparent = useTransparent;
       const fileType: 'jpg' | 'png' = isTransparent ? 'png' : 'jpg';
       let outW = w, outH = h;
       let outCanvas = canvas;
-      if (specIndex >= 0) {
-        const target = getPixelSize(getSpec(specs[specIndex].id)!, DPI)!;
+      if (specIndex >= 0 && plan) {
+        const target = getPixelSize(getSpec(specs[specIndex].id)!, dpi)!;
         outCanvas = anyTaro.createOffscreenCanvas({ type: '2d', width: target.width, height: target.height });
         const octx = outCanvas.getContext('2d');
-        const targetRatio = target.width / target.height;
-        const srcRatio = w / h;
-        let sw = w, sh = h, sx = 0, sy = 0;
-        if (srcRatio > targetRatio) {
-          sw = h * targetRatio;
-          sx = (w - sw) / 2;
-        } else {
-          sh = w / targetRatio;
-          sy = (h - sh) / 2;
-        }
-        octx.drawImage(canvas, sx, sy, sw, sh, 0, 0, target.width, target.height);
+        octx.drawImage(canvas, plan.sx, plan.sy, plan.sw, plan.sh, 0, 0, target.width, target.height);
         outW = target.width;
         outH = target.height;
       }
@@ -169,7 +177,7 @@ export default function ToolBg() {
       setOutInfo(
         `${outW}×${outH} · ${isTransparent ? '透明底 PNG' : `底色 ${activeBg} JPG`}` +
         (seg.degraded ? ' · 已降级端侧' : '') +
-        (specIndex >= 0 ? ` · ${specs[specIndex].name}` : ' · 原图尺寸'),
+        (specIndex >= 0 ? ` · ${specs[specIndex].name} @${dpi}dpi` : ' · 原图尺寸'),
       );
       setMsg(`完成（${seg.backend}）`);
     } catch (e: any) {
@@ -315,6 +323,39 @@ export default function ToolBg() {
             {specIndex < 0 ? '保持原图尺寸' : `${specs[specIndex].name} ▾`}
           </View>
         </Picker>
+        {/* 输出档位（dpi）：300/600 两档全部免费（owner 2026-10-23 决策，不设付费档） */}
+        {specIndex >= 0 ? (
+          <View style={{ marginTop: '8px' }}>
+            <Text>输出档位：</Text>
+            <View style={{ display: 'flex', flexDirection: 'row', marginTop: '4px' }}>
+              {[
+                { dpi: DPI_STD, label: '标准 300dpi' },
+                { dpi: DPI_HD, label: '印刷 600dpi' },
+              ].map((o) => {
+                const on = dpi === o.dpi;
+                return (
+                  <View
+                    key={o.dpi}
+                    className={on ? 'dpi-opt dpi-opt--on' : 'dpi-opt'}
+                    onClick={() => setDpi(o.dpi)}
+                    style={{
+                      padding: '6px 12px',
+                      marginRight: '8px',
+                      borderRadius: '6px',
+                      border: on ? '2px solid #438EDB' : '1px solid #ccc',
+                      background: on ? '#eef5fd' : '#fff',
+                    }}
+                  >
+                    <Text style={{ fontSize: '13px', color: on ? '#2b6cb0' : '#666' }}>{o.label}</Text>
+                  </View>
+                );
+              })}
+            </View>
+            <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
+              两档均免费无水印。600dpi 像素翻倍、体积约为 300dpi 的 2~4 倍，报名系统通常只收 300dpi。
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       <Button className='btn-primary' loading={busy} onClick={process}>
@@ -322,6 +363,13 @@ export default function ToolBg() {
       </Button>
 
       {msg ? <Text style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
+
+      {/* 输出构图提示（分辨率不足 / 达到处理上限 → 如实告知） */}
+      {planNote ? (
+        <Text style={{ display: 'block', fontSize: '12px', color: '#e07b00', marginTop: '6px' }}>
+          {planNote}
+        </Text>
+      ) : null}
 
       {preview ? (
         <View style={{ marginTop: '14px' }}>

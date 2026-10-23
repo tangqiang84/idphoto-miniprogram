@@ -226,8 +226,8 @@ export default function ToolCheck() {
                 <Text>{c.label}{c.key === 'head' && headApprox ? '（估算）' : ''}</Text>
                 <Text style={{ display: 'block', fontSize: '11px', color: '#888' }}>{c.detail}</Text>
               </View>
-              <Text className={c.pass ? 'result__ok' : 'result__bad'}>
-                {c.pass ? '通过' : '未通过'}
+              <Text className={c.level === 'advisory' ? 'result__warn' : (c.pass ? 'result__ok' : 'result__bad')}>
+                {c.level === 'advisory' ? '提示' : (c.pass ? '通过' : '未通过')}
               </Text>
             </View>
           ))}

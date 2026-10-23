@@ -18,6 +18,22 @@
     }
   }
 
+  // 免费承诺标识（owner 2026-10-23 决策：MVP 不设付费档）
+  &__free-badge {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(7, 193, 96, 0.1);
+    border: 1px solid rgba(7, 193, 96, 0.3);
+
+    &-text {
+      font-size: 22px;
+      color: #05974a;
+      font-weight: 500;
+    }
+  }
+
   &__grid {
     display: flex;
     flex-wrap: wrap;

@@ -166,4 +166,8 @@ page {
   &__bad {
     color: #e54d42;
   }
+  // 提示项（advisory）：如 600dpi 印刷级文件的 KB 上限不适用 —— 橙色提示，不判不通过
+  &__warn {
+    color: #b26a00;
+  }
 }

@@ -7,6 +7,7 @@ import { makeHttpAdapter, makeLocalBiRefStub, assertDomestic, cropForeground, en
 import { makeCloudFnAdapter } from './cloudFnAdapter';
 import { requiredConsents, buildConsentRecord, CONSENT_ITEMS, TOOL_CONSENTS } from '../core/privacy';
 import { alphaBBox, suitPlacement, suitCompose } from '../core/suit';
+import { planOutput, MIN_WORK_EDGE, MAX_WORK_EDGE, MAX_WORK_PIXELS } from '../core/compose';
 import { detectFace, measureHeadRatio, measureHeadMetrics } from './faceService';
 
 // ===== 上云增强：部署配置与 adapter 工厂 =====
@@ -39,6 +40,8 @@ export {
   decideRoute, CONF_THRESHOLD, segment, composite, compositeTransparent, cloudMatting,
   // 换装（T3 端侧贴图合成）
   alphaBBox, suitPlacement, suitCompose,
+  // 输出构图规划（600dpi 动态工作图尺寸 + 裁剪窗口，三页共用）
+  planOutput, MIN_WORK_EDGE, MAX_WORK_EDGE, MAX_WORK_PIXELS,
   // 人脸定位（任务 #4：VisionKit 优先 + faceDetect 降级，端侧完成）
   detectFace, measureHeadRatio, measureHeadMetrics,
   // 上云增强（CLOUD_CONFIG 与各 build*Adapter 已在上方 export const/function 直接导出，此处不重复导出）

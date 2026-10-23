@@ -1,4 +1,4 @@
-import { View, Text, Button, Image } from '@tarojs/components';
+import { View, Text, Button, Image, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { useState } from 'react';
 import {
@@ -7,7 +7,9 @@ import {
   buildCloudFnAdapter,
   alphaBBox, suitPlacement, suitCompose,
   measureHeadMetrics,
-  BG,
+  planOutput,
+  BG, getSpec, getPixelSize, listSpecs,
+  DPI_STD, DPI_HD,
 } from '../../services';
 
 // T3 单独 AI 换装：核心功能（PRD D 章），须三项独立授权（I1/J3：faceLocal+faceCloudEnhance+suitSwap）
@@ -15,8 +17,9 @@ import {
 // 不依赖云端换装模型；贴合精度有限，换装效果以真机实测为准，正式商用版可替换设计师素材（接口不变）。
 // 合规：PRD D2「仅换装不改五官」由端侧实现保证（只覆盖肩颈区域像素，不触碰脸部像素）+
 //       D3/AC6 强制五官自检（页面层：未确认不得导出）。
+//
+// 【2026-10-23 owner 决策】MVP 不设付费档，300/600dpi 两档全部免费（T3 亦开放 600dpi）。
 const TOOL = 'T3';
-const MAX_EDGE = 800; // 工作图长边上限（端侧逐像素性能保护）
 
 // 自绘模板（AI 自绘，自有版权，PRD Q3 合规）：透明 PNG，领口居中于顶部
 const SUIT_TEMPLATES = [
@@ -48,12 +51,16 @@ export default function ToolSuit() {
   const [granted, setGranted] = useState<string[]>([]);
   const rec = buildConsentRecord(TOOL, granted);
 
+  const specs = listSpecs();
   const [tplIndex, setTplIndex] = useState(0);
   const [bg, setBg] = useState<BgKey>('blue');
+  const [specIndex, setSpecIndex] = useState(-1); // -1 = 保持原图尺寸（不裁剪）
+  const [dpi, setDpi] = useState(DPI_STD);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [preview, setPreview] = useState('');
   const [outInfo, setOutInfo] = useState('');
+  const [planNote, setPlanNote] = useState('');
   const [selfChecked, setSelfChecked] = useState(false); // AC6/D3：五官自检确认
 
   const toggleConsent = (id: string) => {
@@ -68,6 +75,7 @@ export default function ToolSuit() {
     setBusy(true);
     setSelfChecked(false);
     setMsg('读取图片…');
+    setPlanNote('');
     try {
       const anyTaro: any = Taro;
       if (typeof anyTaro.createOffscreenCanvas !== 'function') {
@@ -79,10 +87,21 @@ export default function ToolSuit() {
       const path = pick.tempFilePaths[0];
       const info: any = await Taro.getImageInfo({ src: path });
 
-      // 2. 缩放到工作尺寸
-      const scale = Math.min(1, MAX_EDGE / Math.max(info.width, info.height));
-      const w = Math.max(1, Math.round(info.width * scale));
-      const h = Math.max(1, Math.round(info.height * scale));
+      // 2. 规划输出构图（选规格时按目标像素动态提升工作图，含 600dpi）
+      let w: number, h: number;
+      let plan: any = null;
+      if (specIndex >= 0) {
+        const target = getPixelSize(getSpec(specs[specIndex].id)!, dpi)!;
+        plan = planOutput(info.width, info.height, target.width, target.height);
+        if (!plan) throw new Error('图片尺寸读取失败，请换一张照片');
+        w = plan.workW;
+        h = plan.workH;
+        setPlanNote(plan.reason || '');
+      } else {
+        const scale = Math.min(1, 800 / Math.max(info.width, info.height));
+        w = Math.max(1, Math.round(info.width * scale));
+        h = Math.max(1, Math.round(info.height * scale));
+      }
 
       // 3. 离屏 canvas 取像素
       const canvas = anyTaro.createOffscreenCanvas({ type: '2d', width: w, height: h });
@@ -132,15 +151,26 @@ export default function ToolSuit() {
       imageData.data.set(composed);
       ctx.putImageData(imageData, 0, 0);
 
-      // 8. 导出（原图尺寸 JPG）
+      // 8. 导出（原图尺寸；选了规格则裁剪到该规格，含 600dpi）
+      let outW = w, outH = h;
+      let outCanvas = canvas;
+      if (specIndex >= 0 && plan) {
+        const target = getPixelSize(getSpec(specs[specIndex].id)!, dpi)!;
+        outCanvas = anyTaro.createOffscreenCanvas({ type: '2d', width: target.width, height: target.height });
+        const octx = outCanvas.getContext('2d');
+        octx.drawImage(canvas, plan.sx, plan.sy, plan.sw, plan.sh, 0, 0, target.width, target.height);
+        outW = target.width;
+        outH = target.height;
+      }
       const exported: any = await Taro.canvasToTempFilePath({
-        canvas, x: 0, y: 0, width: w, height: h,
-        destWidth: w, destHeight: h, fileType: 'jpg', quality: 0.95,
+        canvas: outCanvas, x: 0, y: 0, width: outW, height: outH,
+        destWidth: outW, destHeight: outH, fileType: 'jpg', quality: 0.95,
       });
       setPreview(exported.tempFilePath);
       setOutInfo(
-        `${w}×${h} · ${SUIT_TEMPLATES[tplIndex].name} · 底色 ${BG[bg]}` +
+        `${outW}×${outH} · ${SUIT_TEMPLATES[tplIndex].name} · 底色 ${BG[bg]}` +
         (seg.degraded ? ' · 已降级端侧' : '') +
+        (specIndex >= 0 ? ` · ${specs[specIndex].name} @${dpi}dpi` : ' · 原图尺寸') +
         ` · ${headIsEstimate ? '比例估算定位' : '关键点定位'}`,
       );
       setMsg(`换装完成（${seg.backend}）——请核对五官后导出`);
@@ -262,11 +292,69 @@ export default function ToolSuit() {
         </View>
       </View>
 
+      {/* 输出尺寸（可选规格）+ 输出档位（dpi） */}
+      <View style={{ margin: '12px 0' }}>
+        <Text>输出尺寸（可选）：</Text>
+        <Picker
+          mode='selector'
+          range={['保持原图尺寸', ...specs.map((s: any) => `${s.name}（${s.note}）`)]}
+          value={specIndex < 0 ? 0 : specIndex + 1}
+          onChange={(e: any) => {
+            const v = Number(e.detail.value);
+            setSpecIndex(v === 0 ? -1 : v - 1);
+          }}
+        >
+          <View style={{ color: '#438EDB', padding: '4px 0' }}>
+            {specIndex < 0 ? '保持原图尺寸' : `${specs[specIndex].name} ▾`}
+          </View>
+        </Picker>
+        {/* 输出档位（dpi）：300/600 两档全部免费（owner 2026-10-23 决策，不设付费档） */}
+        {specIndex >= 0 ? (
+          <View style={{ marginTop: '8px' }}>
+            <Text>输出档位：</Text>
+            <View style={{ display: 'flex', flexDirection: 'row', marginTop: '4px' }}>
+              {[
+                { dpi: DPI_STD, label: '标准 300dpi' },
+                { dpi: DPI_HD, label: '印刷 600dpi' },
+              ].map((o) => {
+                const on = dpi === o.dpi;
+                return (
+                  <View
+                    key={o.dpi}
+                    className={on ? 'dpi-opt dpi-opt--on' : 'dpi-opt'}
+                    onClick={() => setDpi(o.dpi)}
+                    style={{
+                      padding: '6px 12px',
+                      marginRight: '8px',
+                      borderRadius: '6px',
+                      border: on ? '2px solid #438EDB' : '1px solid #ccc',
+                      background: on ? '#eef5fd' : '#fff',
+                    }}
+                  >
+                    <Text style={{ fontSize: '13px', color: on ? '#2b6cb0' : '#666' }}>{o.label}</Text>
+                  </View>
+                );
+              })}
+            </View>
+            <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
+              两档均免费无水印。600dpi 像素翻倍、体积约为 300dpi 的 2~4 倍，报名系统通常只收 300dpi。
+            </Text>
+          </View>
+        ) : null}
+      </View>
+
       <Button className='btn-primary' loading={busy} onClick={process}>
         {busy ? '处理中…' : '选择照片并换装'}
       </Button>
 
       {msg ? <Text style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
+
+      {/* 输出构图提示（分辨率不足 / 达到处理上限 → 如实告知） */}
+      {planNote ? (
+        <Text style={{ display: 'block', fontSize: '12px', color: '#e07b00', marginTop: '6px' }}>
+          {planNote}
+        </Text>
+      ) : null}
 
       {preview ? (
         <View style={{ marginTop: '14px' }}>

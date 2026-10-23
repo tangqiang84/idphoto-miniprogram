@@ -19,6 +19,12 @@ export default function Home() {
       <View className='home__hero'>
         <Text className='home__hero-title'>证件照工具箱</Text>
         <Text className='home__hero-sub'>本地优先 · 隐私合规 · 即用即走</Text>
+        {/* 免费承诺（owner 2026-10-23 决策：MVP 不设付费档，全部功能免费）
+            竞品调研显示「透明定价、零套路」正是本产品相对同类的差异化信任信号；
+            个人主体也无法开通微信支付（问题台账 #14），不做付费入口。 */}
+        <View className='home__free-badge'>
+          <Text className='home__free-badge-text'>全部功能免费 · 无水印 · 300/600dpi 均开放</Text>
+        </View>
       </View>
 
       <View className='home__grid'>

@@ -75,6 +75,60 @@ function placeBack(fullAlpha, subAlpha, crop, w, h) {
   return out;
 }
 
+// ===================== 上传降采样 / 回贴放大 =====================
+// 降采样 RGBA（面积平均，缩小时比最近邻干净，避免混色边）
+function downsampleRGBA(src, sw, sh, dw, dh) {
+  const out = new Uint8ClampedArray(dw * dh * 4);
+  const rx = sw / dw, ry = sh / dh;
+  for (let y = 0; y < dh; y++) {
+    const y0 = Math.floor(y * ry), y1 = Math.min(sh - 1, Math.ceil((y + 1) * ry) - 1);
+    for (let x = 0; x < dw; x++) {
+      const x0 = Math.floor(x * rx), x1 = Math.min(sw - 1, Math.ceil((x + 1) * rx) - 1);
+      let r = 0, g = 0, b = 0, a = 0, n = 0;
+      for (let yy = y0; yy <= y1; yy++) {
+        for (let xx = x0; xx <= x1; xx++) {
+          const i = (yy * sw + xx) * 4;
+          r += src[i]; g += src[i + 1]; b += src[i + 2]; a += src[i + 3]; n++;
+        }
+      }
+      const di = (y * dw + x) * 4;
+      out[di] = r / n; out[di + 1] = g / n; out[di + 2] = b / n; out[di + 3] = a / n;
+    }
+  }
+  return out;
+}
+
+// 双线性放大单通道 alpha（Float32Array 0~1）
+function upscaleAlpha(src, sw, sh, dw, dh) {
+  const out = new Float32Array(dw * dh);
+  const rx = sw / dw, ry = sh / dh;
+  for (let y = 0; y < dh; y++) {
+    const sy0 = y * ry, y0 = Math.floor(sy0), y1 = Math.min(sh - 1, y0 + 1), fy = sy0 - y0;
+    for (let x = 0; x < dw; x++) {
+      const sx0 = x * rx, x0 = Math.floor(sx0), x1 = Math.min(sw - 1, x0 + 1), fx = sx0 - x0;
+      const a = src[y0 * sw + x0], b = src[y0 * sw + x1];
+      const c = src[y1 * sw + x0], d = src[y1 * sw + x1];
+      out[y * dw + x] = (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy;
+    }
+  }
+  return out;
+}
+
+// ===================== 上传像素封顶（载荷保护） =====================
+// 【2026-10-23 owner 决策 600dpi 全工具开放后新增】
+// 微信 CloudBase `wx.cloud.callFunction` 的 data 字段大小上限为 5MB（官方文档）。
+// 上云链路传的是 base64(RGBA)，体积 = 像素数 × 4 × 4/3(base64 膨胀) ≈ 像素数 × 5.3 字节。
+//   800px 工作图（约 64 万像素）→ base64 约 3.4MB，逼近上限；
+//   600dpi 工作图可到 1600px（约 256 万像素）→ base64 约 13.6MB，**必然超限抛错**。
+// 官方建议：大数据字段用 wx.cloud.CDN 标记后走 CDN（返回 url），而非直接塞进 data。
+// 本项目的解法（无需改云函数契约）：
+//   上云**只用于精修 alpha 边缘**，不需要与成品同分辨率 ——
+//   因此上传前把裁剪区域降采样到 UPLOAD_MAX_PIXELS 以内，
+//   云端返回的 alpha 再双线性放大回原尺寸贴回全图。
+//   代价：边缘精度略降（放大插值），收益：链路在 600dpi 下仍能跑通，且保留
+//   「仅上传裁剪后人像区域、不上传全图」的合规属性（PRD I3 / 第 7 章）。
+const UPLOAD_MAX_PIXELS = 640000; // ≈ 800×800，与 300dpi 档既有行为基本一致
+
 // ===================== 境内 endpoint 断言（数据不出境，fail-closed） =====================
 // 无法物理探测机房位置，采用「白名单 + 境内后缀」启发式；任一不满足即阻断，绝不把人脸送跨境。
 const DOMESTIC_SUFFIX = ['.cn', '.tencentcloudapi.com', '.myqcloud.com', '.aliyuncs.com', '.huaweicloud.com', '.volcengine.com'];
@@ -252,15 +306,29 @@ async function cloudMatting({ rgba, alpha, width, height, adapter, consents = []
 
   // 仅裁剪人像区域(非全图，I3/第171行)
   const crop = cropForeground(rgba, alpha, width, height);
+
+  // 上传降采样（载荷保护，见 UPLOAD_MAX_PIXELS 注释）：
+  // 上云只为精修 alpha 边缘，不必与成品同分辨率；超限时降采样以适配 5MB 载荷上限。
+  let upW = crop.w, upH = crop.h;
+  let upRgba = crop.rgba;
+  let downSampled = false;
+  if (crop.w * crop.h > UPLOAD_MAX_PIXELS) {
+    const k = Math.sqrt(UPLOAD_MAX_PIXELS / (crop.w * crop.h));
+    upW = Math.max(1, Math.round(crop.w * k));
+    upH = Math.max(1, Math.round(crop.h * k));
+    upRgba = downsampleRGBA(crop.rgba, crop.w, crop.h, upW, upH);
+    downSampled = true;
+  }
+
   const req = {
     region: 'CN',
     purpose: 'matting_enhance',
     retain: false,        // 处理完即销毁
     train: false,         // 不做模型训练留存
     consent: 'faceCloudEnhance',
-    width: crop.w,
-    height: crop.h,
-    image: toBase64(crop.rgba), // 仅裁剪区域像素，base64
+    width: upW,
+    height: upH,
+    image: toBase64(upRgba), // 仅裁剪区域像素，base64
   };
 
   const t0 = Date.now();
@@ -274,7 +342,11 @@ async function cloudMatting({ rgba, alpha, width, height, adapter, consents = []
   }
   const dt = Date.now() - t0;
 
-  const subAlpha = decodeAlphaB64(resp.alphaB64, crop.w * crop.h);
+  const subAlphaRaw = decodeAlphaB64(resp.alphaB64, upW * upH);
+  // 若上传时降采样过，把 alpha 双线性放大回裁剪区原始尺寸再贴回全图
+  const subAlpha = downSampled
+    ? upscaleAlpha(subAlphaRaw, upW, upH, crop.w, crop.h)
+    : subAlphaRaw;
   const enhanced = placeBack(alpha, subAlpha, crop, width, height);
   // 子图尺度公平比较：云端只看到裁剪区域(见 PRD 第171行仅上传裁剪人像区域)，
   // 与全图像素数无关，避免尺度差异造成的歧义占比偏差误判「上云变差」。
