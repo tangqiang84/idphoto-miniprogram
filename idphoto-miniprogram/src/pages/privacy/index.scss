@@ -1,0 +1,61 @@
+.privacy-page {
+  min-height: 100vh;
+  padding: 24px 32px 60px;
+  box-sizing: border-box;
+  background: #f5f6f8;
+
+  &__head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  &__title {
+    font-size: 36px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  &__date {
+    margin-top: 8px;
+    font-size: 22px;
+    color: #8a8f99;
+  }
+
+  &__section {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  &__section-title {
+    display: block;
+    font-size: 28px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+  }
+
+  &__item {
+    display: block;
+    font-size: 26px;
+    line-height: 1.7;
+    color: #555b66;
+    margin-bottom: 8px;
+  }
+
+  &__foot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 8px;
+  }
+
+  &__foot-line {
+    font-size: 24px;
+    color: #8a8f99;
+    line-height: 1.8;
+  }
+}

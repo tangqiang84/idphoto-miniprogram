@@ -7,6 +7,7 @@ export default {
     'pages/tool-suit/index',
     'pages/tool-check/index',
     'pages/tool-spec/index',
+    'pages/privacy/index',
   ],
   window: {
     navigationBarTitleText: '证件照工具箱',
