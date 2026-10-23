@@ -171,3 +171,14 @@ page {
     color: #b26a00;
   }
 }
+
+/* 智能裁切状态块（任务 #24 / PRD B2）
+   放在 msg 下方：先告诉用户「已自动构图」，再按需给出降级原因。
+   degraded（红色）= 原片构图不足、占比达不到规格区间；非 degraded 但有 notes（橙色）= 仅提示。 */
+.crop-info {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #eef5fd;
+  border-left: 3px solid #438edb;
+  border-radius: 6px;
+}

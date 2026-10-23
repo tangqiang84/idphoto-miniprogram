@@ -65,21 +65,38 @@ function sampleRGB(rgba, x, y, w) {
   return [rgba[i], rgba[i + 1], rgba[i + 2]];
 }
 
+// 采集画布四边 band 像素宽的环带，作为背景色估计样本。
+// 抽出为独立函数的原因（任务 #24）：T1 自动裁剪会把工作画布缩到「裁剪窗 + 余量」，
+// 此时画布四边不再是原图边缘（可能压在头发/肩膀上），
+// 背景色估计会失准。故允许调用方在【整图】上先采一次，再用 bgSamples 注进来。
+// 纯像素读取，可单测。
+function collectEdgeSamples(rgba, w, h, band = 2) {
+  const out = [];
+  if (!(w > 0) || !(h > 0)) return out;
+  const b = Math.max(1, Math.min(band, Math.floor(Math.min(w, h) / 2) || 1));
+  for (let x = 0; x < w; x++) for (let k = 0; k < b; k++) {
+    out.push(sampleRGB(rgba, x, k, w));
+    out.push(sampleRGB(rgba, x, h - 1 - k, w));
+  }
+  for (let y = 0; y < h; y++) for (let k = 0; k < b; k++) {
+    out.push(sampleRGB(rgba, k, y, w));
+    out.push(sampleRGB(rgba, w - 1 - k, y, w));
+  }
+  return out;
+}
+
 // ===================== 经典本地抠图（真实算法） =====================
 // 输入：rgba Uint8ClampedArray/Uint8Array（w*h*4）；输出：alpha Float32Array（0~1），长度 w*h
-function runClassicalFallback(rgba, w, h) {
+//
+// 【bgSamples 注入】任务 #24：默认仍用本画布四边环带估计背景色（行为不变，T2/T3/T4 无回归）。
+// 当工作画布被缩小到「裁剪窗 + 余量」（T1 自动裁剪）时，四边可能压在头发/肩膀上，
+// 此时可由调用方在【整图】上 collectEdgeSamples 后注入，得到与整图抠图一致的背景色估计。
+function runClassicalFallback(rgba, w, h, opts = {}) {
   const n = w * h;
   const alpha = new Float32Array(n);
-  const band = 2;
-  const bgSamples = [];
-  for (let x = 0; x < w; x++) for (let b = 0; b < band; b++) {
-    bgSamples.push(sampleRGB(rgba, x, b, w));
-    bgSamples.push(sampleRGB(rgba, x, h - 1 - b, w));
-  }
-  for (let y = 0; y < h; y++) for (let b = 0; b < band; b++) {
-    bgSamples.push(sampleRGB(rgba, b, y, w));
-    bgSamples.push(sampleRGB(rgba, w - 1 - b, y, w));
-  }
+  const bgSamples = (opts && Array.isArray(opts.bgSamples) && opts.bgSamples.length >= 3)
+    ? opts.bgSamples
+    : collectEdgeSamples(rgba, w, h, 2);
   const bg = gaussianFromSamples(bgSamples);
   const fgSamples = [];
   for (let i = 0; i < n; i++) {
@@ -187,13 +204,14 @@ async function runRealModel(session, rgba, w, h, size = 1024) {
 }
 
 // 端侧统一入口：有 session 走真实模型，否则走经典基线
+// opts.bgSamples 透传给经典基线（任务 #24，缺省行为不变）
 async function localMatting(rgba, w, h, opts = {}) {
   let alpha, backend;
   if (opts.session) {
     alpha = await runRealModel(opts.session, rgba, w, h, opts.size || 1024);
     backend = 'rmbg-1.4';
   } else {
-    alpha = runClassicalFallback(rgba, w, h);
+    alpha = runClassicalFallback(rgba, w, h, { bgSamples: opts.bgSamples });
     backend = 'classical';
   }
   const quality = estimateQuality(alpha);
@@ -202,6 +220,7 @@ async function localMatting(rgba, w, h, opts = {}) {
 
 module.exports = {
   sigmoid, mat3Inv, gaussianFromSamples, mahalanobis, feather, sampleRGB,
+  collectEdgeSamples,
   runClassicalFallback, estimateQuality, preprocess,
   resizeBilinear, resizeBilinearRGBA, runRealModel, localMatting,
 };

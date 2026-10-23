@@ -13,7 +13,9 @@ const {
   headMetricsFromLandmarks, headMetricsFromBBox,
   ratioWithinWindow, analyzeFace,
 } = require('../face');
-const { planOutput, MIN_WORK_EDGE, MAX_WORK_EDGE } = require('../compose');
+const { planOutput, planWindowOutput, planDetectImage, clampScale, MIN_WORK_EDGE, MAX_WORK_EDGE, DETECT_EDGE } = require('../compose');
+const { planHeadCrop, targetHeadRatio, HEAD_TOP_GAP_RATIO, CHIN_BOTTOM_GAP_RATIO } = require('../headCrop');
+const { collectEdgeSamples, runClassicalFallback } = require('../mattingLocal');
 
 test('规格库：一寸 300dpi 像素正确 (25mm→295, 35mm→413)', () => {
   const px = getPixelSize('one-inch', 300);
@@ -742,4 +744,298 @@ test('换装：suitCompose 双线性混合后不产生黑边（半透明边界�
   assert.ok(right > 200, `右半应保留前景白（无黑边渗染），实测 ${right}`);
   // 输入不被修改
   assert.strictEqual(rgba[0], 255);
+});
+
+// ==================== 智能裁切（任务 #24 / PRD B2） ====================
+
+test('headCrop：目标头占比取规格区间中值，非法参数返回 null', () => {
+  // 一寸 61%~71% → 中值 66%（浮点用近似比较）
+  assert.ok(Math.abs(targetHeadRatio(0.61, 0.71) - 0.66) < 1e-9);
+  // 美国签证 49%~69% → 中值 59%
+  assert.ok(Math.abs(targetHeadRatio(0.49, 0.69) - 0.59) < 1e-9);
+  // 非法输入
+  assert.strictEqual(targetHeadRatio(0, 0.71), null);
+  assert.strictEqual(targetHeadRatio(0.61, 0.5), null, '上限小于下限应返回 null');
+  assert.strictEqual(targetHeadRatio(null, 0.71), null);
+});
+
+test('headCrop：9 个规格全部能算出目标占比，且落在各自区间内', () => {
+  // 注意：listSpecs() 返回的是【摘要】，不含头占比区间；区间只在 getSpec() 的完整对象里。
+  // （这正是 T1 页面必须调 getSpec 而非 listSpecs 的原因。）
+  assert.strictEqual(listSpecs().length, 9);
+  for (const s of listSpecs()) {
+    const full = getSpec(s.id);
+    const r = targetHeadRatio(full.headHeightRatioMin, full.headHeightRatioMax);
+    assert.ok(r != null, `${s.id} 应能算出目标占比`);
+    assert.ok(r >= full.headHeightRatioMin && r <= full.headHeightRatioMax, `${s.id} 中值应落在区间内`);
+  }
+});
+
+test('headCrop：反解出的占比精确命中目标（构造「构图宽松」场景）', () => {
+  // 构造：原图 1000×1400，头顶 y=300，下巴 y=420（头长 120），目标一寸 295×413
+  // 理想窗高 sh = headPx / R = 120 / 0.66 ≈ 181.8 → 远小于原图高度，构图宽松
+  const crop = planHeadCrop({
+    workW: 1000, workH: 1400,
+    targetW: 295, targetH: 413,
+    crownY: 300, chinY: 420,
+    faceCenterX: 500,
+    ratioMin: 0.61, ratioMax: 0.71,
+  });
+  assert.ok(crop, '应返回裁剪方案');
+  // 头完整在窗内 + 占比命中目标
+  assert.strictEqual(crop.headFullyVisible, true);
+  assert.strictEqual(crop.degraded, false);
+  assert.ok(Math.abs(crop.ratioAchieved - crop.ratioTarget) < 1e-6,
+    `实测占比 ${crop.ratioAchieved} 应等于目标 ${crop.ratioTarget}`);
+  // 宽由目标宽高比决定
+  const aspect = 295 / 413;
+  assert.ok(Math.abs(crop.sw / crop.sh - aspect) < 1e-6, '窗宽高比应等于目标宽高比');
+  // 裁剪窗完全落在原图内
+  assert.ok(crop.sx >= 0 && crop.sy >= 0);
+  assert.ok(crop.sx + crop.sw <= 1000 + 1e-6);
+  assert.ok(crop.sy + crop.sh <= 1400 + 1e-6);
+});
+
+test('headCrop：头顶上方留白符合官方口径系数（0.13 倍头长）', () => {
+  const crop = planHeadCrop({
+    workW: 1000, workH: 1400, targetW: 295, targetH: 413,
+    crownY: 300, chinY: 420, faceCenterX: 500,
+    ratioMin: 0.61, ratioMax: 0.71,
+  });
+  const headPx = 420 - 300;
+  // 头顶上方留白 = HEAD_TOP_GAP_RATIO × 头长（sy 由 crownY - topGap 直接定位）
+  assert.ok(Math.abs((300 - crop.sy) - HEAD_TOP_GAP_RATIO * headPx) < 1e-6,
+    `头顶留白 ${300 - crop.sy} 应约等于 ${HEAD_TOP_GAP_RATIO * headPx}`);
+  // 下巴留白是【派生值】：窗高由「头占比」唯一决定（sh = headPx / R），
+  // 垂直定位由「头顶留白」唯一决定，两者都不变 → 下巴留白 = sh - topGap - headPx。
+  // CHIN_BOTTOM_GAP_RATIO 只用于「窗高是否容得下头+必要留白」的可行性校验，不是硬性目标值。
+  const bottomGap = (crop.sy + crop.sh) - 420;
+  assert.ok(bottomGap > 0, '下巴下方必须留白');
+  assert.ok(Math.abs(bottomGap - (crop.sh - HEAD_TOP_GAP_RATIO * headPx - headPx)) < 1e-6);
+  // 且该留白必须 ≥ 官方口径的 0.16 倍图高（本例 46.2 > 29.1，构图宽松，成立）
+  assert.ok(bottomGap >= CHIN_BOTTOM_GAP_RATIO * crop.sh,
+    `下巴留白 ${bottomGap} 不应小于官方口径下限 ${CHIN_BOTTOM_GAP_RATIO * crop.sh}`);
+});
+
+test('headCrop：面部水平居中（脸中心对齐窗中心，且脸完整在窗内）', () => {
+  // 人脸明显偏右：脸中心 x=700
+  const crop = planHeadCrop({
+    workW: 1000, workH: 1400, targetW: 295, targetH: 413,
+    crownY: 300, chinY: 420, faceCenterX: 700,
+    ratioMin: 0.61, ratioMax: 0.71,
+  });
+  const winCenter = crop.sx + crop.sw / 2;
+  assert.ok(Math.abs(winCenter - 700) < 1e-6, `窗中心 ${winCenter} 应等于脸中心 700`);
+});
+
+test('headCrop：构图过紧（宽度受限）时如实降级并标记 above-max', () => {
+  // 极端：原片很窄（workW=200），头长占满几乎整个宽度
+  const crop = planHeadCrop({
+    workW: 200, workH: 400, targetW: 295, targetH: 413,
+    crownY: 100, chinY: 380, faceCenterX: 100,
+    ratioMin: 0.61, ratioMax: 0.71,
+  });
+  assert.ok(crop, '应返回裁剪方案');
+  // 宽度受限时占比必然高于目标（窗变小、可见头长不变）
+  assert.strictEqual(crop.degraded, true);
+  assert.ok(['above-max', 'head-clipped'].includes(crop.degradeReason));
+  assert.ok(crop.notes.length > 0, '降级必须给出用户可读提示');
+  assert.ok(crop.sw <= 200 + 1e-6 && crop.sh <= 400 + 1e-6, '裁剪窗不得超出原图');
+});
+
+test('headCrop：头顶超出画面时不裁头，如实标记 head-clipped', () => {
+  // 头顶在 y=-50（画面外），下巴 y=250 → 头长 300，可见部分只有 250
+  const crop = planHeadCrop({
+    workW: 1000, workH: 800, targetW: 295, targetH: 413,
+    crownY: -50, chinY: 250, faceCenterX: 500,
+    ratioMin: 0.61, ratioMax: 0.71,
+  });
+  assert.ok(crop);
+  // 关键回归（问题 #35）：crownY<0 时 sy 曾会算成 -89（越出画面上界），
+  // 导致裁剪窗超出原图、drawImage 取到空白。必须夹到 0。
+  assert.strictEqual(crop.sy, 0, '头顶出界时窗顶必须对齐画面顶，不得为负');
+  assert.ok(crop.sy + crop.sh <= 800 + 1e-6, '窗底不得超出画面');
+  assert.strictEqual(crop.headFullyVisible, false);
+  assert.strictEqual(crop.degraded, true);
+  // 可见头长 250 / 窗高 → 必然低于区间下限
+  assert.strictEqual(crop.degradeReason, 'below-min');
+});
+
+test('headCrop：非法输入返回 null（不抛异常）', () => {
+  assert.strictEqual(planHeadCrop(null), null);
+  assert.strictEqual(planHeadCrop({ workW: 0, workH: 100, targetW: 295, targetH: 413, crownY: 1, chinY: 2 }), null);
+  assert.strictEqual(planHeadCrop({ workW: 100, workH: 100, targetW: 295, targetH: 413, crownY: 50, chinY: 50, ratioMin: 0.6, ratioMax: 0.7 }), null, '头长为 0 应返回 null');
+  assert.strictEqual(planHeadCrop({ workW: 100, workH: 100, targetW: 295, targetH: 413, crownY: 10, chinY: 50, ratioMin: 0, ratioMax: 0.7 }), null);
+});
+
+test('headCrop：无 faceCenterX 时退化为水平居中（不崩）', () => {
+  const crop = planHeadCrop({
+    workW: 1000, workH: 1400, targetW: 295, targetH: 413,
+    crownY: 300, chinY: 420,
+    ratioMin: 0.61, ratioMax: 0.71,
+  });
+  assert.ok(crop);
+  assert.ok(Math.abs((crop.sx + crop.sw / 2) - 500) < 1e-6, '缺脸中心时应按原图水平居中');
+});
+
+// ==================== 区域化工作画布（planWindowOutput） ====================
+
+test('compose：planWindowOutput 的工作画布覆盖裁剪窗且不放大', () => {
+  // 契约：调用方给的裁剪窗必须已是目标宽高比（planHeadCrop 保证），本函数只做缩放与区域规划。
+  // 原图 3000×4000，裁剪窗按一寸比例 750×1049.5 → 目标 295×413
+  const win = { sx: 1000, sy: 800, sw: 750, sh: 750 / (295 / 413) };
+  const plan = planWindowOutput(3000, 4000, 295, 413, win);
+  assert.ok(plan, '应返回规划结果');
+  // 裁剪窗在工作图内的像素 ≥ 目标像素（不放大）
+  assert.ok(plan.sw >= 295 - 0.5, `窗宽 ${plan.sw} 应 ≥ 295`);
+  assert.ok(plan.sh >= 413 - 0.5, `窗高 ${plan.sh} 应 ≥ 413`);
+  assert.strictEqual(plan.upscale, false);
+  assert.strictEqual(plan.srcTooSmall, false);
+  // 裁剪窗在工作画布内
+  assert.ok(plan.sx >= -0.01 && plan.sy >= -0.01);
+  assert.ok(plan.sx + plan.sw <= plan.workW + 0.01);
+  assert.ok(plan.sy + plan.sh <= plan.workH + 0.01);
+  // 窗宽高比仍等于目标宽高比（等比缩放不改变比例）
+  assert.ok(Math.abs(plan.sw / plan.sh - 295 / 413) < 1e-6);
+  // 工作区域应大于裁剪窗（含余量）
+  assert.ok(plan.regionW > win.sw, '工作区域应比裁剪窗大（含余量，避免边缘硬切）');
+  // 缩放是等比的：区域与裁剪窗的像素比一致
+  assert.ok(Math.abs(plan.sw / win.sw - plan.sh / win.sh) < 1e-9);
+});
+
+test('compose：planWindowOutput 贴边时区域尺寸不缩水、裁剪窗仍在界内', () => {
+  // 裁剪窗紧贴左上角
+  const plan = planWindowOutput(1000, 1000, 295, 413, { sx: 0, sy: 0, sw: 300, sh: 413 });
+  assert.ok(plan);
+  assert.strictEqual(plan.regionX, 0);
+  assert.strictEqual(plan.regionY, 0);
+  assert.ok(plan.sx >= -0.01 && plan.sy >= -0.01);
+  assert.ok(plan.sx + plan.sw <= plan.workW + 0.01);
+  assert.ok(plan.sy + plan.sh <= plan.workH + 0.01);
+});
+
+test('compose：planWindowOutput 在源图不足时如实标记 srcTooSmall', () => {
+  // 裁剪窗 100×140（源像素极少），目标 591×826（600dpi 一寸）→ 必须放大
+  const plan = planWindowOutput(1000, 1000, 591, 826, { sx: 400, sy: 400, sw: 100, sh: 140 });
+  assert.ok(plan);
+  assert.strictEqual(plan.srcTooSmall, true);
+  assert.ok(plan.reason.includes('分辨率不足'));
+});
+
+test('compose：planWindowOutput 参数非法返回 null', () => {
+  assert.strictEqual(planWindowOutput(1000, 1000, 295, 413, null), null);
+  assert.strictEqual(planWindowOutput(1000, 1000, 295, 413, { sx: 0, sy: 0, sw: 0, sh: 100 }), null);
+  assert.strictEqual(planWindowOutput(0, 1000, 295, 413, { sx: 0, sy: 0, sw: 100, sh: 100 }), null);
+});
+
+test('compose：planDetectImage 长边封顶 1200，小图不放大', () => {
+  const big = planDetectImage(3000, 4000);
+  assert.strictEqual(big.width, 900);   // 1200 * 3000/4000
+  assert.strictEqual(big.height, 1200);
+  assert.ok(big.scale < 1);
+  const small = planDetectImage(600, 800);
+  assert.strictEqual(small.width, 600, '小于上限时不放大');
+  assert.strictEqual(small.height, 800);
+  assert.strictEqual(small.scale, 1);
+  assert.strictEqual(planDetectImage(0, 100), null);
+});
+
+test('compose：clampScale 与 planOutput 原行为等价（限幅下界=质量下限）', () => {
+  // scale 过小 → 抬到 minEdge/长边
+  const a = clampScale(0.01, 3000, 4000);
+  assert.ok(Math.abs(a.scale * 4000 - MIN_WORK_EDGE) < 1e-6);
+  assert.strictEqual(a.cappedBy, null);
+  // scale 过大 → 压到 maxEdge/长边
+  const b = clampScale(10, 3000, 4000);
+  assert.ok(Math.abs(b.scale * 4000 - MAX_WORK_EDGE) < 1e-6);
+  assert.strictEqual(b.cappedBy, 'maxEdge');
+});
+
+test('compose：planOutput 行为未被 planWindowOutput 改动影响（回归护栏）', () => {
+  // 固定输入的期望值（与 #24 之前的实现一致）—— 防止抽 clampScale 时漂移。
+  // 3000×4000 源图 + 一寸 295×413：needScale≈0.103 → 触发质量下限 800px
+  // → scale=0.2 → 工作图 600×800；宽高比 0.75 ≥ 0.714 → 窗高取满、左右居中。
+  const plan = planOutput(3000, 4000, 295, 413);
+  assert.strictEqual(plan.workW, 600);
+  assert.strictEqual(plan.workH, 800);
+  assert.strictEqual(plan.sh, 800);
+  assert.strictEqual(plan.sy, 0);
+  assert.ok(Math.abs(plan.sw - 800 * (295 / 413)) < 1e-9);
+  assert.ok(Math.abs(plan.sx - (600 - plan.sw) / 2) < 1e-9);
+});
+
+test('headCrop + planWindowOutput 串联：原片远景也能得到够像素的成品', () => {
+  // 场景：3000×4000 远景全身照，头长仅 400px（占原图高 10%）
+  const srcW = 3000, srcH = 4000;
+  const headPx = 400;
+  const chinY = 1200;
+  const crownY = chinY - headPx;   // 800
+  const crop = planHeadCrop({
+    workW: srcW, workH: srcH, targetW: 295, targetH: 413,
+    crownY, chinY, faceCenterX: 1500,
+    ratioMin: 0.61, ratioMax: 0.71,
+  });
+  assert.ok(crop);
+  const plan = planWindowOutput(srcW, srcH, 295, 413, {
+    sx: crop.sx, sy: crop.sy, sw: crop.sw, sh: crop.sh,
+  });
+  assert.ok(plan);
+  // 关键：区域化之后，成品不再是「从 1600px 长边整图放大」——窗像素够 300dpi
+  assert.ok(plan.sw >= 295 && plan.sh >= 413, '窗像素应≥目标像素');
+  assert.ok(plan.workW < 3000, '工作画布应只含该区域');
+  // 且占比确实落在规格区间内
+  assert.ok(crop.ratioAchieved >= 0.61 && crop.ratioAchieved <= 0.71,
+    `占比 ${crop.ratioAchieved} 应落在一寸区间 61%~71%`);
+});
+
+// ==================== 抠图背景色采样注入（任务 #24） ====================
+
+test('mattingLocal：collectEdgeSamples 采到画布四边环带', () => {
+  // 4×4 图：内部填红，四边 2px 环带填纯白
+  const w = 4, h = 4;
+  const rgba = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const onEdge = x < 2 || x >= w - 2 || y < 2 || y >= h - 2;
+    const c = onEdge ? 255 : 255; // 先全白
+    const i = (y * w + x) * 4;
+    rgba[i] = c; rgba[i + 1] = c; rgba[i + 2] = c; rgba[i + 3] = 255;
+  }
+  // 中心 2×2 改成红色（w=h=4 时中心就是全图，改为 6×6 更明确）
+  const w2 = 6, h2 = 6;
+  const rgba2 = new Uint8ClampedArray(w2 * h2 * 4);
+  for (let y = 0; y < h2; y++) for (let x = 0; x < w2; x++) {
+    const onEdge = x < 2 || x >= w2 - 2 || y < 2 || y >= h2 - 2;
+    const i = (y * w2 + x) * 4;
+    const v = onEdge ? 255 : 0;
+    rgba2[i] = v; rgba2[i + 1] = v; rgba2[i + 2] = v; rgba2[i + 3] = 255;
+  }
+  const s = collectEdgeSamples(rgba2, w2, h2, 2);
+  assert.ok(s.length > 0, '应采到样本');
+  for (const [r, g, b] of s) {
+    assert.strictEqual(r, 255, '边缘样本应为白色（内部红色不应混入）');
+    assert.strictEqual(g, 255);
+    assert.strictEqual(b, 255);
+  }
+  assert.strictEqual(collectEdgeSamples(rgba2, 0, 0).length, 0, '非法尺寸返回空数组');
+});
+
+test('mattingLocal：注入 bgSamples 后抠图使用外部背景色（区域化裁剪场景）', () => {
+  // 构造「区域画布」：画布四边是黑色（模拟压在头发上的边缘），但真实背景是白色
+  const w = 20, h = 20;
+  const rgba = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4;
+    const onEdge = x < 2 || x >= w - 2 || y < 2 || y >= h - 2;
+    // 边缘黑、内部白
+    const v = onEdge ? 0 : 255;
+    rgba[i] = v; rgba[i + 1] = v; rgba[i + 2] = v; rgba[i + 3] = 255;
+  }
+  const external = [[255, 255, 255], [250, 250, 250], [255, 255, 255]];
+  const withInjected = runClassicalFallback(rgba, w, h, { bgSamples: external });
+  const withoutInject = runClassicalFallback(rgba, w, h);
+  const center = (10 * w + 10);
+  // 注入白色背景后：内部白色像素被判为背景（alpha 低）；不注入时白色像素远离黑色背景 → alpha 高
+  assert.ok(withInjected[center] < 0.5, `注入后中心白色应判为背景，实测 ${withInjected[center]}`);
+  assert.ok(withoutInject[center] > withInjected[center],
+    '不注入时中心白色的 alpha 应更高（黑色边缘把白色当成了前景）');
 });

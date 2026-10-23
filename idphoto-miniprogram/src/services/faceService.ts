@@ -398,4 +398,6 @@ export async function measureHeadMetrics(
 }
 
 // 便捷导出：供单测与页面复用的纯函数
-export { faceVerticalSpan, analyzeFace, pickPrimaryFace };
+// ratioWithinWindow：任务 #24 中 T1 复算「成品图口径头占比」时复用，
+// 避免二次调用平台检测（每次检测在真机上是百毫秒级开销，且可能二次失败）。
+export { faceVerticalSpan, analyzeFace, pickPrimaryFace, ratioWithinWindow };

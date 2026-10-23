@@ -5,8 +5,10 @@ import {
   requiredConsents, buildConsentRecord,
   segment, composite, check,
   buildCloudFnAdapter,
-  measureHeadRatio,
-  planOutput,
+  measureHeadMetrics, ratioWithinWindow,
+  planOutput, planWindowOutput, planDetectImage,
+  planHeadCrop, targetHeadRatio,
+  collectEdgeSamples,
   BG, getSpec, getPixelSize, listSpecs, specLabel,
   DPI_STD, DPI_HD,
 } from '../../services';
@@ -42,6 +44,10 @@ export default function ToolIdPhoto() {
   const [headInfo, setHeadInfo] = useState<any>(null);
   // 输出构图提示（如「原图分辨率不足」/「已达处理分辨率上限」）
   const [planNote, setPlanNote] = useState('');
+  // 智能裁切信息（任务 #24 / PRD B2）：
+  //   auto=false → 未检出人脸，已降级为「按宽高比居中裁剪」（与 #24 前行为一致）
+  //   degraded     → 已按占比反解裁剪，但原片构图不足，如实提示（owner 决策：不阻断导出）
+  const [cropInfo, setCropInfo] = useState<any>(null);
 
   const toggleConsent = (id: string) => {
     setGranted((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -57,6 +63,7 @@ export default function ToolIdPhoto() {
     setResult(null);
     setHeadInfo(null);
     setPlanNote('');
+    setCropInfo(null);
     try {
       const anyTaro: any = Taro;
       if (typeof anyTaro.createOffscreenCanvas !== 'function') {
@@ -71,50 +78,135 @@ export default function ToolIdPhoto() {
       });
       const path = pick.tempFilePaths[0];
       const info: any = await Taro.getImageInfo({ src: path });
+      const srcW = info.width;
+      const srcH = info.height;
 
-      // 2. 规划输出构图（工作图尺寸 + 裁剪窗口）
-      //    600dpi 目标最大 1252px，超过原固定 800px 工作图上限 → 必须动态提升，
-      //    否则输出的是「从 800px 放大来的假印刷级」。规划逻辑见 core/compose.js。
       const spec = getSpec(specs[specIndex].id);
       const target = getPixelSize(spec!, dpi)!;
-      const plan = planOutput(info.width, info.height, target.width, target.height);
+
+      // 把一张图片画进离屏 canvas 并取回 RGBA 像素（微信 canvas 通用取像素姿势）
+      const loadRgba = async (cw: number, ch: number, draw: (ctx: any, img: any) => void) => {
+        const cv = anyTaro.createOffscreenCanvas({ type: '2d', width: cw, height: ch });
+        const cx = cv.getContext('2d');
+        const im = cv.createImage();
+        await new Promise<void>((resolve, reject) => {
+          im.onload = () => resolve();
+          im.onerror = (e: any) => reject(e || new Error('图片加载失败'));
+          im.src = path;
+        });
+        draw(cx, im);
+        const id = cx.getImageData(0, 0, cw, ch);
+        return { canvas: cv, ctx: cx, imageData: id, rgba: id.data };
+      };
+
+      // 2. 人脸检测（任务 #24 / PRD B2 智能裁切的前置）
+      //    检测在【检测用图】上做（长边 ≤ DETECT_EDGE=1200）：人脸关键点需要足够像素细节，
+      //    同时避免为检测而绘制全尺寸大图（RGBA 内存 = 长边²×4）。
+      //    此处拿到的头顶/下巴/面部中心都是检测用图坐标，需按 1/scale 换算回原图坐标。
+      setMsg('识别人脸…');
+      const det = planDetectImage(srcW, srcH);
+      if (!det) throw new Error('图片尺寸读取失败，请换一张照片');
+      const detImg = await loadRgba(det.width, det.height, (cx, im) => {
+        cx.drawImage(im, 0, 0, det.width, det.height);
+      });
+      const fm = await measureHeadMetrics(detImg.rgba, det.width, det.height, null);
+      // 换算回原图坐标（检测用图是原图的等比缩放，比例不变）
+      const srcMetrics = fm.ok && fm.metrics
+        ? {
+          ...fm.metrics,
+          crownY: fm.metrics.crownY / det.scale,
+          chinY: fm.metrics.chinY / det.scale,
+          faceCenterX: typeof fm.metrics.faceCenterX === 'number'
+            ? fm.metrics.faceCenterX / det.scale
+            : undefined,
+        }
+        : null;
+
+      // 3. 反解裁剪框（按规格头占比区间中值，core/headCrop.js）
+      //    检测不可用时 srcMetrics 为 null → 降级为「居中裁剪」，并在页面提示。
+      let crop: any = null;
+      let plan: any;
+      if (srcMetrics) {
+        crop = planHeadCrop({
+          workW: srcW,
+          workH: srcH,
+          targetW: target.width,
+          targetH: target.height,
+          crownY: srcMetrics.crownY,
+          chinY: srcMetrics.chinY,
+          faceCenterX: srcMetrics.faceCenterX,
+          ratioMin: spec!.headHeightRatioMin,
+          ratioMax: spec!.headHeightRatioMax,
+        });
+      }
+
+      if (crop) {
+        // 3.1 区域化工作画布：只把「要用到的那块」放大到足够像素，避免成品是放大糊图
+        plan = planWindowOutput(srcW, srcH, target.width, target.height, {
+          sx: crop.sx, sy: crop.sy, sw: crop.sw, sh: crop.sh,
+        });
+      }
+      if (!plan) {
+        // 降级路径：未检出人脸 / 反解失败 → 沿用「按目标宽高比居中裁剪」
+        plan = planOutput(srcW, srcH, target.width, target.height);
+      }
       if (!plan) throw new Error('图片尺寸读取失败，请换一张照片');
+
       const w = plan.workW;
       const h = plan.workH;
       setPlanNote(plan.reason || '');
+      setCropInfo(crop
+        ? {
+          auto: true,
+          ratioTarget: crop.ratioTarget,
+          ratioAchieved: crop.ratioAchieved,
+          degraded: crop.degraded,
+          degradeReason: crop.degradeReason,
+          notes: crop.notes || [],
+        }
+        : { auto: false, notes: ['未检出人脸，已按画面居中裁剪；建议正对镜头、面部清晰的照片'] });
 
-      // 3. 离屏 canvas 取像素
-      const canvas = anyTaro.createOffscreenCanvas({ type: '2d', width: w, height: h });
-      const ctx = canvas.getContext('2d');
-      const img = canvas.createImage();
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = (e: any) => reject(e || new Error('图片加载失败'));
-        img.src = path;
+      // 4. 取工作画布像素
+      //    自动裁剪路径：画「裁剪窗 + 余量」这一块（planWindowOutput 已算好源图区域）
+      //    降级路径：画整图（planOutput 的工作画布 = 整图等比缩放）
+      const work = await loadRgba(w, h, (cx, im) => {
+        if (plan.regionX != null) {
+          cx.drawImage(im, plan.regionX, plan.regionY, plan.regionW, plan.regionH, 0, 0, w, h);
+        } else {
+          cx.drawImage(im, 0, 0, w, h);
+        }
       });
-      ctx.drawImage(img, 0, 0, w, h);
-      const imageData = ctx.getImageData(0, 0, w, h);
-      const rgba = imageData.data;
+      const canvas = work.canvas;
+      const ctx = work.ctx;
+      const imageData = work.imageData;
+      const rgba = work.rgba;
 
-      // 4. 抠图：端侧优先，置信不足自动走 CloudBase 云函数增强（需 faceCloudEnhance 授权）
+      // 4.1 背景色采样集（任务 #24）
+      // 经典抠图基线的背景色由「画布四边环带」估计。自动裁剪时工作画布只含
+      // 「裁剪窗 + 余量」，四边可能压在头发/肩膀上 → 背景色估计失准。
+      // 故在【检测用图】（覆盖整张原图）上采一次注入，行为与整图抠图一致。
+      const bgSamples = crop ? collectEdgeSamples(detImg.rgba, det.width, det.height, 2) : undefined;
+
+      // 5. 抠图：端侧优先，置信不足自动走 CloudBase 云函数增强（需 faceCloudEnhance 授权）
       setMsg('抠图处理中…');
       const seg: any = await segment({
         rgba,
         width: w,
         height: h,
+        bgSamples,
         cloud: { adapter: buildCloudFnAdapter() },
         consents: granted,
         audit: (meta: any) => console.log('[audit]', meta),
         tool: TOOL,
       });
 
-      // 5. 换底合成
+      // 6. 换底合成
       setMsg('合成底色…');
       const composed = composite(rgba, seg.alpha, w, h, BG[bg]);
 
-      // 6. 裁剪缩放到目标规格尺寸并导出
+      // 7. 裁剪缩放到目标规格尺寸并导出
       // 注：不使用 createImageData —— 微信部分基础库对它报
-      // "Value is not of type 'long'"。改为复用第 3 步 getImageData 返回的
+      // "Value is not of type 'long'"。改为复用第 4 步 getImageData 返回的
       // ImageData 直接写回工作 canvas，再经 drawImage 裁剪缩放到目标尺寸。
       imageData.data.set(composed);
       ctx.putImageData(imageData, 0, 0);
@@ -125,21 +217,33 @@ export default function ToolIdPhoto() {
         height: target.height,
       });
       const octx = outCanvas.getContext('2d');
-      // 居中裁剪，保持目标宽高比（窗口由 core/compose.js 统一计算，三端口径一致）
+      // 裁剪窗口：自动裁剪 = 按头占比反解的窗口；降级 = 居中窗口（三端口径一致，均由 core/compose.js 产出）
       const sx = plan.sx, sy = plan.sy, sw = plan.sw, sh = plan.sh;
       octx.drawImage(canvas, sx, sy, sw, sh, 0, 0, target.width, target.height);
 
-      // 6.1 头部占比（PRD B3 / 功能清单 T1-16，任务 #4）
+      // 7.1 头部占比（PRD B3 / 功能清单 T1-16，任务 #4；任务 #24 后口径由「反解目标」+「实测复核」双报）
       // 口径：在【裁剪窗口】坐标系中测量 —— 头长 ÷ 成品图高，与审核员在成品图上量的口径一致。
-      // 在工作图（按目标分辨率动态规划）上检测，而非在 295×413 的成品小图上检测：
-      // 小图人脸像素过少，106 点关键点检测不可靠。缩放为等比变换，头长占比在换算前后不变。
-      // 检测不到时降级为「未检测」，其余 4 项照常预审（不因一项缺失而阻断整张图）。
+      // 复用第 2 步已测得的人脸度量按窗口换算，【不重复调用平台检测】：
+      // 真机上每次人脸检测是百毫秒级开销，且二次调用可能失败 → 占比忽有忽无。
+      // 坐标换算：检测用图坐标 → 原图坐标（÷det.scale）→ 工作图坐标（×plan.scale）。
       setMsg('测量头部占比…');
-      const head = await measureHeadRatio(rgba, w, h, null, { x: sx, y: sy, width: sw, height: sh });
-      const headRatio = head.ok ? head.ratio : null;
-      setHeadInfo(head.ok
-        ? { ratio: headRatio, source: head.source, quality: head.quality, notes: head.notes || [] }
-        : null);
+      let headRatio: number | null = null;
+      let headExtra: any = null;
+      if (srcMetrics) {
+        const wm = {
+          ...srcMetrics,
+          crownY: srcMetrics.crownY * plan.scale,
+          chinY: srcMetrics.chinY * plan.scale,
+        };
+        const r = ratioWithinWindow(wm, { x: sx, y: sy, width: sw, height: sh });
+        if (r) {
+          headRatio = r.ratio;
+          headExtra = { source: srcMetrics.source, quality: srcMetrics.quality, notes: srcMetrics.notes || [] };
+          if (r.clamped) headExtra.notes = [...headExtra.notes, '头顶或下巴被裁切，占比按成品图可见部分计算'];
+        }
+      }
+      // 未检出人脸时降级为「未检测」，其余 4 项照常预审（不因一项缺失而阻断整张图）
+      setHeadInfo(headRatio != null ? { ratio: headRatio, ...headExtra } : null);
 
       const exported: any = await Taro.canvasToTempFilePath({
         canvas: outCanvas,
@@ -154,7 +258,7 @@ export default function ToolIdPhoto() {
       });
       setPreview(exported.tempFilePath);
 
-      // 7. 合规预审
+      // 8. 合规预审
       const fs = Taro.getFileSystemManager();
       const fileInfo: any = await new Promise((resolve, reject) => {
         fs.getFileInfo({ filePath: exported.tempFilePath, success: resolve, fail: reject });
@@ -329,6 +433,26 @@ export default function ToolIdPhoto() {
       </Button>
 
       {msg ? <Text style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
+
+      {/* 智能裁切状态（任务 #24 / PRD B2）：按规格头占比自动定位裁剪框 */}
+      {cropInfo ? (
+        <View className='crop-info'>
+          <Text style={{ fontSize: '12px', color: cropInfo.auto ? '#2b6cb0' : '#999' }}>
+            {cropInfo.auto
+              ? `智能裁切：已按目标头部占比 ${(cropInfo.ratioTarget * 100).toFixed(0)}% 自动构图`
+              : '智能裁切：未检出人脸，已按画面居中裁剪'}
+          </Text>
+          {cropInfo.notes && cropInfo.notes.length ? (
+            <Text
+              className='crop-info__warn'
+              style={{ display: 'block', fontSize: '12px', color: cropInfo.degraded ? '#c62828' : '#e07b00', marginTop: '4px' }}
+            >
+              {cropInfo.degraded ? '⚠ ' : ''}
+              {cropInfo.notes.join('；')}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
 
       {/* 输出构图提示（分辨率不足 / 达到处理上限 → 如实告知，不静默输出糊图） */}
       {planNote ? (

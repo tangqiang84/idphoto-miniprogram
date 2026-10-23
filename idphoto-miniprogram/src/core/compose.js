@@ -33,6 +33,51 @@ const MAX_WORK_EDGE = 1600;
 // 像素总数上限：约 2.2M 像素 ≈ RGBA 8.8MB / alpha 8.8MB / canvas 8.8MB
 const MAX_WORK_PIXELS = 2200000;
 
+// 检测用图的长边（T1 自动裁剪需要在**绘制工作图之前**先测出人脸位置）。
+// 取 1200 的理由：人脸检测要足够的像素细节（106 点关键点在人脸高度 < 100px 时不可靠），
+// 同时离屏画布 RGBA 内存 = 长边²×4 ≈ 5.8MB，可接受。
+const DETECT_EDGE = 1200;
+
+// 按指定裁剪窗规划工作画布时，工作区域向外的余量比例（相对裁剪窗长边）。
+// 用途：抠图（segment）在工作画布上做，若画布正好等于裁剪窗，
+// 人像在画布边缘被硬切 → 抠图 alpha 在边缘质量下降（合成底色后可见瑕疵）。
+// 给 15% 余量让肩/臂在画布内自然过渡，瑕疵落在成品区之外。
+const WIN_MARGIN_RATIO = 0.15;
+
+/**
+ * 把缩放倍率限制在「质量下限」与「性能上限」之间（planOutput 与 planWindowOutput 共用）。
+ * 口径与 planOutput 原实现逐条一致，抽成函数是为了避免两处逻辑漂移。
+ * @param {number} scale 待限制的倍率
+ * @param {number} regionW 区域宽（源图像素）
+ * @param {number} regionH 区域高（源图像素）
+ * @param {{minEdge?:number,maxEdge?:number,maxPixels?:number}} [opts]
+ * @returns {{scale:number, cappedBy:null|string}}
+ */
+function clampScale(scale, regionW, regionH, opts = {}) {
+  const minEdge = opts.minEdge == null ? MIN_WORK_EDGE : opts.minEdge;
+  const maxEdge = opts.maxEdge == null ? MAX_WORK_EDGE : opts.maxEdge;
+  const maxPixels = opts.maxPixels == null ? MAX_WORK_PIXELS : opts.maxPixels;
+  const regionLong = Math.max(regionW, regionH);
+  let cappedBy = null;
+
+  // B. 质量下限
+  if (scale * regionLong < minEdge) scale = minEdge / regionLong;
+  // C. 性能上限（长边）
+  if (scale * regionLong > maxEdge) {
+    scale = maxEdge / regionLong;
+    cappedBy = 'maxEdge';
+  }
+  // C. 性能上限（总像素）
+  if (regionW * regionH * scale * scale > maxPixels) {
+    scale = Math.sqrt(maxPixels / (regionW * regionH));
+    cappedBy = 'maxPixels';
+  }
+  // 区域本身小于质量下限时不再放大（放大无收益，白白耗性能）
+  if (scale > 1 && regionLong < minEdge) scale = 1;
+
+  return { scale, cappedBy };
+}
+
 /**
  * 计算工作图尺寸与裁剪窗口。
  * @param {number} srcW 源图宽
@@ -65,23 +110,9 @@ function planOutput(srcW, srcH, targetW, targetH, opts = {}) {
   const needScale = Math.max(targetW / cropFullW, targetH / cropFullH);
 
   const srcLong = Math.max(srcW, srcH);
-  let scale = needScale;
-  let cappedBy = null;
-
-  // B. 质量下限
-  if (scale * srcLong < minEdge) scale = minEdge / srcLong;
-  // C. 性能上限（长边）
-  if (scale * srcLong > maxEdge) {
-    scale = maxEdge / srcLong;
-    cappedBy = 'maxEdge';
-  }
-  // C. 性能上限（总像素）
-  if (srcW * srcH * scale * scale > maxPixels) {
-    scale = Math.sqrt(maxPixels / (srcW * srcH));
-    cappedBy = 'maxPixels';
-  }
-  // 源图小于质量下限时不再放大（放大无收益，白白耗性能）
-  if (scale > 1 && srcLong < minEdge) scale = 1;
+  const clamped = clampScale(needScale, srcW, srcH, { minEdge, maxEdge, maxPixels });
+  const scale = clamped.scale;
+  const cappedBy = clamped.cappedBy;
 
   const workW = Math.max(1, Math.round(srcW * scale));
   const workH = Math.max(1, Math.round(srcH * scale));
@@ -124,9 +155,116 @@ function planOutput(srcW, srcH, targetW, targetH, opts = {}) {
   };
 }
 
+/**
+ * 按【指定裁剪窗】规划工作画布（T1 自动裁剪用，任务 #24）。
+ *
+ * 与 planOutput 的区别：
+ *   planOutput —— 工作画布 = 整张源图缩放，裁剪窗 = 目标宽高比下的最大窗口（居中）。
+ *   本函数   —— 工作画布 = 【裁剪窗 + 余量】这一块区域的缩放，裁剪窗 = 指定的窗口。
+ *
+ * 为什么需要它：按头占比反解出的裁剪窗通常比「最大窗口」小得多
+ * （例：原片 3000×4000 全身照，头占比 12%，目标一寸 66% ⇒ 裁剪窗只有原片的 ~1/4 面积）。
+ * 若仍按「整图缩放到 1600 长边」处理，裁剪窗在工作图上只剩几百像素 → 成品是放大出来的糊图。
+ * 改为「只把要用到的那块区域放大到足够像素」，才能既满足头占比又保住清晰度。
+ *
+ * @param {number} srcW 源图宽
+ * @param {number} srcH 源图高
+ * @param {number} targetW 目标成品宽（px）
+ * @param {number} targetH 目标成品高（px）
+ * @param {{sx:number, sy:number, sw:number, sh:number}} win 裁剪窗（源图坐标）
+ * @param {{margin?:number,minEdge?:number,maxEdge?:number,maxPixels?:number}} [opts]
+ * @returns {{
+ *   regionX:number, regionY:number, regionW:number, regionH:number,
+ *   workW:number, workH:number,
+ *   sx:number, sy:number, sw:number, sh:number,
+ *   scale:number, needScale:number,
+ *   upscale:boolean, srcTooSmall:boolean, cappedBy:null|string,
+ *   reason:string
+ * }|null}
+ */
+function planWindowOutput(srcW, srcH, targetW, targetH, win, opts = {}) {
+  if (!srcW || !srcH || !targetW || !targetH) return null;
+  if (!win || !(win.sw > 0) || !(win.sh > 0)) return null;
+  const minEdge = opts.minEdge == null ? MIN_WORK_EDGE : opts.minEdge;
+  const maxEdge = opts.maxEdge == null ? MAX_WORK_EDGE : opts.maxEdge;
+  const maxPixels = opts.maxPixels == null ? MAX_WORK_PIXELS : opts.maxPixels;
+  const margin = opts.margin == null ? WIN_MARGIN_RATIO : opts.margin;
+
+  // 工作区域 = 裁剪窗向外扩 margin（贴边时把余量让给另一侧，保证区域尺寸不缩水）
+  const m = Math.round(Math.max(win.sw, win.sh) * margin);
+  let regionX = win.sx - m;
+  let regionY = win.sy - m;
+  let regionW = win.sw + 2 * m;
+  let regionH = win.sh + 2 * m;
+  if (regionX < 0) { regionW += regionX; regionX = 0; }
+  if (regionY < 0) { regionH += regionY; regionY = 0; }
+  if (regionX + regionW > srcW) regionW = srcW - regionX;
+  if (regionY + regionH > srcH) regionH = srcH - regionY;
+  if (!(regionW > 0) || !(regionH > 0)) return null;
+
+  // 让【裁剪窗】像素 ≥ 目标像素所需的缩放
+  const needScale = Math.max(targetW / win.sw, targetH / win.sh);
+  const clamped = clampScale(needScale, regionW, regionH, { minEdge, maxEdge, maxPixels });
+  const scale = clamped.scale;
+  const cappedBy = clamped.cappedBy;
+
+  const workW = Math.max(1, Math.round(regionW * scale));
+  const workH = Math.max(1, Math.round(regionH * scale));
+
+  // 裁剪窗在工作图坐标系中的位置
+  const sx = (win.sx - regionX) * scale;
+  const sy = (win.sy - regionY) * scale;
+  const sw = win.sw * scale;
+  const sh = win.sh * scale;
+
+  const upscale = sw < targetW - 0.5 || sh < targetH - 0.5;
+  const srcTooSmall = needScale > 1;
+
+  let reason = '';
+  if (srcTooSmall) {
+    reason = '原图分辨率不足，放大不会更清晰';
+  } else if (upscale && cappedBy === 'maxEdge') {
+    reason = '已达端侧处理分辨率上限，输出为放大结果';
+  } else if (upscale && cappedBy === 'maxPixels') {
+    reason = '已达端侧处理内存上限，输出为放大结果';
+  } else if (upscale) {
+    reason = '输出为放大结果';
+  }
+
+  return {
+    regionX, regionY, regionW, regionH,
+    workW, workH,
+    sx, sy, sw, sh,
+    scale, needScale,
+    upscale, srcTooSmall, cappedBy,
+    reason,
+  };
+}
+
+/**
+ * 规划「检测用图」的尺寸：源图等比缩放到长边 DETECT_EDGE（源图本身更小则不放大）。
+ * 用于在绘制工作图之前先测出人脸位置（任务 #24）。
+ */
+function planDetectImage(srcW, srcH, opts = {}) {
+  if (!srcW || !srcH) return null;
+  const edge = opts.edge == null ? DETECT_EDGE : opts.edge;
+  const srcLong = Math.max(srcW, srcH);
+  const scale = srcLong > edge ? edge / srcLong : 1;
+  return {
+    width: Math.max(1, Math.round(srcW * scale)),
+    height: Math.max(1, Math.round(srcH * scale)),
+    scale,
+  };
+}
+
 module.exports = {
   planOutput,
+  planWindowOutput,
+  planDetectImage,
+  clampScale,
   MIN_WORK_EDGE,
   MAX_WORK_EDGE,
   MAX_WORK_PIXELS,
+  DETECT_EDGE,
+  WIN_MARGIN_RATIO,
 };

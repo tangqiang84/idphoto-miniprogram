@@ -4,7 +4,7 @@
 // 上云增强：BiRefNet / RMBG-2.0（境内 GPU 云函数，处理完即销毁、不训练）
 // 上云链路见 src/core/mattingCloud.js（裁剪上传 / 境内断言 / 单独授权 / 审计无像素）
 
-const { localMatting, estimateQuality } = require('./mattingLocal');
+const { localMatting, estimateQuality, collectEdgeSamples } = require('./mattingLocal');
 const { cloudMatting } = require('./mattingCloud');
 
 const CONF_THRESHOLD = 0.85; // 端侧置信度阈值，低于则触发上云增强
@@ -15,13 +15,16 @@ function decideRoute(confidence) {
 }
 
 // 抠图入口：端侧优先；置信不足且注入上云能力时，真实调用上云增强并带降级
-// input: { rgba, width, height, session?, cloud?, consents?, audit?, tool? }
+// input: { rgba, width, height, session?, cloud?, consents?, audit?, tool?, bgSamples? }
 //   cloud   : { adapter } —— makeHttpAdapter / makeLocalBiRefStub（由调用方注入）
 //   consents: 已授予授权项数组，须含 'faceCloudEnhance' 才允许上云(AC5)
 //   audit   : 审计回调(stageMeta)，仅收元数据，无像素(AC8)
-async function segment({ rgba, width, height, session, cloud, consents, audit, tool } = {}) {
+//   bgSamples: 背景色采样集（任务 #24）。经典基线的背景色由「画布四边」估计，
+//              T1 自动裁剪把工作画布缩小到「裁剪窗+余量」后四边可能压在人体上，
+//              故允许调用方在整图上先采一次注入。缺省不传 → 沿用四边采样（行为不变）。
+async function segment({ rgba, width, height, session, cloud, consents, audit, tool, bgSamples } = {}) {
   if (!rgba || !width || !height) throw new Error('segment: 缺少 rgba/width/height');
-  const res = await localMatting(rgba, width, height, { session });
+  const res = await localMatting(rgba, width, height, { session, bgSamples });
   const route = decideRoute(res.quality.confidence);
   const base = {
     width, height,
@@ -93,4 +96,6 @@ module.exports = {
   CONF_THRESHOLD, decideRoute, segment, composite, compositeTransparent, estimateQuality, localMatting,
   // 上云增强（来自 mattingCloud）
   cloudMatting,
+  // 背景色采样（来自 mattingLocal，任务 #24 区域化裁剪用）
+  collectEdgeSamples,
 };

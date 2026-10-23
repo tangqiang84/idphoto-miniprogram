@@ -154,6 +154,12 @@ function headMetricsFromLandmarks({ points, rect, imageWidth, imageHeight, confi
   const chinY = span.bottomY;
   const crownY = chinY - headLengthPx;
 
+  // 面部水平中心（任务 #24 自动裁剪用）：取关键点 x 的中位数。
+  // 用中位数而非 (minX+maxX)/2 —— 后者会被单个横向飞点带偏；
+  // 中位数对孤立飞点免疫，与本模块「只剔孤立飞点」的降级纪律一致。
+  const xs = points.map((p) => p.x).sort((a, b) => a - b);
+  const faceCenterX = percentile(xs, 0.5);
+
   const notes = [];
   let quality = 'good';
 
@@ -184,6 +190,7 @@ function headMetricsFromLandmarks({ points, rect, imageWidth, imageHeight, confi
     faceSpanPx,
     headLengthPx,
     faceSpanRatio,
+    faceCenterX,
     notes,
   };
 }
@@ -205,6 +212,8 @@ function headMetricsFromBBox({ bbox, imageWidth, imageHeight } = {}) {
     faceSpanPx: headLengthPx * FACE_LENGTH_RATIO,
     headLengthPx,
     faceSpanRatio: (headLengthPx * FACE_LENGTH_RATIO) / imageHeight,
+    // 估算路径无关键点 → 用人像包围盒中心作为「面部水平中心」的近似
+    faceCenterX: bbox.x + bbox.w / 2,
     notes: ['当前环境不支持人脸检测，头部占比由人像比例估算，仅供参考'],
   };
 }
