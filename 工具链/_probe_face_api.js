@@ -1,7 +1,14 @@
 /**
- * 探针脚本（一次性，用完即弃；不登记为项目资产）
+ * 探针脚本 · 平台 API 可用性探测（2026-10-23 任务 #24 新增，已登记为项目资产）
  * 目的：确认微信开发者工具模拟器内 wx 人脸检测 API 的可用性，
  *      以决定 T1 自动裁剪能否用 mock 做自动化验证。
+ * 用法：NODE_OPTIONS= node 工具链/_probe_face_api.js   （端口 9499）
+ * 结论：wx.faceDetect / initFaceDetect / stopFaceDetect / createVKSession /
+ *      getDeviceInfo / createOffscreenCanvas 在模拟器内**均为 function**，
+ *      但 platform 恒为 'devtools'（faceService 会据此提前返回），
+ *      故必须先伪造 getDeviceInfo 才能走检测轨道。
+ *      ⚠ mockWxMethod 函数形式对 wx 底层 API 不生效 —— 详见 _probe_mock_face.js 与台账 #33。
+ * 详见《项目资产与工具手册.md》3k 节。
  */
 const path = require('path');
 const APP = path.join(__dirname, '..', 'idphoto-miniprogram');

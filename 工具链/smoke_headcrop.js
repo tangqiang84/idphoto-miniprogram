@@ -4,7 +4,7 @@
  * 验证目标：
  *   1. 【几何层·纯 Node】core/headCrop.js 反解裁剪框正确：
  *      头占比命中目标、宽高比等于目标、头顶留白符合官方口径、脸水平居中、
- *      构图过紧/头顶出界时如实降级且不越界（问题 #35 回归护栏）。
+ *      构图过紧/头顶出界时如实降级且不越界（问题台账 #37 回归护栏）。
  *   2. 【架构层·静态断言】T1 走「检测 → 反解 → 区域化工作画布 → 抠图 → 出图」，
  *      不再是纯居中裁剪；抠图必须注入 bgSamples（否则区域画布四边背景采样失准）。
  *   3. 【端到端·模拟器】用 mockWxMethod 注入【假人脸检测】，让 T1 走通自动裁剪分支：
@@ -89,13 +89,13 @@ function geometryChecks() {
   check('几何/裁剪窗不越出原图', !!c && c.sx >= 0 && c.sy >= 0 &&
     c.sx + c.sw <= 1000 + 1e-6 && c.sy + c.sh <= 1400 + 1e-6);
 
-  // 问题 #35 回归护栏：头顶出界时 sy 不得为负
+  // 问题台账 #37 回归护栏：头顶出界时 sy 不得为负
   const clip = planHeadCrop({
     workW: 1000, workH: 800, targetW: 295, targetH: 413,
     crownY: -50, chinY: 250, faceCenterX: 500,
     ratioMin: 0.61, ratioMax: 0.71,
   });
-  check('几何/问题台账#32 回归：头顶出界 sy 不为负',
+  check('几何/问题台账#37 回归：头顶出界 sy 不为负',
     !!clip && clip.sy >= 0 && clip.sy + clip.sh <= 800 + 1e-6,
     clip ? `sy=${clip.sy}` : '');
   check('几何/头顶出界如实降级', !!clip && clip.degraded && clip.degradeReason === 'below-min');
@@ -188,7 +188,7 @@ function staticChecks() {
     // 3.1 注入假人脸检测 —— 关键：faceService 对 platform==='devtools' 提前返回，
     //     故必须伪装成真机（platform=ios）并提供 initFaceDetect/faceDetect。
     //
-    //     【为什么不用 miniProgram.mockWxMethod —— 问题台账 #33】
+    //     【为什么不用 miniProgram.mockWxMethod —— 问题台账 #38】
     //     实测 automator 0.13：mockWxMethod 的**对象形式**可用（getDeviceInfo 能返回
     //     伪造对象），但**函数形式**（functionDeclaration 分支）在 wx 底层 API 上
     //     **不执行** —— 安装后 wx.faceDetect 被包成 wrapper，但业务调用永远拿不到回调

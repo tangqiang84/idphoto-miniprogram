@@ -148,7 +148,7 @@ function planHeadCrop(p) {
     sy = Math.max(0, Math.min(crownY - topGap * 0.5, workH - sh));
   }
 
-  // 窗必须完整落在画面内（【问题台账 #32】bug：crownY<0 时 sy=crownY-topGap 会越出上界，
+  // 窗必须完整落在画面内（【问题台账 #37】bug：crownY<0 时 sy=crownY-topGap 会越出上界，
   //   导致裁剪窗超出原图 → drawImage 取到空白，输出纯色图）。
   // 顺序很重要：先夹到 [0, workH-sh]，再判头顶/下巴是否被裁 —— 否则夹取会掩盖裁切事实。
   sy = Math.max(0, Math.min(sy, workH - sh));

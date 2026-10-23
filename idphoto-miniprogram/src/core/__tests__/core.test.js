@@ -851,7 +851,7 @@ test('headCrop：头顶超出画面时不裁头，如实标记 head-clipped', ()
     ratioMin: 0.61, ratioMax: 0.71,
   });
   assert.ok(crop);
-  // 关键回归（问题 #35）：crownY<0 时 sy 曾会算成 -89（越出画面上界），
+  // 关键回归（问题台账 #37）：crownY<0 时 sy 曾会算成 -89（越出画面上界），
   // 导致裁剪窗超出原图、drawImage 取到空白。必须夹到 0。
   assert.strictEqual(crop.sy, 0, '头顶出界时窗顶必须对齐画面顶，不得为负');
   assert.ok(crop.sy + crop.sh <= 800 + 1e-6, '窗底不得超出画面');
