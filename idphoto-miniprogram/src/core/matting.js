@@ -74,8 +74,23 @@ function composite(rgba, alpha, width, height, bgHex) {
   return out;
 }
 
+// 透明底合成：保留 alpha 通道（PRD C3 透明底 PNG 导出）。
+// 前景 RGB 保留原值，A 通道 = 抠图 alpha*255；背景区域 A=0（全透明）。
+// 返回 RGBA（Uint8ClampedArray，长度 w*h*4），配合 canvasToTempFilePath fileType:'png' 使用。
+function compositeTransparent(rgba, alpha, width, height) {
+  const out = new Uint8ClampedArray(width * height * 4);
+  for (let i = 0; i < width * height; i++) {
+    const a = Math.max(0, Math.min(1, alpha[i]));
+    out[i * 4] = rgba[i * 4];
+    out[i * 4 + 1] = rgba[i * 4 + 1];
+    out[i * 4 + 2] = rgba[i * 4 + 2];
+    out[i * 4 + 3] = Math.round(a * 255);
+  }
+  return out;
+}
+
 module.exports = {
-  CONF_THRESHOLD, decideRoute, segment, composite, estimateQuality, localMatting,
+  CONF_THRESHOLD, decideRoute, segment, composite, compositeTransparent, estimateQuality, localMatting,
   // 上云增强（来自 mattingCloud）
   cloudMatting,
 };

@@ -1,9 +1,9 @@
 const test = require('node:test');
 const assert = require('node:assert');
 
-const { getSpec, getPixelSize, listSpecs } = require('../specLibrary');
+const { getSpec, getPixelSize, listSpecs, BG } = require('../specLibrary');
 const { check } = require('../compliance');
-const { decideRoute, CONF_THRESHOLD, localMatting, estimateQuality, composite } = require('../matting');
+const { decideRoute, CONF_THRESHOLD, localMatting, estimateQuality, composite, compositeTransparent } = require('../matting');
 const { requiredConsents, buildConsentRecord } = require('../privacy');
 
 test('规格库：一寸 300dpi 像素正确 (25mm→295, 35mm→413)', () => {
@@ -108,6 +108,30 @@ test('合成换底：composite 将前景按 alpha 混到目标底色', () => {
   assert.deepStrictEqual([out[0], out[1], out[2]], [200, 50, 50]);
   // 第2像素：alpha=0 → 完全底色蓝(0,0,255)
   assert.deepStrictEqual([out[4], out[5], out[6]], [0, 0, 255]);
+});
+
+test('规格库：BG 含标准灰底 #C0C0C0（PRD 8.1 R192 G192 B192）', () => {
+  assert.strictEqual(BG.gray, '#C0C0C0');
+});
+
+test('透明底合成：compositeTransparent 保留前景色与 alpha 通道（PRD C3）', () => {
+  const w = 2, h = 1;
+  const rgba = new Uint8ClampedArray([200, 50, 50, 255, 200, 50, 50, 255]);
+  // 半透明 alpha=0.5 → A=127~128；全背景 alpha=0 → A=0
+  const out = compositeTransparent(rgba, new Float32Array([1, 0.5]), w, h);
+  // 前景像素：RGB 原样保留，A=255
+  assert.deepStrictEqual([out[0], out[1], out[2], out[3]], [200, 50, 50, 255]);
+  // 半透明像素：RGB 保留，A≈127（0.5*255 取整）
+  assert.deepStrictEqual([out[4], out[5], out[6]], [200, 50, 50]);
+  assert.ok(out[7] === 127 || out[7] === 128, `A 应为 127/128，实际 ${out[7]}`);
+});
+
+test('透明底合成：alpha 越界值被截断到 [0,1]', () => {
+  const w = 2, h = 1;
+  const rgba = new Uint8ClampedArray([10, 20, 30, 255, 10, 20, 30, 255]);
+  const out = compositeTransparent(rgba, new Float32Array([-0.5, 1.5]), w, h);
+  assert.strictEqual(out[3], 0); // -0.5 → 0
+  assert.strictEqual(out[7], 255); // 1.5 → 255
 });
 
 test('隐私：T3 换装需三项同意，缺一项 ready=false', () => {

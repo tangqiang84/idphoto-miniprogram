@@ -10,6 +10,7 @@ const BG = {
   white: '#FFFFFF',
   blue: '#438EDB', // 标准蓝底
   red: '#FF0000', // 标准红底
+  gray: '#C0C0C0', // 标准灰底（PRD 8.1：R192 G192 B192）
 };
 
 const SPECS = [

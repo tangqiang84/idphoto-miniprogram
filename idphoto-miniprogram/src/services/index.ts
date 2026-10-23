@@ -2,7 +2,7 @@
 // core 为框架无关纯 JS，Taro(weapp) 与 Node 测试共用同一份实现。
 import { getSpec, getPixelSize, listSpecs, BG, DPI_STD, DPI_HD } from '../core/specLibrary';
 import { check } from '../core/compliance';
-import { decideRoute, CONF_THRESHOLD, segment, composite, cloudMatting } from '../core/matting';
+import { decideRoute, CONF_THRESHOLD, segment, composite, compositeTransparent, cloudMatting } from '../core/matting';
 import { makeHttpAdapter, makeLocalBiRefStub, assertDomestic, cropForeground, encodeAlphaB64, decodeAlphaB64 } from '../core/mattingCloud';
 import { makeCloudFnAdapter } from './cloudFnAdapter';
 import { requiredConsents, buildConsentRecord, CONSENT_ITEMS, TOOL_CONSENTS } from '../core/privacy';
@@ -34,7 +34,7 @@ export {
   // 合规引擎
   check,
   // 抠图
-  decideRoute, CONF_THRESHOLD, segment, composite, cloudMatting,
+  decideRoute, CONF_THRESHOLD, segment, composite, compositeTransparent, cloudMatting,
   // 上云增强（CLOUD_CONFIG 与各 build*Adapter 已在上方 export const/function 直接导出，此处不重复导出）
   makeHttpAdapter, makeLocalBiRefStub, assertDomestic, cropForeground, encodeAlphaB64, decodeAlphaB64,
   // 隐私
