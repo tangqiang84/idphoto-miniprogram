@@ -424,3 +424,47 @@ test('合规：云函数不得打印像素或 token（AC8 审计只记元数据�
   assert.ok(!/console\.log\([^)]*(image|rgba|alphaB64)/i.test(src), '禁止打印像素字段');
   assert.ok(!/console\.log\([^)]*token/i.test(src), '禁止打印 token');
 });
+
+// ---- 台账 #50：载荷自洽校验（占位符输入曾导致 alpha 全 0 且不报错）----
+test('#50 载荷与尺寸不匹配 → 400，不得静默返回全 0 alpha', async () => {
+  const bad = { consent: 'faceCloudEnhance', region: 'CN', image: '<RGBA base64>', width: 300, height: 400 };
+  const r = await fn.handleMatting(bad, { env: {} });
+  assert.strictEqual(r.code, 400, '应返回 400 而非成功');
+  assert.ok(!r.alphaB64, '不得返回 alphaB64');
+  assert.ok(/不匹配|非法/.test(r.error), '错误信息应说明数据与尺寸不匹配');
+});
+
+test('#50 尺寸参数非法（0 / 非整数）→ 400', async () => {
+  const px = new Uint8ClampedArray(4 * 4 * 4).fill(128);
+  const b64 = Buffer.from(px.buffer).toString('base64');
+  for (const [w, h] of [[0, 4], [4, 0], [2.5, 4], [4, -1]]) {
+    const r = await fn.handleMatting({ consent: 'faceCloudEnhance', region: 'CN', image: b64, width: w, height: h }, { env: {} });
+    assert.strictEqual(r.code, 400, `width=${w} height=${h} 应报 400`);
+  }
+});
+
+test('#50 合规载荷（数据长度自洽）不被误拒，且影子实现方向正确', async () => {
+  // 40×56：band=2 的边缘环带与人形（x12..27, y8..47）完全分离——8×8 时环带会压进人形，属无效输入
+  const w = 40, h = 56;
+  const px = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4;
+    const person = x >= 12 && x <= 27 && y >= 8 && y <= 47;
+    const v = person ? 70 : 235;
+    px[i] = v; px[i + 1] = v; px[i + 2] = v; px[i + 3] = 255;
+  }
+  const r = await fn.handleMatting(
+    { consent: 'faceCloudEnhance', region: 'CN', image: Buffer.from(px.buffer).toString('base64'), width: w, height: h },
+    { env: {} },
+  );
+  assert.ok(!r.error, '不应报错：' + r.error);
+  assert.strictEqual(r.provider, 'shadow', '无 Key 时走影子实现');
+  const a = Buffer.from(r.alphaB64, 'base64');
+  assert.strictEqual(a.length, w * h);
+  // 台账 #51/#52 回归护栏：人（暗）应为高 alpha，背景（亮）应为低 alpha，前景占比接近真值
+  assert.ok(a[28 * w + 20] > 200, `人形中心应为高 alpha，实际 ${a[28 * w + 20]}`);
+  assert.ok(a[3 * w + 3] < 50, `角落背景应为低 alpha，实际 ${a[3 * w + 3]}`);
+  let fg = 0; for (const v of a) if (v >= 128) fg++;
+  const ratio = fg / a.length;
+  assert.ok(ratio > 0.2 && ratio < 0.45, `前景占比应≈32%，实际 ${(ratio * 100).toFixed(1)}%（#51 反向 / #52 塌缩时都会跑出此区间）`);
+});

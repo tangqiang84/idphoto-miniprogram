@@ -51,7 +51,12 @@ function runClassicalFallback(rgba, w, h) {
   for (let i = 0; i < w * h; i++) {
     const r = rgba[i * 4], g = rgba[i * 4 + 1], b = rgba[i * 4 + 2];
     const d = Math.hypot(r - mr, g - mg, b - mb);
-    alpha[i] = Math.max(0, Math.min(1, 1 - d / 75));
+    // ⚠️ 台账 #51：原写成 `1 - d/75` —— **方向反了**（离背景越远 alpha 越低）。
+    // 后果不只是这张初始 mask 反了：`strongSegment` 用 `init > 0.9` 采样「前景」像素，
+    // 取到的其实是**背景色**像素 → 前景/背景两个高斯塌成同一个 → 输出退化为全场恒值
+    // （合成人像实测：整图 alpha 恒为 140、前景占比 100%），影子兜底等于失效。
+    // 约定与前端 `core/mattingLocal.js` 一致：**alpha = 1 表示前景（离背景色越远越接近 1）**。
+    alpha[i] = Math.max(0, Math.min(1, d / 75));
   }
   return alpha;
 }
@@ -61,19 +66,43 @@ function estimateQuality(alpha) {
   return { foregroundRatio: fg / n, ambiguousRatio: amb / n, confidence: 1 - amb / n };
 }
 function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
-function gaussianFromSamples(samples) {
-  const mean = [0, 0, 0]; for (const s of samples) { mean[0] += s[0]; mean[1] += s[1]; mean[2] += s[2]; }
-  const k = samples.length || 1; mean[0] /= k; mean[1] /= k; mean[2] /= k;
-  const cov = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-  for (const s of samples) for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) cov[a][b] += (s[a] - mean[a]) * (s[b] - mean[b]);
-  for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) cov[a][b] /= k;
-  const det = cov[0][0] * (cov[1][1] * cov[2][2] - cov[1][2] * cov[2][1]) - cov[0][1] * (cov[1][0] * cov[2][2] - cov[1][2] * cov[2][0]) + cov[0][2] * (cov[1][0] * cov[2][1] - cov[1][1] * cov[2][0]) + 1e-6;
-  const inv = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) inv[a][b] = cov[a][b] / det;
-  return { mean, covInv: inv };
+// ⚠️ 台账 #52：原实现用 `cov[a][b] / det` 冒充 3×3 矩阵求逆 —— **这不是逆矩阵**
+// （真逆 = 伴随矩阵/det）。后果：纯色/低方差簇的协方差≈0 → det≈0 → inv≈0 →
+// 所有像素到两个簇的马氏距离都≈0 → alpha 恒等于 sigmoid(0+0.1)≈0.52（实测整图恒值 140）。
+// 现与前端 `core/mattingLocal.js` 的 mat3Inv 口径统一（含奇异矩阵对角加 eps 后重试）。
+function mat3Inv(m) {
+  const [a, b, c, d, e, f, g, h, i] = m;
+  const A = e * i - f * h, B = -(d * i - f * g), C = d * h - e * g;
+  const D = -(b * i - c * h), E = a * i - c * g, F = -(a * h - b * g);
+  const G = b * f - c * e, H = -(a * f - c * d), I = a * e - b * d;
+  const det = a * A + b * B + c * C;
+  if (!isFinite(det) || Math.abs(det) < 1e-8) {
+    const eps = 1e-3; // 奇异 → 对角线加小量后重试（伪逆）
+    return mat3Inv([a + eps, b, c, d, e + eps, f, g, h, i + eps]);
+  }
+  const id = 1 / det;
+  return [A * id, B * id, C * id, D * id, E * id, F * id, G * id, H * id, I * id];
 }
+function gaussianFromSamples(samples) {
+  const k = samples.length || 1;
+  const mean = [0, 0, 0];
+  for (const s of samples) { mean[0] += s[0]; mean[1] += s[1]; mean[2] += s[2]; }
+  mean[0] /= k; mean[1] /= k; mean[2] /= k;
+  const cov = new Array(9).fill(0);
+  for (const s of samples) {
+    const dx = s[0] - mean[0], dy = s[1] - mean[1], dz = s[2] - mean[2];
+    cov[0] += dx * dx; cov[1] += dx * dy; cov[2] += dx * dz;
+    cov[3] += dy * dx; cov[4] += dy * dy; cov[5] += dy * dz;
+    cov[6] += dz * dx; cov[7] += dz * dy; cov[8] += dz * dz;
+  }
+  for (let i = 0; i < 9; i++) cov[i] /= k;
+  return { mean, covInv: mat3Inv(cov) };
+}
+// covInv 为扁平 9 元素数组（与前端一致）
 function mahalanobis(r, g, b, mean, covInv) {
   const d = [r - mean[0], g - mean[1], b - mean[2]];
-  let s = 0; for (let a = 0; a < 3; a++) { let t = 0; for (let b = 0; b < 3; b++) t += d[b] * covInv[a][b]; s += d[a] * t; }
+  let s = 0;
+  for (let a = 0; a < 3; a++) { let t = 0; for (let b2 = 0; b2 < 3; b2++) t += d[b2] * covInv[a * 3 + b2]; s += d[a] * t; }
   return s;
 }
 function dist2(a, b) { let s = 0; for (let k = 0; k < 3; k++) { const d = a[k] - b[k]; s += d * d; } return s; }
@@ -188,6 +217,21 @@ async function handleMatting(event, opts) {
     const bytes = fromBase64(event.image);
     const rgba = new Uint8ClampedArray(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
     const w = event.width, h = event.height;
+
+    // 【静默失败防线 —— 台账 #50】
+    // 若 image 数据长度 < w*h*4（常见原因：云端测试面板里 image 填了 "<RGBA base64>" 之类的占位符、
+    // 或前端裁剪窗口与像素数不匹配），后续所有像素读取都会越界返回 undefined → 运算得 NaN →
+    // alpha **全 0 且不报错**，调用方拿到「成功」的空结果，排查成本极高。
+    // 因此在解码图像之前就做尺寸自洽校验，明确报 400。
+    if (!Number.isInteger(w) || !Number.isInteger(h) || w <= 0 || h <= 0) {
+      return { error: `尺寸参数非法：width=${w} height=${h}（须为正整数）`, code: 400 };
+    }
+    if (rgba.length < w * h * 4) {
+      return {
+        error: `图像数据与尺寸不匹配：收到 ${rgba.length} 字节，${w}×${h} 需要 ${w * h * 4} 字节（检查 image 是否为真实 RGBA base64，而非占位符）`,
+        code: 400,
+      };
+    }
 
     const plan = pickProvider(event, env);
     if (plan.provider === 'baidu') {
