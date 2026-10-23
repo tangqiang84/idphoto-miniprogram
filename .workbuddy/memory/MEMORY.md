@@ -42,6 +42,8 @@
 
 - **Windows 无关 / macOS 无 `timeout` 命令**：脚本里别用 `timeout`，用后台任务 + TaskOutput。
 - **bash 脚本写文件会被静默杀**：`cat > file <<EOF` 在本环境触发安全层拦截（exit **137 / SIGTERM**，沙箱内外都无报错）。**生成文件优先用 Python + Write 工具**（台账 #21）。
+- **版本控制已建立（2026-10-23）**：根目录为唯一 git 仓库，分支 `master`，提交 `02c6e6d`（75 文件），标签 `v0.1-t1-verified`。忽略：node_modules/ dist/ .swc/ project.private.config.json/ `.git.scaffold-backup/`。**目前无远程仓库**（换机即丢，建议加私有远程）。提交规范与日常命令见《项目资产与工具手册》第四节。
+- **脚手架嵌套 .git 坑**：Taro 脚手架自带 `.git`（1 次 Initial Commit），会导致 `git add` 只收 38 个文件、源码被当 submodule 拒收。已改名为 `idphoto-miniprogram/.git.scaffold-backup` 保留（勿删），由根仓库统一接管。
 
 ## 关键文件
 - `小程序发布准备包.md` —— 注册/备案/提审材料与进度（含路1实施方案）
