@@ -1,0 +1,42 @@
+# ============================================================
+# 证件照小程序「标准照裁剪」根忽略规则
+# 建立：2026-10-23（台账 #20 补版本控制）
+# 原则：只忽略「可重建产物」与「机器本地私有配置」，
+#       工具脚本 / 素材 / 文档 / 源码 / lock 文件 一律入库。
+# ============================================================
+
+# ---- 依赖与构建产物（可重建，不入库）----
+node_modules/
+dist/
+.swc/
+*.tsbuildinfo
+
+# ---- 微信开发者工具本地私有配置 ----
+# 含个人路径与本机开关，会被工具自动改写，入库只会产生无谓 diff
+idphoto-miniprogram/project.private.config.json
+
+# ---- 脚手架原始 git 历史备份 ----
+# Taro 脚手架自带 1 次 Initial Commit；已改名保留作追溯，不参与版本管理
+idphoto-miniprogram/.git.scaffold-backup/
+
+# ---- 操作系统 ----
+.DS_Store
+Thumbs.db
+$RECYCLE.BIN/
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+
+# ---- 编辑器 ----
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ---- 日志与临时文件 ----
+*.log
+npm-debug.log*
+yarn-error.log*
+*.tmp
+*.bak

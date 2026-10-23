@@ -1,0 +1,45 @@
+import { View, Text } from '@tarojs/components';
+import Taro from '@tarojs/taro';
+import './index.scss';
+
+// 首页 = 工具箱枢纽：各小工具独立进入、互不依赖（PRD 模块 J）
+const TOOLS = [
+  { id: 'T1', title: '一键证件照', desc: '拍照/上传 → 抠图换底 → 选规格 → 导出', icon: '🪪', path: '/pages/tool-idphoto/index', tag: '完整流程' },
+  { id: 'T2', title: '单独换底色', desc: '已有照片，只换红/蓝/白底', icon: '🎨', path: '/pages/tool-bg/index', tag: '换底' },
+  { id: 'T3', title: 'AI 换装', desc: '职业装一键合成（独立授权）', icon: '👔', path: '/pages/tool-suit/index', tag: '换装' },
+  { id: 'T4', title: '合规检测', desc: '只读检测头部占比/像素/KB/底色', icon: '✅', path: '/pages/tool-check/index', tag: '检测' },
+  { id: 'T5', title: '规格转换', desc: '按规格裁剪 / 改 dpi / 压 KB', icon: '📐', path: '/pages/tool-spec/index', tag: '转换' },
+];
+
+export default function Home() {
+  const go = (path: string) => Taro.navigateTo({ url: path });
+
+  return (
+    <View className='home'>
+      <View className='home__hero'>
+        <Text className='home__hero-title'>证件照工具箱</Text>
+        <Text className='home__hero-sub'>本地优先 · 隐私合规 · 即用即走</Text>
+      </View>
+
+      <View className='home__grid'>
+        {TOOLS.map((t) => (
+          <View key={t.id} className='tool-card' onClick={() => go(t.path)}>
+            <View className='tool-card__top'>
+              <Text className='tool-card__icon'>{t.icon}</Text>
+              <Text className='tool-card__tag'>{t.tag}</Text>
+            </View>
+            <Text className='tool-card__title'>{t.title}</Text>
+            <Text className='tool-card__desc'>{t.desc}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View className='home__privacy'>
+        <Text className='home__privacy-title'>隐私承诺</Text>
+        <Text className='home__privacy-text'>
+          人脸仅在设备本地处理；上云增强仅上传裁剪后的人像区域，境内处理、用完即销毁、不训练。换装须单独授权。
+        </Text>
+      </View>
+    </View>
+  );
+}

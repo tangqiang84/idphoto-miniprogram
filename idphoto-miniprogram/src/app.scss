@@ -1,0 +1,158 @@
+page {
+  background: #f5f6f8;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+}
+
+/* 工具页共用样式（全局） */
+.page {
+  min-height: 100vh;
+  padding: 24px;
+
+  &__title {
+    display: block;
+    font-size: 38px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+  }
+  &__hint {
+    display: block;
+    font-size: 24px;
+    color: #8a8f99;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+}
+
+.consent {
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 16px;
+  margin-bottom: 24px;
+
+  &__h {
+    display: block;
+    font-size: 26px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+  }
+  &__item {
+    padding: 12px 0;
+    border-top: 1px solid #f0f0f0;
+  }
+  &__label {
+    display: block;
+    font-size: 26px;
+    color: #1a1a1a;
+  }
+  &__desc {
+    display: block;
+    font-size: 22px;
+    color: #8a8f99;
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+}
+
+.btn-primary {
+  margin-top: 24px;
+  background: #438edb;
+  color: #fff;
+  border-radius: 12px;
+  font-size: 30px;
+}
+
+.steps {
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 16px;
+  &__item {
+    display: block;
+    font-size: 26px;
+    color: #333;
+    padding: 8px 0;
+  }
+}
+
+.bg-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.bg-item {
+  width: 30%;
+  padding: 16px;
+  background: #fff;
+  border-radius: 12px;
+  text-align: center;
+}
+.bg-swatch {
+  display: block;
+  height: 80px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  margin-bottom: 8px;
+}
+.bg-name {
+  font-size: 24px;
+  color: #333;
+}
+
+.suit-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.suit-item {
+  width: 45%;
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 26px;
+  color: #333;
+}
+
+.spec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.spec-item {
+  padding: 16px;
+  background: #fff;
+  border-radius: 12px;
+}
+.spec-name {
+  display: block;
+  font-size: 28px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.spec-size {
+  display: block;
+  font-size: 22px;
+  color: #8a8f99;
+  margin-top: 4px;
+}
+
+.result {
+  margin-top: 20px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 16px;
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 24px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  &__ok {
+    color: #2ba471;
+  }
+  &__bad {
+    color: #e54d42;
+  }
+}
