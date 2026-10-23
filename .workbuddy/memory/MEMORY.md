@@ -45,6 +45,20 @@
 - **版本控制已建立（2026-10-23）**：根目录为唯一 git 仓库，分支 `master`，提交 `02c6e6d`（基线）+ `124f497`，标签 `v0.1-t1-verified`。忽略：node_modules/ dist/ .swc/ project.private.config.json/ `.git.scaffold-backup/`。**远程 = GitHub 私有库 `git@github.com:tangqiang84/idphoto-miniprogram.git`**（master 已跟踪 origin/master，标签已同步，远程克隆回验 75 文件一致）。依赖本机 `~/.ssh/id_ed25519`；非交互首次连接需 `GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new"`。**坑：普通 `git push` 不带 annotated tag，要单独 `git push origin --tags`（台账 #22）**。提交规范与日常命令见《项目资产与工具手册》第四节。
 - **脚手架嵌套 .git 坑**：Taro 脚手架自带 `.git`（1 次 Initial Commit），会导致 `git add` 只收 38 个文件、源码被当 submodule 拒收。已改名为 `idphoto-miniprogram/.git.scaffold-backup` 保留（勿删），由根仓库统一接管。
 
+## 云端抠图 provider 口径（任务 #34 固化，2026-10-23）
+- **三条并存、契约一致**（入 RGBA 像素 → 出 alphaB64），云函数 `index.js` 按配置路由：
+  `baidu`（百度智能云人像分割，**默认**，配 Key 即生效）→ 失败/未配置 → `shadow`（CPU 影子，永不失败）；
+  另有 `birefnet`（自部署 GPU，`部署/birefnet/`，待实例）。
+- **密钥铁律**：`BAIDU_API_KEY` / `BAIDU_SECRET_KEY` 只走云函数环境变量，**禁止进小程序包体/文件/git**；单测有静态断言。
+- **取 scoremap 不取 foreground**：scoremap 灰度 = 置信度×255 → 软 alpha，发丝边缘最好；foreground 只兜底。
+- **三个限制**：base64 **再 urlencode 后 ≤4MB**（最坏 ×3）；最短边≥15 / 最长边≤4096；个人免费 1 万次、QPS 2（企业 5 万/5）。
+- **触发时机**：沿用端侧置信 <0.85 且已授权 `faceCloudEnhance` 才上云 —— 省额度，断网/失败自动降级。
+- **PNG 编解码手写**：CloudBase 无 sharp/canvas → `cloudfunctions/matting/png.js`（纯 zlib），已用 PIL 双向交叉验证。
+- **判据铁律（#45）**：真模型软 alpha 的 `confidence` 天然更低，**不得**用 `1−ambiguousRatio` 判优劣 →
+  用 `shouldAcceptCloudAlpha`（前景占比退化检测 + 与本地偏移 >0.25）。
+- **合规**：第三方 = 个保法第 23 条，政策页/授权弹窗/后台指引/原型文档**四处同步点名接收方**；
+  owner 待办：后台指引补第三方条目并重提（已提交版本不含）。
+
 ## 关键文件
 - `小程序发布准备包.md` —— 注册/备案/提审材料与进度（含路1实施方案）
 - `问题台账.md` —— 问题→根因→解决→状态→预防（登记纪律载体）

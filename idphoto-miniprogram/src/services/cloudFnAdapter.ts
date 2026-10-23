@@ -20,7 +20,17 @@ export function makeCloudFnAdapter(opts: CloudFnAdapterOpts = {}) {
       const res: any = await Taro.cloud.callFunction({ name, data: req });
       const result = (res && res.result) || {};
       if (result.error) throw new Error('cloudfn: ' + result.error);
-      return { alphaB64: result.alphaB64 || result.alpha, region: result.region || 'CN' };
+      // provider 用于前端判断「这次结果来自真模型还是影子实现」：
+      //  - 'baidu'          百度智能云人像分割（真模型）
+      //  - 'shadow'         云函数 CPU 影子实现（含百度失败后的降级）
+      //  - 'birefnet'       未来自有 GPU 实例
+      // 前端据此选择云端 alpha 的接受判据（core/mattingCloud.shouldAcceptCloudAlpha）。
+      return {
+        alphaB64: result.alphaB64 || result.alpha,
+        region: result.region || 'CN',
+        provider: result.provider || null,
+        providerMeta: result.providerMeta || null,
+      };
     },
   };
 }

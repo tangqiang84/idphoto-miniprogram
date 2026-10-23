@@ -5,15 +5,26 @@
 // 返回：{ alphaB64, region }
 // 合规：仅处理裁剪人像区域(非全图)、retain:false 处理完销毁、train:false 不留存、region 固定 CN（数据不出境）。
 //
-// ⚠️⚠️ 算法：本文件是【影子实现】—— 多高斯 + 引导滤波保边，**不是真 BiRefNet 模型**。
-//    原因：微信 CloudBase 云函数是 **CPU 运行环境、无 GPU**，而 BiRefNet 1024×1024 推理
-//    约需 5.5GB 显存，跑不动。本实现的价值是「链路可跑通、质量可对比、降级有兜底」。
+// ⚠️⚠️ 算法：本文件支持**三条 provider**，入参/出参契约完全一致（RGBA 像素 → alphaB64）：
 //
-//    真 BiRefNet 推理服务见 **`部署/birefnet/`**（server.py + Dockerfile + 部署手册），
-//    需部署在**自有境内 GPU 实例**，走《小程序发布准备包》第八节的「形态 B」。
-//    两者的入参/出参契约完全一致，切换时只需改前端 CLOUD_CONFIG.endpoint 与 adapter。
+//    1) `baidu`  —— **百度智能云「人像分割」商用 API**（真模型，2026-10-23 接入）
+//       实现见 ./baiduSeg.js；需配置云函数环境变量 BAIDU_API_KEY / BAIDU_SECRET_KEY。
+//       取 scoremap（灰度=置信度×255）作软 alpha。免费额度：个人 1 万次/QPS 2，企业 5 万次/QPS 5。
+//       **现在就是默认路径**：配了 Key 就走真模型，没配自动回落影子实现。
 //
-//    若未来 CloudBase 提供 GPU 云函数，可直接把本文件的 strongSegment 换成真实模型推理。
+//    2) `shadow` —— 多高斯 + 引导滤波保边的 **CPU 影子实现**（本文件 strongSegment）。
+//       为什么还要留：微信 CloudBase 云函数是 CPU 环境、无 GPU，且外部 API 有额度/网络风险，
+//       影子实现保证「任何情况下都能出图」。百度失败时也一律降级到这里。
+//
+//    3) `birefnet` —— 自有境内 GPU 实例上的真 BiRefNet，见 **`部署/birefnet/`**
+//       （server.py + Dockerfile + 部署手册，《小程序发布准备包》第八节「形态 B」）。
+//       适合日调用量上万、想摆脱按次计费之后切换。
+//
+//    切换方式：环境变量（BAIDU_API_KEY / BAIDU_SECRET_KEY / BAIDU_ENABLED）或单次调用 event.provider。
+//    为什么端侧抠图（core/mattingLocal + 端侧模型）仍然存在：端侧免费、离线可用，
+//    本项目策略是「端侧优先，置信不足才上云」（core/matting.js decideRoute，阈值 0.85）。
+
+const { resolveProvider, makeBaiduSegClient } = require('./baiduSeg');
 
 // ---------- 基础序列化 ----------
 function toBase64(bytes) {
@@ -131,8 +142,41 @@ function strongSegment(rgba, w, h) {
   return qRef.confidence >= qInit.confidence - 1e-3 ? refined : init;
 }
 
-// ---------- 云函数入口 ----------
-exports.main = async (event, context) => {
+// ---------- provider 路由 ----------
+// 两条实现，契约完全一致（入 RGBA 像素 → 出 alphaB64），可随时切换/回退：
+//   1) 'baidu'  —— 百度智能云人像分割（真模型，需配置 BAIDU_API_KEY / BAIDU_SECRET_KEY）
+//   2) 'shadow' —— 本地多高斯 + 引导滤波（CPU 影子实现，无外部依赖、永不失败）
+// 选择逻辑：event.provider 显式指定 > 环境变量配置自动判定 > 影子兜底。
+// 【铁律】百度这条路失败**一律降级影子实现**，绝不让用户拿不到图；降级原因随结果回传，便于排查。
+function pickProvider(event, env) {
+  const e = env || process.env;
+  const forced = (event && event.provider) || '';
+  if (forced === 'shadow') return { provider: 'shadow', reason: '调用方显式指定影子实现' };
+  const enabled = String(e.BAIDU_ENABLED || 'true').toLowerCase() !== 'false';
+  const plan = resolveProvider({
+    apiKey: e.BAIDU_API_KEY || '',
+    secretKey: e.BAIDU_SECRET_KEY || '',
+    enabled,
+  });
+  if (forced === 'baidu' && plan.provider === 'shadow') {
+    return { provider: 'shadow', reason: '调用方指定百度，但凭据未配置（' + plan.reason + '）' };
+  }
+  return plan;
+}
+
+// 百度 API 的输入尺寸边界（最短边 15px / 最长边 4096px）；越界没必要浪费一次调用
+function baiduSizeOk(w, h) {
+  const min = Math.min(w, h), max = Math.max(w, h);
+  return min >= 15 && max <= 4096;
+}
+
+// ---------- 云函数主逻辑 ----------
+// 抽成独立函数并支持注入 clientFactory：单测可在**不联网**的前提下覆盖
+// 「百度成功 / 百度失败降级 / 未配置凭据」三条完整路径（项目约束：改完必实跑验证）。
+async function handleMatting(event, opts) {
+  const o = opts || {};
+  const env = o.env || process.env;
+  const makeClient = o.clientFactory || ((cfg) => makeBaiduSegClient(cfg));
   // 合规闸门：仅处理裁剪后人像区域、境内、不留存
   if (event.consent !== 'faceCloudEnhance') {
     return { error: 'AC5: 缺少上云增强授权', code: 403 };
@@ -144,9 +188,56 @@ exports.main = async (event, context) => {
     const bytes = fromBase64(event.image);
     const rgba = new Uint8ClampedArray(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
     const w = event.width, h = event.height;
+
+    const plan = pickProvider(event, env);
+    if (plan.provider === 'baidu') {
+      if (!baiduSizeOk(w, h)) {
+        const enhanced = strongSegment(rgba, w, h);
+        return {
+          alphaB64: encodeAlphaB64(enhanced), region: 'CN',
+          provider: 'shadow', providerMeta: { fallbackFrom: 'baidu', reason: `尺寸越界 ${w}x${h}（百度要求最短边≥15、最长边≤4096）` },
+        };
+      }
+      try {
+        const client = makeClient({
+          apiKey: env.BAIDU_API_KEY,
+          secretKey: env.BAIDU_SECRET_KEY,
+        });
+        const r = await client.segment(rgba, w, h);
+        return {
+          alphaB64: encodeAlphaB64(r.alpha), region: 'CN',
+          provider: 'baidu',
+          providerMeta: { ...r.meta, host: client.host },
+        };
+      } catch (e) {
+        // 降级：绝不让上云失败导致无图。日志只记错误码与原因，不记任何像素（AC8）
+        const reason = String((e && e.message) || e);
+        console.warn('[matting] baidu 失败，降级影子实现：' + reason);
+        const enhanced = strongSegment(rgba, w, h);
+        return {
+          alphaB64: encodeAlphaB64(enhanced), region: 'CN',
+          provider: 'shadow',
+          providerMeta: {
+            fallbackFrom: 'baidu', reason,
+            code: e && e.code != null ? e.code : null,
+            retryable: !!(e && e.retryable),
+          },
+        };
+      }
+    }
+
     const enhanced = strongSegment(rgba, w, h);
-    return { alphaB64: encodeAlphaB64(enhanced), region: 'CN' };
+    return {
+      alphaB64: encodeAlphaB64(enhanced), region: 'CN',
+      provider: 'shadow', providerMeta: { reason: plan.reason },
+    };
   } catch (e) {
     return { error: String((e && e.message) || e), code: 500 };
   }
-};
+}
+
+// ---------- 云函数入口 ----------
+exports.main = async (event, context) => handleMatting(event || {}, {});
+// 供单测注入（不联网覆盖全路径）；云函数运行时不会用到
+exports.handleMatting = handleMatting;
+exports.pickProvider = pickProvider;

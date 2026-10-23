@@ -131,7 +131,11 @@ const UPLOAD_MAX_PIXELS = 640000; // ≈ 800×800，与 300dpi 档既有行为�
 
 // ===================== 境内 endpoint 断言（数据不出境，fail-closed） =====================
 // 无法物理探测机房位置，采用「白名单 + 境内后缀」启发式；任一不满足即阻断，绝不把人脸送跨境。
-const DOMESTIC_SUFFIX = ['.cn', '.tencentcloudapi.com', '.myqcloud.com', '.aliyuncs.com', '.huaweicloud.com', '.volcengine.com'];
+// 说明：'.baidubce.com' 为百度智能云中国大陆节点（人像分割 API 主机 aip.baidubce.com）。
+// 本项目由**云函数**调用它（小程序端不直连，端侧只连 cloud://），此处登记是为了让
+// 「境内断言」这一条规则在涉及百度链路时同样成立 —— 若哪天有人把百度调用搬进前端，
+// assertDomestic 会认可该主机，但密钥入前端的风险另由代码评审把关。
+const DOMESTIC_SUFFIX = ['.cn', '.tencentcloudapi.com', '.myqcloud.com', '.aliyuncs.com', '.huaweicloud.com', '.volcengine.com', '.baidubce.com'];
 function isDomesticSuffix(host) {
   const h = (host || '').toLowerCase();
   return DOMESTIC_SUFFIX.some((s) => h.endsWith(s));
@@ -152,6 +156,38 @@ function assertDomestic(endpoint, trustedHosts) {
 // ===================== 真实 adapter（注入 wx.request / fetch） =====================
 // adapter.call(reqJSON) → 返回 { alphaB64, region }
 // 由调用方在小程序侧用 wx.request、在 h5/Node 侧用 fetch 实现；core 不内置网络。
+// ===================== 云端结果接受判据（任务：接入百度商用 API） =====================
+// 【为什么不能继续用 confidence 比较 —— 一个会让真模型被误杀的坑】
+// 原判据：云端 confidence < 本地 confidence → 判定「上云变差」并降级。
+// 而 confidence = 1 - ambiguousRatio（alpha 落在 0.1~0.9 的比例）。
+// 端侧经典基线输出的是**接近二值**的 alpha（中间值少 → ambiguous 低 → confidence 高）；
+// 真模型（百度 scoremap / BiRefNet）输出的是**软 alpha**，发丝、半透明衣边天然落在
+// 0.1~0.9 → ambiguous 更高 → confidence 更低。**质量更好，分数却更差**。
+// 若沿用旧判据，真模型会被 100% 误判为「变差」而降级，等于白接。
+//
+// 新判据（真实模型走前景占比合理性，不再比 confidence）：
+//   ① 退化检测：云端前景占比 <0.5% 或 >99.5% → 模型没分割出人/整图当人，判失败
+//   ② 偏移检测：与本地前景占比差 >0.25 → 两者分歧过大，判失败（保守起见退回本地）
+//   ③ 其余情况接受真模型结果（软 alpha 的「歧义多」是优点不是缺点）
+// 非真模型（local-stub 离线验证用）维持原豁免；未知 provider 维持原 confidence 比较。
+function shouldAcceptCloudAlpha({ cloudAlpha, localAlpha, provider } = {}) {
+  const qc = estimateQuality(cloudAlpha);
+  const ql = estimateQuality(localAlpha);
+  const meta = { cloudConf: qc.confidence, localConf: ql.confidence, cloudFg: qc.foregroundRatio, localFg: ql.foregroundRatio };
+  if (provider === 'local-stub') return { accept: true, reason: 'local-stub 离线链路，豁免比对', ...meta };
+  if (qc.foregroundRatio < 0.005 || qc.foregroundRatio > 0.995) {
+    return { accept: false, reason: 'cloud_foreground_degenerate', ...meta };
+  }
+  if (provider === 'baidu' || provider === 'birefnet') {
+    if (Math.abs(qc.foregroundRatio - ql.foregroundRatio) > 0.25) {
+      return { accept: false, reason: 'cloud_foreground_shift', ...meta };
+    }
+    return { accept: true, reason: 'real_model_soft_alpha', ...meta };
+  }
+  if (qc.confidence < ql.confidence - 1e-3) return { accept: false, reason: 'cloud_confidence_lower', ...meta };
+  return { accept: true, reason: 'confidence_ok', ...meta };
+}
+
 function makeHttpAdapter({ endpoint, trustedHosts, authToken, fetchImpl, region = 'CN' }) {
   assertDomestic(endpoint, trustedHosts);
   const doFetch = fetchImpl || (typeof fetch !== 'undefined' ? fetch.bind(globalThis) : null);
@@ -166,7 +202,12 @@ function makeHttpAdapter({ endpoint, trustedHosts, authToken, fetchImpl, region 
       });
       if (!res.ok) throw new Error('cloud http ' + res.status);
       const json = await res.json();
-      return { alphaB64: json.alphaB64 || json.alpha, region: json.region || region };
+      return {
+        alphaB64: json.alphaB64 || json.alpha,
+        region: json.region || region,
+        provider: json.provider || null,          // 'baidu' / 'shadow' / 'birefnet' / null
+        providerMeta: json.providerMeta || null,  // 含降级原因、上传像素、耗时等元数据
+      };
     },
   };
 }
@@ -350,18 +391,30 @@ async function cloudMatting({ rgba, alpha, width, height, adapter, consents = []
   const enhanced = placeBack(alpha, subAlpha, crop, width, height);
   // 子图尺度公平比较：云端只看到裁剪区域(见 PRD 第171行仅上传裁剪人像区域)，
   // 与全图像素数无关，避免尺度差异造成的歧义占比偏差误判「上云变差」。
-  const q = estimateQuality(subAlpha);
-  const localQCrop = estimateQuality(crop.alpha);
-  // 仅对真实上云(adapter.kind==='http')执行「上云≥本地」严格校验；local-stub 为离线链路验证用，
-  // 不因其在裁剪子图上的近似质量被降级（真实 BiRefNet 经 http adapter 接入时才严格比对）。
-  if (adapter.kind !== 'local-stub' && q.confidence < localQCrop.confidence - 1e-3) {
-    // 上云结果反不如本地（异常）→ 降级，避免变差
-    audit && audit({ stage: 'cloud_degraded_quality', cloudConf: q.confidence, localConf: localQCrop.confidence, degraded: true, hasPixel: false });
-    return { alpha, backend: 'cloud->edge', confidence: localQCrop.confidence, degraded: true, reason: 'quality', cloudMeta: { latencyMs: dt } };
+  // 云端身份：真模型（baidu/birefnet）走「前景占比合理性」判据，避免软 alpha 被误杀
+  // （详见 shouldAcceptCloudAlpha 的函数级注释）
+  const provider = resp.provider || (adapter.kind === 'local-stub' ? 'local-stub' : null);
+  const verdict = shouldAcceptCloudAlpha({ cloudAlpha: subAlpha, localAlpha: crop.alpha, provider });
+  if (!verdict.accept) {
+    // 上云结果异常 → 降级，避免变差
+    audit && audit({
+      stage: 'cloud_degraded_quality', reason: verdict.reason, provider,
+      cloudConf: verdict.cloudConf, localConf: verdict.localConf,
+      cloudFg: verdict.cloudFg, localFg: verdict.localFg,
+      degraded: true, hasPixel: false,
+    });
+    return {
+      alpha, backend: 'cloud->edge', confidence: verdict.localConf, degraded: true,
+      reason: verdict.reason,
+      cloudMeta: { latencyMs: dt, provider, providerMeta: resp.providerMeta || null },
+    };
   }
   // AC8：审计只记元数据，无像素
-  audit && audit({ stage: 'cloud_ok', latencyMs: dt, region: resp.region || 'CN', confidence: q.confidence, retained: false, hasPixel: false });
-  return { alpha: enhanced, backend: 'cloud', confidence: estimateQuality(enhanced).confidence, degraded: false, cloudMeta: { latencyMs: dt, region: resp.region || 'CN', retained: false } };
+  audit && audit({ stage: 'cloud_ok', latencyMs: dt, region: resp.region || 'CN', confidence: verdict.cloudConf, retained: false, provider, hasPixel: false });
+  return {
+    alpha: enhanced, backend: 'cloud', confidence: estimateQuality(enhanced).confidence, degraded: false,
+    cloudMeta: { latencyMs: dt, region: resp.region || 'CN', retained: false, provider, providerMeta: resp.providerMeta || null },
+  };
 }
 
 module.exports = {
@@ -371,6 +424,8 @@ module.exports = {
   cropForeground, placeBack,
   // 境内断言
   assertDomestic, isDomesticSuffix,
+  // 云端判据
+  shouldAcceptCloudAlpha,
   // adapter
   makeHttpAdapter, makeLocalBiRefStub,
   // 主入口
