@@ -24,7 +24,7 @@ const SUIT_TEMPLATES = [
   { id: 'gray', name: '灰西装', src: require('../../assets/suits/suit_gray.png') },
 ];
 
-type BgKey = 'white' | 'blue' | 'red' | 'gray';
+type BgKey = 'white' | 'blue' | 'blueLight' | 'red' | 'gray';
 
 // 读模板 PNG → RGBA 像素（离屏 canvas）
 async function loadTemplatePixels(src: string): Promise<{ data: Uint8ClampedArray; w: number; h: number }> {
@@ -196,7 +196,8 @@ export default function ToolSuit() {
 
   const bgOptions: { key: BgKey; label: string; color: string }[] = [
     { key: 'white', label: '白底', color: BG.white },
-    { key: 'blue', label: '蓝底', color: BG.blue },
+    { key: 'blue', label: '标准深蓝', color: BG.blue },
+    { key: 'blueLight', label: '浅蓝', color: BG.blueLight },
     { key: 'red', label: '红底', color: BG.red },
     { key: 'gray', label: '灰底', color: BG.gray },
   ];

@@ -1,7 +1,7 @@
 import { View, Text, Button, Image, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { useState } from 'react';
-import { requiredConsents, buildConsentRecord, BG, listSpecs, getSpec, check } from '../../services';
+import { requiredConsents, buildConsentRecord, BG, listSpecs, getSpec, check, specLabel } from '../../services';
 
 // T4 合规检测：只读检测，不生成、不改动原图（PRD J2 / AC10）——无保存相册入口。
 // 检测项与口径（2026-10-23 与 owner 确认）：
@@ -227,12 +227,15 @@ export default function ToolCheck() {
         <Text>目标规格：</Text>
         <Picker
           mode='selector'
-          range={specs.map((s: any) => `${s.name}（${s.note}）`)}
+          range={specs.map((s: any) => specLabel(s.id, 300))}
           value={specIndex}
           onChange={(e: any) => { setSpecIndex(Number(e.detail.value)); setResult(null); }}
         >
           <View style={{ color: '#438EDB', padding: '4px 0' }}>{spec.name} ▾</View>
         </Picker>
+        <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
+          {spec.source}
+        </Text>
         <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '4px' }}>
           说明：文件内 dpi 元数据微信端无法读取，按「像素 ÷ 目标规格英寸」换算等效 dpi（同 T5 #24 口径）；头部占比为端侧人脸检测估算值
         </Text>

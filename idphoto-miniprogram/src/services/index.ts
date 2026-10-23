@@ -1,6 +1,6 @@
 // 业务服务聚合：复用 core 纯逻辑 + UI 层辅助
 // core 为框架无关纯 JS，Taro(weapp) 与 Node 测试共用同一份实现。
-import { getSpec, getPixelSize, listSpecs, BG, DPI_STD, DPI_HD } from '../core/specLibrary';
+import { getSpec, getPixelSize, listSpecs, BG, BG_LABELS, DPI_STD, DPI_HD, specLabel } from '../core/specLibrary';
 import { check } from '../core/compliance';
 import { decideRoute, CONF_THRESHOLD, segment, composite, compositeTransparent, cloudMatting } from '../core/matting';
 import { makeHttpAdapter, makeLocalBiRefStub, assertDomestic, cropForeground, encodeAlphaB64, decodeAlphaB64 } from '../core/mattingCloud';
@@ -31,7 +31,7 @@ export function buildCloudFnAdapter(overrides = {}) {
 
 export {
   // 规格库
-  getSpec, getPixelSize, listSpecs, BG, DPI_STD, DPI_HD,
+  getSpec, getPixelSize, listSpecs, BG, BG_LABELS, DPI_STD, DPI_HD, specLabel,
   // 合规引擎
   check,
   // 抠图

@@ -137,6 +137,17 @@ page {
   margin-top: 4px;
 }
 
+/* 规格速览芯片（T1/T5）：展示官方像素 + 直接点选
+   2026-10-23 规格数值裁决后新增 —— 用户可直接看到每个规格的确切像素 */
+.spec-chips {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 10px 0 6px;
+}
+.spec-chip {
+  display: inline-block;
+}
+
 .result {
   margin-top: 20px;
   padding: 20px;

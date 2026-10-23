@@ -19,7 +19,7 @@ const TOOL = 'T2';
 const MAX_EDGE = 800; // 端侧逐像素抠图的性能保护：工作图长边上限
 const DPI = 300;
 
-type BgKey = 'white' | 'blue' | 'red' | 'gray';
+type BgKey = 'white' | 'blue' | 'blueLight' | 'red' | 'gray';
 
 // 校验自定义 HEX 色值（#RRGGBB / RRGGBB）
 function normalizeHex(input: string): string | null {
@@ -198,7 +198,8 @@ export default function ToolBg() {
 
   const bgOptions: { key: BgKey; label: string; color: string }[] = [
     { key: 'white', label: '白底', color: BG.white },
-    { key: 'blue', label: '蓝底', color: BG.blue },
+    { key: 'blue', label: '标准深蓝', color: BG.blue },
+    { key: 'blueLight', label: '浅蓝', color: BG.blueLight },
     { key: 'red', label: '红底', color: BG.red },
     { key: 'gray', label: '灰底', color: BG.gray },
   ];

@@ -19,14 +19,60 @@ test('规格库：二寸 像素正确 (35mm→413, 49mm→579)', () => {
   assert.strictEqual(px.height, 579);
 });
 
-test('规格库：美国签证 51mm 正方形 → 602px', () => {
+test('规格库：美国签证 2×2 英寸精确 → 600×600px（官方 DS-160 硬指标）', () => {
   const px = getPixelSize('visa-us', 300);
-  assert.strictEqual(px.width, 602);
-  assert.strictEqual(px.height, 602);
+  assert.strictEqual(px.width, 600);
+  assert.strictEqual(px.height, 600);
+  // 600dpi 时翻倍
+  const pxHd = getPixelSize('visa-us', 600);
+  assert.strictEqual(pxHd.width, 1200);
+  assert.strictEqual(pxHd.height, 1200);
 });
 
-test('规格库：listSpecs 返回 8 项', () => {
-  assert.strictEqual(listSpecs().length, 8);
+test('规格库：中国护照 33×48mm → 390×567px（国家移民管理局口径）', () => {
+  const px = getPixelSize('passport-cn', 300);
+  assert.strictEqual(px.width, 390);
+  assert.strictEqual(px.height, 567);
+});
+
+test('规格库：驾驶证 22×32mm → 260×378px（公安部令172号）', () => {
+  const px = getPixelSize('driver-license', 300);
+  assert.strictEqual(px.width, 260);
+  assert.strictEqual(px.height, 378);
+  const spec = getSpec('driver-license');
+  assert.deepStrictEqual(spec.bg, ['white']); // 驾照要求白底
+});
+
+test('规格库：listSpecs 返回 9 项（含新增驾驶证）', () => {
+  assert.strictEqual(listSpecs().length, 9);
+  assert.ok(listSpecs().some((s) => s.id === 'driver-license'));
+});
+
+test('规格库：每条规格都带官方来源标注 source', () => {
+  const { SPECS } = require('../specLibrary');
+  SPECS.forEach((s) => {
+    assert.ok(typeof s.source === 'string' && s.source.length > 0, `${s.id} 缺 source`);
+  });
+});
+
+test('规格库：蓝底双轨色值正确（深蓝 #438EDB / 浅蓝 #00BFF3）', () => {
+  assert.strictEqual(BG.blue, '#438EDB');
+  assert.strictEqual(BG.blueLight, '#00BFF3');
+  assert.strictEqual(BG.white, '#FFFFFF');
+  assert.strictEqual(BG.red, '#FF0000');
+  assert.strictEqual(BG.gray, '#C0C0C0');
+});
+
+test('规格库：头占比为显式区间字段（不再用基准±0.05 推导）', () => {
+  const p = getSpec('passport-cn');
+  assert.strictEqual(p.headHeightRatioMin, 0.58);
+  assert.strictEqual(p.headHeightRatioMax, 0.69);
+  assert.strictEqual(p.headHeightRatio, undefined); // 旧字段已移除
+});
+
+test('规格库：一寸/小一寸 KB 上限为 200（对齐 PRD 20~200KB 区间）', () => {
+  assert.strictEqual(getSpec('one-inch').maxKb, 200);
+  assert.strictEqual(getSpec('small-one-inch').maxKb, 200);
 });
 
 test('合规引擎：合格输入 pass=true 且无建议', () => {
@@ -56,6 +102,42 @@ test('合规引擎：dpi 不足 fail', () => {
 test('合规引擎：文件超限 fail', () => {
   const r = check('one-inch', { widthPx: 295, heightPx: 413, dpi: 300, fileKb: 500, bg: 'white' });
   assert.strictEqual(r.checks.find((c) => c.key === 'filesize').pass, false);
+});
+
+test('合规引擎：头占比按显式区间判定（护照 58%~69%）', () => {
+  // 63% → 护照区间内 → 通过
+  const ok = check('passport-cn', {
+    widthPx: 390, heightPx: 567, dpi: 300, fileKb: 80, bg: 'white', headHeightRatio: 0.63,
+  });
+  assert.strictEqual(ok.checks.find((c) => c.key === 'head').pass, true);
+  // 72% → 超出官方上限 → 不通过（旧推导式会误判为通过）
+  const bad = check('passport-cn', {
+    widthPx: 390, heightPx: 567, dpi: 300, fileKb: 80, bg: 'white', headHeightRatio: 0.72,
+  });
+  assert.strictEqual(bad.checks.find((c) => c.key === 'head').pass, false);
+});
+
+test('合规引擎：未提供头占比则跳过该项（不判不通过）', () => {
+  const r = check('passport-cn', { widthPx: 390, heightPx: 567, dpi: 300, fileKb: 80, bg: 'white' });
+  assert.strictEqual(r.checks.find((c) => c.key === 'head'), undefined);
+  assert.strictEqual(r.pass, true);
+});
+
+test('合规引擎：蓝底双轨——深蓝与浅蓝分别判定', () => {
+  const deep = check('one-inch', { widthPx: 295, heightPx: 413, dpi: 300, fileKb: 45, bg: 'blue' });
+  assert.strictEqual(deep.checks.find((c) => c.key === 'bg').pass, true);
+  const light = check('one-inch', { widthPx: 295, heightPx: 413, dpi: 300, fileKb: 45, bg: 'blueLight' });
+  assert.strictEqual(light.checks.find((c) => c.key === 'bg').pass, true);
+});
+
+test('合规引擎：驾照要求白底，蓝底不合规', () => {
+  const r = check('driver-license', { widthPx: 260, heightPx: 378, dpi: 300, fileKb: 45, bg: 'blue' });
+  assert.strictEqual(r.checks.find((c) => c.key === 'bg').pass, false);
+});
+
+test('合规引擎：美国签证 600×600 判定通过', () => {
+  const r = check('visa-us', { widthPx: 600, heightPx: 600, dpi: 300, fileKb: 120, bg: 'white', headHeightRatio: 0.55 });
+  assert.strictEqual(r.pass, true);
 });
 
 test('路由：置信≥0.85 走端侧，低于走云端', () => {

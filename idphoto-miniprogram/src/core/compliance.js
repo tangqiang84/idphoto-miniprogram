@@ -1,7 +1,12 @@
 // 合规预审引擎（纯逻辑，可单测）
-// 输入 measured：{ widthPx, heightPx, dpi, fileKb, bg('white'|'blue'|'red'), headHeightRatio(0~1,可选) }
+// 输入 measured：{ widthPx, heightPx, dpi, fileKb, bg('white'|'blue'|'blueLight'|'red'|'gray'), headHeightRatio(0~1,可选) }
 // 目标 specId
 // 输出：{ pass, target, checks:[{key,label,pass,detail}], suggestions:[...] }
+//
+// 【2026-10-23 数值裁决】头部占比判定改为读取规格的显式区间
+// （headHeightRatioMin / headHeightRatioMax），不再用「基准 ±0.05」推导。
+// 原因：官方口径按各机构物理量给出（护照头长 28~33mm/48mm、驾照 19~22mm/32mm），
+// 推导式无法表达非对称区间，且会误判 passport-cn（官方 58%~69%）。
 
 const { getSpec, getPixelSize } = require('./specLibrary');
 
@@ -41,25 +46,29 @@ function check(specId, measured) {
     detail: `实测 ${measured.fileKb || 0}KB，上限 ${spec.maxKb}KB`,
   });
 
-  // 4. 底色
+  // 4. 底色（spec.bg 列出该规格允许的底色 key，blue / blueLight 为两个不同色值）
   const bgOk = spec.bg.includes(measured.bg);
   checks.push({
     key: 'bg',
     label: '底色',
     pass: bgOk,
-    detail: bgOk ? `底色 ${measured.bg} 合规` : `底色 ${measured.bg} 不在允许范围 ${spec.bg.join('/')}`,
+    detail: bgOk
+      ? `底色 ${measured.bg} 合规`
+      : `底色 ${measured.bg} 不在允许范围 ${spec.bg.join('/')}`,
   });
 
-  // 5. 头部占比（可选）
-  if (measured.headHeightRatio != null && spec.headHeightRatio != null) {
-    const min = spec.headHeightRatio - 0.05;
-    const max = spec.headHeightRatioMax != null ? spec.headHeightRatioMax + 0.02 : spec.headHeightRatio + 0.05;
-    const hrOk = measured.headHeightRatio >= min && measured.headHeightRatio <= max;
+  // 5. 头部占比（可选；仅当实测与规格都具备区间/基准时判定）
+  const min = spec.headHeightRatioMin;
+  const max = spec.headHeightRatioMax;
+  if (measured.headHeightRatio != null && (min != null || max != null)) {
+    const lo = min != null ? min : 0;
+    const hi = max != null ? max : 1;
+    const hrOk = measured.headHeightRatio >= lo && measured.headHeightRatio <= hi;
     checks.push({
       key: 'head',
       label: '头部占比',
       pass: hrOk,
-      detail: `实测 ${(measured.headHeightRatio * 100).toFixed(0)}%，建议 ${(min * 100).toFixed(0)}%~${(max * 100).toFixed(0)}%`,
+      detail: `实测 ${(measured.headHeightRatio * 100).toFixed(0)}%，要求 ${(lo * 100).toFixed(0)}%~${(hi * 100).toFixed(0)}%`,
     });
   }
 

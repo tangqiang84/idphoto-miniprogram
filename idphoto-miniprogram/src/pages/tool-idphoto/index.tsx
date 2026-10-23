@@ -5,7 +5,7 @@ import {
   requiredConsents, buildConsentRecord,
   segment, composite, check,
   buildCloudFnAdapter,
-  BG, getSpec, getPixelSize, listSpecs,
+  BG, getSpec, getPixelSize, listSpecs, specLabel,
 } from '../../services';
 
 // T1 一键证件照：完整链路（真实功能，非占位）
@@ -17,7 +17,7 @@ const TOOL = 'T1';
 const MAX_EDGE = 800; // 端侧逐像素抠图的性能保护：工作图长边上限
 const DPI = 300;
 
-type BgKey = 'white' | 'blue' | 'red';
+type BgKey = 'white' | 'blue' | 'blueLight' | 'red';
 
 export default function ToolIdPhoto() {
   const consentItems = requiredConsents(TOOL);
@@ -175,7 +175,8 @@ export default function ToolIdPhoto() {
 
   const bgOptions: { key: BgKey; label: string; color: string }[] = [
     { key: 'white', label: '白底', color: BG.white },
-    { key: 'blue', label: '蓝底', color: BG.blue },
+    { key: 'blue', label: '标准深蓝', color: BG.blue },
+    { key: 'blueLight', label: '浅蓝', color: BG.blueLight },
     { key: 'red', label: '红底', color: BG.red },
   ];
 
@@ -216,12 +217,41 @@ export default function ToolIdPhoto() {
         <Text>规格：</Text>
         <Picker
           mode='selector'
-          range={specs.map((s: any) => `${s.name}（${s.note}）`)}
+          range={specs.map((s: any) => specLabel(s.id, DPI))}
           value={specIndex}
           onChange={(e: any) => setSpecIndex(Number(e.detail.value))}
         >
           <View style={{ color: '#438EDB', padding: '4px 0' }}>{specs[specIndex].name} ▾</View>
         </Picker>
+        <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
+          {specs[specIndex].source}
+        </Text>
+        {/* 规格速览芯片：直接点选 + 展示官方像素（2026-10-23 规格数值裁决后新增） */}
+        <View className='spec-chips'>
+          {specs.map((s: any, i: number) => {
+            const px = getPixelSize(s.id, DPI)!;
+            const on = specIndex === i;
+            return (
+              <View
+                key={s.id}
+                className='spec-chip'
+                onClick={() => setSpecIndex(i)}
+                style={{
+                  padding: '5px 10px',
+                  marginRight: '6px',
+                  marginBottom: '6px',
+                  borderRadius: '20px',
+                  border: on ? '1px solid #438EDB' : '1px solid #ddd',
+                  background: on ? '#eef5fd' : '#fff',
+                }}
+              >
+                <Text style={{ fontSize: '12px', color: on ? '#2b6cb0' : '#666' }}>
+                  {s.name} {px.width}×{px.height}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
       </View>
 
       <View style={{ display: 'flex', flexDirection: 'row', margin: '12px 0' }}>

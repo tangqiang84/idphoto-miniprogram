@@ -1,7 +1,7 @@
 import { View, Text, Button, Image, Picker, Input, Switch } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { useState } from 'react';
-import { getSpec, getPixelSize, listSpecs, DPI_STD, DPI_HD } from '../../services';
+import { getSpec, getPixelSize, listSpecs, DPI_STD, DPI_HD, specLabel } from '../../services';
 
 // T5 规格转换：已有照片按所选规格「裁剪 / 改 dpi / 压 KB」后导出（真实功能，非占位）
 // 选图 → 目标像素计算（内置规格×dpi 或 自定义宽高）→ 居中裁剪缩放 → KB 上限压缩（quality 逐步降）→ 保存相册
@@ -195,12 +195,43 @@ export default function ToolSpec() {
           <Text>目标规格：</Text>
           <Picker
             mode='selector'
-            range={specs.map((s: any) => `${s.name}（${s.note}）`)}
+            range={specs.map((s: any) => specLabel(s.id, dpi))}
             value={specIndex}
             onChange={(e: any) => setSpecIndex(Number(e.detail.value))}
           >
             <View style={{ color: '#438EDB', padding: '4px 0' }}>{specs[specIndex].name} ▾</View>
           </Picker>
+          {/* 规格速览芯片：直接点选 + 展示官方像素（2026-10-23 规格数值裁决后新增） */}
+          <View className='spec-chips'>
+            {specs.map((s: any, i: number) => {
+              const px = getPixelSize(s.id, dpi)!;
+              const on = specIndex === i;
+              return (
+                <View
+                  key={s.id}
+                  className='spec-chip'
+                  onClick={() => setSpecIndex(i)}
+                  style={{
+                    padding: '5px 10px',
+                    marginRight: '6px',
+                    marginBottom: '6px',
+                    borderRadius: '20px',
+                    border: on ? '1px solid #438EDB' : '1px solid #ddd',
+                    background: on ? '#eef5fd' : '#fff',
+                  }}
+                >
+                  <Text style={{ fontSize: '12px', color: on ? '#2b6cb0' : '#666' }}>
+                    {s.name} {px.width}×{px.height}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+          {spec ? (
+            <Text style={{ display: 'block', fontSize: '11px', color: '#999' }}>
+              {spec.source}
+            </Text>
+          ) : null}
           <Text>输出 dpi：</Text>
           <Picker
             mode='selector'
