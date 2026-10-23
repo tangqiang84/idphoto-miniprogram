@@ -1,7 +1,7 @@
 import { View, Text, Button, Image, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { useState } from 'react';
-import { requiredConsents, buildConsentRecord, BG, listSpecs, getSpec, check, specLabel } from '../../services';
+import { requiredConsents, buildConsentRecord, BG, listSpecs, getSpec, check, specLabel, measureHeadRatio } from '../../services';
 
 // T4 合规检测：只读检测，不生成、不改动原图（PRD J2 / AC10）——无保存相册入口。
 // 检测项与口径（2026-10-23 与 owner 确认）：
@@ -10,8 +10,8 @@ import { requiredConsents, buildConsentRecord, BG, listSpecs, getSpec, check, sp
 //   3. 底色：边缘环形采样 → 最近标准色（BG 常量）匹配
 //   4. dpi：文件内 dpi 元数据微信端无法读取（同 T5 #24 口径）→
 //      等效 dpi = min(像素宽/规格英寸宽, 像素高/规格英寸高)（最坏情况），报告标注口径
-//   5. 头部占比：微信端侧人脸检测 wx.faceDetect（106 点 landmarks）估算；
-//      不支持的环境（开发者工具等）自动降级为「未检测」，其余 4 项照常出报告
+//   5. 头部占比：统一走 services/faceService（任务 #4：VisionKit 优先 → faceDetect 降级 → 几何估算），
+//      与 T1/T3 同一套口径；完全不可用时降级为「未检测」，其余 4 项照常出报告
 // 隐私合规：授权矩阵 T4=['faceLocal']（端侧分析人脸区域，无上云），默认【不勾选】（AC5）。
 const TOOL = 'T4';
 const MAX_EDGE = 800; // 分析用工作图长边上限（采样/人脸检测性能保护）
@@ -44,45 +44,6 @@ function detectBgKey(rgba: Uint8ClampedArray, w: number, h: number): string | nu
   return bestKey || null;
 }
 
-// 微信端侧人脸检测估算头部占比；失败返回 null（降级，报告跳过该项）
-async function detectHeadRatio(canvas: any, ctx: any, w: number, h: number): Promise<number | null> {
-  const anyWx: any = wx;
-  if (typeof anyWx.initFaceDetect !== 'function' || typeof anyWx.faceDetect !== 'function') return null;
-  try {
-    const imageData = ctx.getImageData(0, 0, w, h);
-    await new Promise<void>((resolve, reject) => {
-      anyWx.initFaceDetect({
-        success: () => resolve(),
-        fail: (e: any) => reject(e || new Error('initFaceDetect fail')),
-      });
-    });
-    const res: any = await new Promise<void>((resolve, reject) => {
-      anyWx.faceDetect({
-        frameBuffer: imageData.data.buffer,
-        width: w,
-        height: h,
-        enablePoint: true,
-        enableConf: true,
-        success: (r: any) => resolve(r),
-        fail: (e: any) => reject(e || new Error('faceDetect fail')),
-      });
-    });
-    anyWx.stopFaceDetect();
-    const pts: any[] = res.pointArray || [];
-    if (!pts.length) return null;
-    const ys = pts.map((p) => p.y);
-    const browY = Math.min(...ys);   // landmarks 最高点 ≈ 眉/眼区
-    const chinY = Math.max(...ys);   // 最低点 ≈ 下巴
-    const faceH = chinY - browY;
-    if (faceH <= 0) return null;
-    // 头顶 ≈ 眉线上方 0.35×脸高（含额头与发型，经验系数，估算口径）
-    const headTopY = browY - 0.35 * faceH;
-    return (chinY - headTopY) / h;
-  } catch (e) {
-    return null; // 开发者工具/部分真机不支持 → 降级
-  }
-}
-
 export default function ToolCheck() {
   const consentItems = requiredConsents(TOOL);
   const [granted, setGranted] = useState<string[]>([]);
@@ -96,6 +57,7 @@ export default function ToolCheck() {
   const [result, setResult] = useState<CheckResult | null>(null);
   const [headApprox, setHeadApprox] = useState(false);
   const [headSkipped, setHeadSkipped] = useState(false);
+  const [headNotes, setHeadNotes] = useState<string[]>([]);
 
   const spec = specs[specIndex];
 
@@ -159,11 +121,14 @@ export default function ToolCheck() {
       const dpiH = info.height / (full.heightMm / 25.4);
       const eqDpi = Math.round(Math.min(dpiW, dpiH));
 
-      // 6. 头部占比（faceDetect，失败降级为未检测）
+      // 6. 头部占比（统一走 services/faceService：VisionKit 优先 → faceDetect 降级 → 几何估算）
+      //    T4 是只读检测，不做抠图，故无 alpha 包围盒可作几何估算兜底 → 完全不可用时为「未检测」
       setMsg('检测人脸区域…');
-      const ratio = await detectHeadRatio(canvas, ctx, w, h);
-      setHeadApprox(ratio != null);
+      const head = await measureHeadRatio(rgba, w, h, null);
+      const ratio = head.ok ? head.ratio : null;
+      setHeadApprox(head.source === 'estimate' || head.quality === 'low');
       setHeadSkipped(ratio == null);
+      setHeadNotes(head.notes || []);
 
       // 7. 出报告（core/compliance 引擎；只读，无任何写文件动作 → AC10）
       const measured: any = {
@@ -237,7 +202,7 @@ export default function ToolCheck() {
           {spec.source}
         </Text>
         <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '4px' }}>
-          说明：文件内 dpi 元数据微信端无法读取，按「像素 ÷ 目标规格英寸」换算等效 dpi（同 T5 #24 口径）；头部占比为端侧人脸检测估算值
+          说明：文件内 dpi 元数据微信端无法读取，按「像素 ÷ 目标规格英寸」换算等效 dpi（同 T5 #24 口径）；头部占比由端侧人脸检测测得（关键点估算头顶，含误差）
         </Text>
       </View>
 
@@ -271,6 +236,11 @@ export default function ToolCheck() {
               <Text style={{ color: '#999' }}>头部占比</Text>
               <Text style={{ color: '#999' }}>未检测（当前环境不支持人脸检测）</Text>
             </View>
+          ) : null}
+          {headNotes.length ? (
+            <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
+              {headNotes.join('；')}
+            </Text>
           ) : null}
           {!result.pass && result.suggestions.length ? (
             <Text style={{ display: 'block', marginTop: '8px', fontSize: '12px', color: '#b26a00' }}>

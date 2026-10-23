@@ -6,6 +6,7 @@ import {
   segment, composite,
   buildCloudFnAdapter,
   alphaBBox, suitPlacement, suitCompose,
+  measureHeadMetrics,
   BG,
 } from '../../services';
 
@@ -42,35 +43,6 @@ async function loadTemplatePixels(src: string): Promise<{ data: Uint8ClampedArra
   return { data: d.data, w: 400, h: 400 };
 }
 
-// 头肩定位：优先 faceDetect landmarks 算头高；不支持的环境降级 bbox 估算（与 T4 同口径）
-async function estimateHeadHeight(canvas: any, ctx: any, w: number, h: number, bbox: { x: number; y: number; w: number; h: number }): Promise<number> {
-  const anyWx: any = wx;
-  if (typeof anyWx.initFaceDetect === 'function' && typeof anyWx.faceDetect === 'function') {
-    try {
-      const imageData = ctx.getImageData(0, 0, w, h);
-      await new Promise<void>((resolve, reject) => {
-        anyWx.initFaceDetect({ success: () => resolve(), fail: (e: any) => reject(e) });
-      });
-      const res: any = await new Promise<void>((resolve, reject) => {
-        anyWx.faceDetect({
-          frameBuffer: imageData.data.buffer,
-          width: w, height: h, enablePoint: true, enableConf: true,
-          success: (r: any) => resolve(r), fail: (e: any) => reject(e),
-        });
-      });
-      anyWx.stopFaceDetect();
-      const pts: any[] = res.pointArray || [];
-      if (pts.length) {
-        const browY = Math.min(...pts.map((p) => p.y));
-        const chinY = Math.max(...pts.map((p) => p.y));
-        const faceH = chinY - browY;
-        if (faceH > 0) return faceH / 0.65; // 脸高≈头高 65%（额头+发型占 35%，经验系数）
-      }
-    } catch (e) { /* 不支持 → 降级 */ }
-  }
-  return bbox.h * 0.30; // 证件照头肩比例估算
-}
-
 export default function ToolSuit() {
   const consentItems = requiredConsents(TOOL);
   const [granted, setGranted] = useState<string[]>([]);
@@ -83,7 +55,6 @@ export default function ToolSuit() {
   const [preview, setPreview] = useState('');
   const [outInfo, setOutInfo] = useState('');
   const [selfChecked, setSelfChecked] = useState(false); // AC6/D3：五官自检确认
-  const [headApprox, setHeadApprox] = useState<boolean | null>(null); // true=faceDetect / false=估算
 
   const toggleConsent = (id: string) => {
     setGranted((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -136,12 +107,18 @@ export default function ToolSuit() {
         tool: TOOL,
       });
 
-      // 5. 头肩定位
+      // 5. 头肩定位（统一走 services/faceService，任务 #4：与 T1/T4 同一套口径）
       setMsg('定位头肩区域…');
       const bbox = alphaBBox(seg.alpha, w, h);
       if (!bbox) throw new Error('未检测到人像，请换一张正面照片');
-      const headH = await estimateHeadHeight(canvas, ctx, w, h, bbox);
-      setHeadApprox(headH !== bbox.h * 0.30);
+      const headRes = await measureHeadMetrics(rgba, w, h, bbox);
+      if (!headRes.ok || !headRes.headLengthPx) {
+        throw new Error('未检测到人脸，请换一张正面照片');
+      }
+      const headH = headRes.headLengthPx;
+      // 用局部变量而非 state：setState 是异步的，同一函数内后续读取 state 拿到的是旧值
+      // （原代码即有此隐患：setOutInfo 里的 headApprox 恒为初始值 null）
+      const headIsEstimate = headRes.source === 'estimate';
 
       // 6. 换装贴图合成（仅覆盖肩颈前景区，不触碰脸部像素 → PRD D2）
       setMsg('合成职业装…');
@@ -164,7 +141,7 @@ export default function ToolSuit() {
       setOutInfo(
         `${w}×${h} · ${SUIT_TEMPLATES[tplIndex].name} · 底色 ${BG[bg]}` +
         (seg.degraded ? ' · 已降级端侧' : '') +
-        ` · ${headApprox ? 'faceDetect 定位' : '比例估算定位'}`,
+        ` · ${headIsEstimate ? '比例估算定位' : '关键点定位'}`,
       );
       setMsg(`换装完成（${seg.backend}）——请核对五官后导出`);
     } catch (e: any) {

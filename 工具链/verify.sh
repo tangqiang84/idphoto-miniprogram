@@ -38,7 +38,9 @@ TEST_CODE=${PIPESTATUS[0]}
 if [ "$TEST_CODE" -ne 0 ]; then
   echo "FAIL: core 单测未通过"; FAIL=1
 else
-  echo "OK: core 单测通过（23/23）"
+  # 计数从测试输出里实取，不写死（写死会随新增用例失真，掩盖真实通过数）
+  COUNT=$(npm run test:core 2>&1 | grep -E '^# pass ' | awk '{print $3}')
+  echo "OK: core 单测通过（${COUNT:-?} 条）"
 fi
 
 if [ "$DO_BUILD" -eq 1 ]; then

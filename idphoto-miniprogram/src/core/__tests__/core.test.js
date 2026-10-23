@@ -6,6 +6,13 @@ const { check } = require('../compliance');
 const { decideRoute, CONF_THRESHOLD, localMatting, estimateQuality, composite, compositeTransparent } = require('../matting');
 const { requiredConsents, buildConsentRecord } = require('../privacy');
 const { alphaBBox, suitPlacement, suitCompose } = require('../suit');
+const {
+  FACE_LENGTH_RATIO, HEAD_BBOX_RATIO, MIN_LANDMARK_COUNT,
+  percentile, isValidPoints, pointsWithinImage,
+  faceVerticalSpan, pickPrimaryFace,
+  headMetricsFromLandmarks, headMetricsFromBBox,
+  ratioWithinWindow, analyzeFace,
+} = require('../face');
 
 test('规格库：一寸 300dpi 像素正确 (25mm→295, 35mm→413)', () => {
   const px = getPixelSize('one-inch', 300);
@@ -365,4 +372,235 @@ test('换装：suitCompose 模板透明处不覆盖', () => {
   const out = suitCompose(rgba, alpha, w, h, tpl, 2, 1, { x: 0, y: 0, w: 2, h: 1 });
   assert.strictEqual(out[0], 99);
   assert.strictEqual(out[4], 20); // 模板透明 → 保留原色
+});
+
+// ==================== 人脸定位（任务 #4） ====================
+
+// 构造一张合成的 106 点人脸点集：脸部轮廓从 topY 到 bottomY，左右各铺点
+function makeFacePoints(topY, bottomY, cx = 100, halfW = 30, n = 106) {
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    // 交替铺在左右两侧，y 从 topY 线性到 bottomY
+    const t = n > 1 ? i / (n - 1) : 0;
+    const y = topY + (bottomY - topY) * t;
+    const x = i % 2 === 0 ? cx - halfW : cx + halfW;
+    pts.push({ x, y });
+  }
+  return pts;
+}
+
+test('人脸定位：percentile 取分位数', () => {
+  const a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  assert.strictEqual(percentile(a, 0), 1);
+  assert.strictEqual(percentile(a, 1), 10);
+  assert.strictEqual(percentile(a, 0.5), 6);
+  assert.strictEqual(percentile([], 0.5), null);
+});
+
+test('人脸定位：isValidPoints 校验点数与坐标', () => {
+  assert.strictEqual(isValidPoints(makeFacePoints(10, 100)), true);
+  assert.strictEqual(isValidPoints([]), false);
+  assert.strictEqual(isValidPoints(null), false);
+  // 点数不足
+  assert.strictEqual(isValidPoints(new Array(MIN_LANDMARK_COUNT - 1).fill({ x: 1, y: 1 })), false);
+  // 坐标非有限数
+  const bad = makeFacePoints(10, 100);
+  bad[0].x = NaN;
+  assert.strictEqual(isValidPoints(bad), false);
+});
+
+test('人脸定位：pointsWithinImage 检出坐标系异常', () => {
+  const pts = makeFacePoints(10, 100);
+  assert.strictEqual(pointsWithinImage(pts, 200, 200), true);
+  // 远超图像边界 → 坐标系异常
+  const bad = makeFacePoints(10, 100).map((p) => ({ x: p.x * 100, y: p.y * 100 }));
+  assert.strictEqual(pointsWithinImage(bad, 200, 200), false);
+});
+
+test('人脸定位：faceVerticalSpan 取上下沿，正常点集零偏差', () => {
+  const pts = makeFacePoints(20, 120);
+  const span = faceVerticalSpan(pts);
+  assert.ok(span);
+  // 最高/最低关键点本身就是发际线上沿与下巴 → 不应被裁剪（避免系统性低估脸长）
+  assert.strictEqual(span.topY, 20);
+  assert.strictEqual(span.bottomY, 120);
+  assert.strictEqual(span.span, 100);
+});
+
+test('人脸定位：faceVerticalSpan 剔除孤立飞点但不误伤正常点', () => {
+  // 底部加一个孤立飞点（比真实下巴低 200px）→ 应被剔除
+  const pts = makeFacePoints(20, 120).concat([{ x: 100, y: 320 }]);
+  const span = faceVerticalSpan(pts);
+  assert.ok(span);
+  assert.strictEqual(span.bottomY, 120);
+  assert.strictEqual(span.topY, 20);
+  assert.strictEqual(span.span, 100);
+});
+
+test('人脸定位：faceVerticalSpan 顶部孤立飞点同样被剔除', () => {
+  const pts = makeFacePoints(20, 120).concat([{ x: 100, y: -180 }]);
+  const span = faceVerticalSpan(pts);
+  assert.ok(span);
+  assert.strictEqual(span.topY, 20);
+  assert.strictEqual(span.bottomY, 120);
+});
+
+test('人脸定位：faceVerticalSpan 对无效输入返回 null', () => {
+  assert.strictEqual(faceVerticalSpan(null), null);
+  assert.strictEqual(faceVerticalSpan([]), null);
+  // 全部点同高 → 跨度为 0
+  const flat = new Array(20).fill({ x: 5, y: 50 });
+  assert.strictEqual(faceVerticalSpan(flat), null);
+});
+
+test('人脸定位：pickPrimaryFace 取人脸框面积最大者', () => {
+  const faces = [
+    { points: makeFacePoints(10, 60), rect: { x: 0, y: 0, width: 50, height: 50 } },
+    { points: makeFacePoints(10, 120), rect: { x: 0, y: 0, width: 100, height: 100 } },
+    { points: makeFacePoints(10, 40), rect: { x: 0, y: 0, width: 20, height: 20 } },
+  ];
+  const p = pickPrimaryFace(faces);
+  assert.strictEqual(p.rect.width, 100);
+  assert.strictEqual(pickPrimaryFace([]), null);
+  assert.strictEqual(pickPrimaryFace(null), null);
+});
+
+test('人脸定位：pickPrimaryFace 无 rect 时按关键点包围盒比较', () => {
+  const faces = [
+    { points: makeFacePoints(10, 60, 50, 10) },
+    { points: makeFacePoints(10, 120, 50, 40) },
+  ];
+  const p = pickPrimaryFace(faces);
+  assert.ok(p);
+  // 第二个脸更大（半宽 40 > 10）
+  assert.ok(p.points[0].x !== faces[0].points[0].x);
+});
+
+test('人脸定位：headMetricsFromLandmarks 头长 = 脸长 ÷ FACE_LENGTH_RATIO', () => {
+  const pts = makeFacePoints(20, 120); // 脸长 100
+  const m = headMetricsFromLandmarks({ points: pts, imageWidth: 200, imageHeight: 200 });
+  assert.ok(m);
+  assert.strictEqual(m.source, 'landmarks');
+  assert.strictEqual(m.faceSpanPx, 100);
+  // 头长比脸长长（头顶在发际线之上）
+  assert.ok(Math.abs(m.headLengthPx - m.faceSpanPx / FACE_LENGTH_RATIO) < 1e-9);
+  // 下巴 = 关键点最低点
+  assert.strictEqual(m.chinY, 120);
+  // 头顶在发际线之上
+  assert.ok(m.crownY < 20);
+});
+
+test('人脸定位：头长占比与官方区间可比（整图口径）', () => {
+  // 目标：一寸 61%~71%；构造一个头长占比约 65% 的场景
+  const imgH = 400;
+  const headLen = imgH * 0.65;
+  const faceLen = headLen * FACE_LENGTH_RATIO;
+  const bottomY = 300;
+  const topY = bottomY - faceLen;
+  const pts = makeFacePoints(topY, bottomY, 100, 30);
+  const m = headMetricsFromLandmarks({ points: pts, imageWidth: 200, imageHeight: imgH });
+  const r = ratioWithinWindow(m, { x: 0, y: 0, width: 200, height: imgH });
+  assert.ok(r);
+  assert.ok(Math.abs(r.ratio - 0.65) < 0.01, `占比应为 65% 附近，实际 ${(r.ratio * 100).toFixed(1)}%`);
+  assert.ok(r.ratio >= 0.61 && r.ratio <= 0.71);
+});
+
+test('人脸定位：脸在画面中过小 → 质量降级为 low', () => {
+  const pts = makeFacePoints(180, 200); // 脸长仅 20，图高 400 → 5%
+  const m = headMetricsFromLandmarks({ points: pts, imageWidth: 200, imageHeight: 400 });
+  assert.ok(m);
+  assert.strictEqual(m.quality, 'low');
+  assert.ok(m.notes.some((n) => n.includes('过小')));
+});
+
+test('人脸定位：人脸框与关键点不自洽 → 质量降级', () => {
+  const pts = makeFacePoints(20, 120);
+  // rect 高度远大于脸长（相差 5 倍）→ 不自洽
+  const m = headMetricsFromLandmarks({
+    points: pts, rect: { x: 0, y: 0, width: 60, height: 500 }, imageWidth: 200, imageHeight: 200,
+  });
+  assert.ok(m);
+  assert.strictEqual(m.quality, 'low');
+  assert.ok(m.notes.some((n) => n.includes('不自洽')));
+});
+
+test('人脸定位：头顶超出画面上边界 → 给出提示', () => {
+  const pts = makeFacePoints(2, 120);
+  const m = headMetricsFromLandmarks({ points: pts, imageWidth: 200, imageHeight: 200 });
+  assert.ok(m);
+  assert.ok(m.crownY < 0);
+  assert.ok(m.notes.some((n) => n.includes('头顶超出')));
+});
+
+test('人脸定位：坐标系异常（点远超边界）返回 null', () => {
+  const pts = makeFacePoints(20, 120).map((p) => ({ x: p.x * 50, y: p.y * 50 }));
+  assert.strictEqual(headMetricsFromLandmarks({ points: pts, imageWidth: 200, imageHeight: 200 }), null);
+});
+
+test('人脸定位：缺少图像尺寸返回 null', () => {
+  assert.strictEqual(headMetricsFromLandmarks({ points: makeFacePoints(20, 120) }), null);
+});
+
+test('人脸定位：headMetricsFromBBox 降级估算（几何口径）', () => {
+  const bbox = { x: 10, y: 20, w: 100, h: 200 };
+  const m = headMetricsFromBBox({ bbox, imageWidth: 200, imageHeight: 400 });
+  assert.ok(m);
+  assert.strictEqual(m.source, 'estimate');
+  assert.strictEqual(m.quality, 'estimated');
+  assert.ok(Math.abs(m.headLengthPx - bbox.h * HEAD_BBOX_RATIO) < 1e-9);
+  assert.ok(m.notes.some((n) => n.includes('不支持人脸检测')));
+});
+
+test('人脸定位：headMetricsFromBBox 缺参返回 null', () => {
+  assert.strictEqual(headMetricsFromBBox({}), null);
+  assert.strictEqual(headMetricsFromBBox({ bbox: { x: 0, y: 0, w: 10, h: 0 }, imageWidth: 10, imageHeight: 10 }), null);
+});
+
+test('人脸定位：ratioWithinWindow 按裁剪窗口换算占比', () => {
+  const imgH = 400;
+  const headLen = imgH * 0.5;
+  const faceLen = headLen * FACE_LENGTH_RATIO;
+  const pts = makeFacePoints(300 - faceLen, 300, 100, 30);
+  const m = headMetricsFromLandmarks({ points: pts, imageWidth: 200, imageHeight: imgH });
+  // 取下半部分窗口（高 200）→ 头顶在窗口外，只按可见部分算
+  const win = { x: 0, y: 200, width: 200, height: 200 };
+  const r = ratioWithinWindow(m, win);
+  assert.ok(r);
+  assert.strictEqual(r.clamped, true);
+  // 可见头长 = 下巴(300) − 窗口顶(200) = 100 → 100/200 = 50%
+  assert.ok(Math.abs(r.ratio - 0.5) < 0.01);
+});
+
+test('人脸定位：ratioWithinWindow 缺参返回 null', () => {
+  assert.strictEqual(ratioWithinWindow(null, { x: 0, y: 0, width: 10, height: 10 }), null);
+  assert.strictEqual(ratioWithinWindow({ crownY: 0, chinY: 5 }, null), null);
+  assert.strictEqual(ratioWithinWindow({ crownY: 0, chinY: 5 }, { x: 0, y: 0, width: 10, height: 0 }), null);
+});
+
+test('人脸定位：analyzeFace 优先关键点，失败降级包围盒估算', () => {
+  // 有关键点 → 走实测
+  const pts = makeFacePoints(20, 120);
+  const a1 = analyzeFace({ points: pts, imageWidth: 200, imageHeight: 200 });
+  assert.strictEqual(a1.ok, true);
+  assert.strictEqual(a1.metrics.source, 'landmarks');
+  assert.ok(a1.ratio > 0);
+
+  // 无关键点但有 bbox → 走估算
+  const a2 = analyzeFace({ bbox: { x: 10, y: 20, w: 100, h: 200 }, imageWidth: 200, imageHeight: 400 });
+  assert.strictEqual(a2.ok, true);
+  assert.strictEqual(a2.metrics.source, 'estimate');
+
+  // 两者都无 → 失败
+  const a3 = analyzeFace({ imageWidth: 200, imageHeight: 200 });
+  assert.strictEqual(a3.ok, false);
+  assert.strictEqual(a3.ratio, null);
+});
+
+test('人脸定位：analyzeFace 关键点不可信时不回退到估算（避免掩盖失败）', () => {
+  // 关键点坐标系异常 + 同时给 bbox → 仍应判定不可用（不静默用估算冒充实测）
+  const pts = makeFacePoints(20, 120).map((p) => ({ x: p.x * 50, y: p.y * 50 }));
+  const a = analyzeFace({
+    points: pts, bbox: { x: 0, y: 0, w: 100, h: 200 }, imageWidth: 200, imageHeight: 200,
+  });
+  assert.strictEqual(a.ok, false);
 });

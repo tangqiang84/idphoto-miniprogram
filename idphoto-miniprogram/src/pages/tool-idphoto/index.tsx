@@ -5,6 +5,7 @@ import {
   requiredConsents, buildConsentRecord,
   segment, composite, check,
   buildCloudFnAdapter,
+  measureHeadRatio,
   BG, getSpec, getPixelSize, listSpecs, specLabel,
 } from '../../services';
 
@@ -31,6 +32,8 @@ export default function ToolIdPhoto() {
   const [msg, setMsg] = useState('');
   const [preview, setPreview] = useState('');
   const [result, setResult] = useState<any>(null);
+  // 头部占比测量结果（PRD B3 / T1-16，任务 #4）：null = 未检测到人脸
+  const [headInfo, setHeadInfo] = useState<any>(null);
 
   const toggleConsent = (id: string) => {
     setGranted((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -44,6 +47,7 @@ export default function ToolIdPhoto() {
     setBusy(true);
     setMsg('读取图片…');
     setResult(null);
+    setHeadInfo(null);
     try {
       const anyTaro: any = Taro;
       if (typeof anyTaro.createOffscreenCanvas !== 'function') {
@@ -121,6 +125,18 @@ export default function ToolIdPhoto() {
       }
       octx.drawImage(canvas, sx, sy, sw, sh, 0, 0, target.width, target.height);
 
+      // 6.1 头部占比（PRD B3 / 功能清单 T1-16，任务 #4）
+      // 口径：在【裁剪窗口】坐标系中测量 —— 头长 ÷ 成品图高，与审核员在成品图上量的口径一致。
+      // 在工作图（长边 ≤800px）上检测，而非在 295×413 的成品小图上检测：
+      // 小图人脸像素过少，106 点关键点检测不可靠。缩放为等比变换，头长占比在换算前后不变。
+      // 检测不到时降级为「未检测」，其余 4 项照常预审（不因一项缺失而阻断整张图）。
+      setMsg('测量头部占比…');
+      const head = await measureHeadRatio(rgba, w, h, null, { x: sx, y: sy, width: sw, height: sh });
+      const headRatio = head.ok ? head.ratio : null;
+      setHeadInfo(head.ok
+        ? { ratio: headRatio, source: head.source, quality: head.quality, notes: head.notes || [] }
+        : null);
+
       const exported: any = await Taro.canvasToTempFilePath({
         canvas: outCanvas,
         x: 0,
@@ -146,6 +162,8 @@ export default function ToolIdPhoto() {
         dpi: DPI,
         fileKb,
         bg,
+        // 头部占比：仅在成功测量时传入（未检测则跳过该项，其余 4 项照常判定）
+        headHeightRatio: headRatio != null ? headRatio : undefined,
       });
       setResult(cr);
       setMsg(`完成（${seg.backend}${seg.degraded ? '，已降级端侧' : ''}）`);
@@ -282,6 +300,28 @@ export default function ToolIdPhoto() {
       {preview ? (
         <View style={{ marginTop: '14px' }}>
           <Image src={preview} style={{ width: '100%', height: '260px' }} mode='aspectFit' />
+          {/* 头部占比（PRD B3）：实测值 + 来源标注；未检测时说明原因 */}
+          {headInfo ? (
+            <View style={{ padding: '8px 0' }}>
+              <Text style={{ fontSize: '13px', color: '#333' }}>
+                头部占比{' '}
+                {headInfo.ratio != null
+                  ? `${(headInfo.ratio * 100).toFixed(0)}%`
+                  : '未检测到'}
+                {headInfo.source === 'estimate' ? '（估算）' : ''}
+                {headInfo.quality === 'low' ? '（可信度低）' : ''}
+              </Text>
+              {headInfo.notes && headInfo.notes.length ? (
+                <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                  {headInfo.notes.join('；')}
+                </Text>
+              ) : null}
+            </View>
+          ) : (
+            <Text style={{ display: 'block', fontSize: '12px', color: '#999', marginTop: '6px' }}>
+              头部占比：未检测到人脸，当前环境不支持人脸检测
+            </Text>
+          )}
           <Button style={{ marginTop: '8px' }} onClick={save}>
             保存到相册
           </Button>
