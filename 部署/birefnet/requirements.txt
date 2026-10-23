@@ -1,0 +1,34 @@
+# BiRefNet 上云增强服务依赖
+# 说明：CUDA 版本的 torch 需按你的 GPU 驱动与 CUDA 版本选择安装源，
+#      见下方注释与 README「第 2 步 · 安装依赖」。这里给的是 CUDA 12.1 组合。
+
+# ---- 基础（CPU 版，先装这个，再按注释替换为 CUDA 版）----
+# torch>=2.1.0
+# torchvision>=0.16.0
+
+# ---- CUDA 12.1 版（GPU 实例用这个）----
+# 安装命令：
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+# 在 requirements.txt 里则用如下写法（去掉注释即可，但需保留上方 index-url 参数）：
+# --extra-index-url https://download.pytorch.org/whl/cu121
+# torch==2.4.1+cu121
+# torchvision==0.19.1+cu121
+
+torch>=2.1.0
+torchvision>=0.16.0
+
+# ---- 模型加载（官方权重 ZhengPeng7/BiRefNet，License: MIT）----
+transformers>=4.40.0
+safetensors>=0.4.0
+
+# ---- 服务框架 ----
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.6.0
+
+# ---- 图像处理 ----
+pillow>=10.2.0
+numpy>=1.26.0
+
+# ---- 自测脚本用 ----
+requests>=2.31.0

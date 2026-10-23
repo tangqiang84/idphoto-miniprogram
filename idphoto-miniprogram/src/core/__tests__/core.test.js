@@ -15,7 +15,12 @@ const {
 } = require('../face');
 const { planOutput, planWindowOutput, planDetectImage, clampScale, MIN_WORK_EDGE, MAX_WORK_EDGE, DETECT_EDGE } = require('../compose');
 const { planHeadCrop, targetHeadRatio, HEAD_TOP_GAP_RATIO, CHIN_BOTTOM_GAP_RATIO } = require('../headCrop');
-const { collectEdgeSamples, runClassicalFallback } = require('../mattingLocal');
+const { collectEdgeSamples, runClassicalFallback, preprocess: preprocessLocal } = require('../mattingLocal');
+const {
+  listModelSpecs, getModelSpec, normalizeSpec, preprocess, postprocess,
+  verifyWeight, resolveWeightFileName, shouldDownload,
+  resolveModelPlan, shouldRetryDownload,
+} = require('../mattingModel');
 
 test('规格库：一寸 300dpi 像素正确 (25mm→295, 35mm→413)', () => {
   const px = getPixelSize('one-inch', 300);
@@ -1038,4 +1043,227 @@ test('mattingLocal：注入 bgSamples 后抠图使用外部背景色（区域化
   assert.ok(withInjected[center] < 0.5, `注入后中心白色应判为背景，实测 ${withInjected[center]}`);
   assert.ok(withoutInject[center] > withInjected[center],
     '不注入时中心白色的 alpha 应更高（黑色边缘把白色当成了前景）');
+});
+
+// ==================== 端侧真模型规格（任务 #3） ====================
+
+test('mattingModel：4 个内置规格全部可商用，且许可信息齐全', () => {
+  const specs = listModelSpecs();
+  assert.ok(specs.length >= 4, '应至少 4 个内置规格');
+  for (const s of specs) {
+    // 🔴 这是任务 #3 的硬红线：RMBG-1.4/2.0 权重为非商业许可，绝不能进这张表
+    assert.strictEqual(s.commercialOk, true, `${s.id} 必须是可商用模型（RMBG 系列权重仅限非商用）`);
+    assert.ok(s.license && s.license.length > 0, `${s.id} 必须声明许可`);
+    assert.ok(s.source && s.source.startsWith('http'), `${s.id} 必须给出来源链接`);
+  }
+  // 明确断言：表里不含 RMBG（防止后人照旧文档接进来）
+  const ids = specs.map((s) => s.id).join(',');
+  assert.ok(!/rmbg/i.test(ids), `规格表不应包含 RMBG（当前：${ids}）`);
+});
+
+test('mattingModel：MODNet 归一化为 [-1,1]、输入 512（与 ImageNet 规格不同）', () => {
+  const m = getModelSpec('modnet-q8');
+  assert.ok(m, '应能取到 modnet-q8 规格');
+  assert.strictEqual(m.inputSize, 512);
+  assert.strictEqual(m.normalize.kind, 'minus1to1');
+  assert.ok(Math.abs(m.normalize.mean[0] - 0.5) < 1e-9);
+  assert.ok(Math.abs(m.normalize.std[0] - 0.5) < 1e-9);
+  assert.strictEqual(m.output.kind, 'matte', 'MODNet 输出已是 0~1 soft alpha');
+  // 与上云模型对比，确认两套参数确实不同（否则说明参数化没生效）
+  const b = getModelSpec('birefnet-1024');
+  assert.strictEqual(b.inputSize, 1024);
+  assert.strictEqual(b.normalize.kind, 'imagenet');
+  assert.strictEqual(b.output.kind, 'sigmoid', 'BiRefNet 输出 logits 需 sigmoid');
+});
+
+test('mattingModel：preprocess 按规格归一化 —— 同像素在两种规格下值不同（核心回归）', () => {
+  // 构造 2×2 纯灰图（R=G=B=128）
+  const w = 2, h = 2;
+  const rgba = new Uint8ClampedArray(w * h * 4);
+  for (let i = 0; i < w * h; i++) {
+    rgba[i * 4] = 128; rgba[i * 4 + 1] = 128; rgba[i * 4 + 2] = 128; rgba[i * 4 + 3] = 255;
+  }
+  // MODNet: (128/255 - 0.5)/0.5 ≈ 0.0039
+  const a = preprocess(rgba, w, h, getModelSpec('modnet-q8'));
+  // ImageNet: (128/255 - 0.485)/0.229 ≈ 0.0707
+  const b = preprocess(rgba, w, h, getModelSpec('birefnet-1024'));
+  assert.ok(Math.abs(a[0] - 0.0039) < 0.002, `MODNet 归一化应约 0.0039，实测 ${a[0]}`);
+  assert.ok(Math.abs(b[0] - 0.0707) < 0.01, `ImageNet 归一化应约 0.0707，实测 ${b[0]}`);
+  // 关键断言：两者必须显著不同 —— 这正是「硬编码 ImageNet 会让 MODNet 失真」的护栏
+  assert.ok(Math.abs(a[0] - b[0]) > 0.02, '两种归一化的结果必须显著不同，否则参数化未生效');
+  // 输出长度 = 3 * size * size
+  assert.strictEqual(a.length, 3 * 512 * 512);
+  assert.strictEqual(b.length, 3 * 1024 * 1024);
+});
+
+test('mattingModel：preprocess 兼容旧的数字入参（行为与原 ImageNet 实现一致）', () => {
+  const w = 2, h = 2;
+  const rgba = new Uint8ClampedArray(w * h * 4);
+  for (let i = 0; i < w * h; i++) {
+    rgba[i * 4] = 128; rgba[i * 4 + 1] = 128; rgba[i * 4 + 2] = 128; rgba[i * 4 + 3] = 255;
+  }
+  const out = preprocess(rgba, w, h, 1024);
+  assert.strictEqual(out.length, 3 * 1024 * 1024);
+  assert.ok(Math.abs(out[0] - 0.0707) < 0.01, '数字入参应按 ImageNet 归一化');
+  assert.strictEqual(normalizeSpec(null), null);
+  assert.strictEqual(normalizeSpec('bad'), null);
+});
+
+test('mattingModel：postprocess 三种后处理语义正确', () => {
+  const size = 4;
+  // sigmoid：logit 0 → 0.5；大正数 → 趋近 1
+  const logits = new Float32Array(size * size);
+  logits[0] = 0; logits[1] = 10; logits[2] = -10;
+  const sg = postprocess(logits, { inputSize: size, output: { kind: 'sigmoid' } }, size, size);
+  assert.ok(Math.abs(sg[0] - 0.5) < 1e-6, 'logit 0 应映射为 0.5');
+  assert.ok(sg[1] > 0.99, 'logit +10 应趋近 1');
+  assert.ok(sg[2] < 0.01, 'logit -10 应趋近 0');
+
+  // minmax：按本帧拉伸；常量图不得产生 NaN
+  const raw = new Float32Array(size * size);
+  for (let i = 0; i < raw.length; i++) raw[i] = i; // 0..15
+  const mm = postprocess(raw, { inputSize: size, output: { kind: 'minmax' } }, size, size);
+  assert.ok(mm[0] < 0.01, '最小值应映射为 0');
+  assert.ok(mm[raw.length - 1] > 0.99, '最大值应映射为 1');
+  const flat = new Float32Array(size * size).fill(5);
+  const mmFlat = postprocess(flat, { inputSize: size, output: { kind: 'minmax' } }, size, size);
+  for (let i = 0; i < mmFlat.length; i++) {
+    assert.ok(Number.isFinite(mmFlat[i]), '常量图不得出现 NaN/Infinity');
+  }
+
+  // matte：夹取到 0~1（量化模型可能轻微越界）
+  const over = new Float32Array(size * size).fill(1.5);
+  const mt = postprocess(over, { inputSize: size, output: { kind: 'matte' } }, size, size);
+  assert.ok(mt[0] <= 1 + 1e-6, '超出 1 的 matte 必须被夹到 1');
+});
+
+test('mattingModel：postprocess 输出被 resize 回目标尺寸', () => {
+  const size = 8;
+  const raw = new Float32Array(size * size).fill(1);
+  const out = postprocess(raw, { inputSize: size, output: { kind: 'matte' } }, 40, 30);
+  assert.strictEqual(out.length, 40 * 30, '应 resize 回 40×30');
+});
+
+test('mattingModel：postprocess 对非法输入抛错而非静默返回', () => {
+  assert.throws(() => postprocess(null, { inputSize: 4, output: { kind: 'matte' } }, 4, 4));
+  // 输出长度不足（模型换了但规格没更新 → 必须报错，不能拿脏数据继续算）
+  assert.throws(
+    () => postprocess(new Float32Array(4), { inputSize: 64, output: { kind: 'matte' } }, 4, 4),
+    /长度不足/,
+    '模型输出长度与规格不符时必须报错',
+  );
+});
+
+test('mattingModel：权重体积校验带 ±20% 容差', () => {
+  const spec = getModelSpec('modnet-q8');
+  const expect = spec.approxBytes;
+  assert.strictEqual(verifyWeight({ size: expect }, spec).ok, true);
+  assert.strictEqual(verifyWeight({ size: Math.round(expect * 1.1) }, spec).ok, true, '10% 偏差应放行');
+  assert.strictEqual(verifyWeight({ size: Math.round(expect * 0.5) }, spec).ok, false, '体积减半应判异常');
+  assert.strictEqual(verifyWeight({ size: expect * 3 }, spec).ok, false, '体积三倍应判异常');
+  // 未声明体积的规格（云端模型）→ 跳过体积校验，不误报
+  const cloud = getModelSpec('birefnet-1024');
+  assert.strictEqual(verifyWeight({ size: 123 }, cloud).ok, true);
+});
+
+test('mattingModel：sha256 不匹配时阻断（防权重被替换/损坏）', () => {
+  const spec = { ...getModelSpec('modnet-q8'), sha256: 'abcdef123456' };
+  assert.strictEqual(verifyWeight({ size: spec.approxBytes, sha256: 'abcdef123456' }, spec).ok, true);
+  const bad = verifyWeight({ size: spec.approxBytes, sha256: '000000000000' }, spec);
+  assert.strictEqual(bad.ok, false);
+  assert.ok(/sha256/.test(bad.reason), '失败原因应点明是 sha256 不匹配');
+  // 规格未固定 sha256 时，只有体积兜底，sha 校验标记为「跳过」
+  const noSha = verifyWeight({ size: spec.approxBytes }, getModelSpec('modnet-q8'));
+  assert.strictEqual(noSha.ok, true);
+  assert.strictEqual(noSha.checks.sha, null, '未固定 sha256 时应标记为跳过(null)，而非误判通过');
+});
+
+test('mattingModel：缓存文件名与下载决策', () => {
+  assert.strictEqual(resolveWeightFileName(getModelSpec('modnet-q8')), 'matting-modnet-q8.onnx');
+  assert.strictEqual(resolveWeightFileName(null), null);
+  const spec = getModelSpec('modnet-q8');
+  assert.strictEqual(shouldDownload({ exists: false }, spec).need, true, '无缓存应下载');
+  assert.strictEqual(shouldDownload({ exists: true, size: spec.approxBytes }, spec).need, false, '体积正常无需重下');
+  assert.strictEqual(shouldDownload({ exists: true, size: 1024 }, spec).need, true, '体积异常应重下');
+  assert.ok(/体积异常/.test(shouldDownload({ exists: true, size: 1024 }, spec).reason));
+});
+
+test('mattingModel：resolveModelPlan 未启用/未注入/未配置 → 全部走经典基线', () => {
+  const spec = getModelSpec('modnet-q8');
+  const okCfg = { enabled: true, weightUrl: 'https://e.cn/m.onnx', modelId: 'modnet-q8' };
+
+  // 未启用 → classical（这是默认状态，保证零回归）
+  assert.strictEqual(resolveModelPlan({ config: { enabled: false } }).action, 'classical');
+  assert.ok(/未启用/.test(resolveModelPlan({ config: { enabled: false } }).reason));
+
+  // 启用但没注入 ort → classical
+  const noOrt = resolveModelPlan({ config: okCfg, runtime: { hasOrt: false } });
+  assert.strictEqual(noOrt.action, 'classical');
+  assert.ok(/运行时/.test(noOrt.reason));
+
+  // 注入了但没配 weightUrl → classical
+  const noUrl = resolveModelPlan({ config: { ...okCfg, weightUrl: '' }, runtime: { hasOrt: true } });
+  assert.strictEqual(noUrl.action, 'classical');
+  assert.ok(/weightUrl/.test(noUrl.reason));
+
+  // 未知模型 id → classical
+  const badId = resolveModelPlan({ config: { ...okCfg, modelId: 'nope' }, runtime: { hasOrt: true } });
+  assert.strictEqual(badId.action, 'classical');
+  assert.ok(/未知模型规格/.test(badId.reason));
+
+  // 云端专用规格放端侧 → classical（BiRefNet 1024 手机跑不动）
+  const cloud = resolveModelPlan({
+    config: { ...okCfg, modelId: 'birefnet-1024' }, runtime: { hasOrt: true },
+  });
+  assert.strictEqual(cloud.action, 'classical');
+  assert.ok(/云端专用/.test(cloud.reason));
+});
+
+test('mattingModel：resolveModelPlan 缓存命中/缺失/损坏的三种分支', () => {
+  const spec = getModelSpec('modnet-q8');
+  const cfg = { enabled: true, weightUrl: 'https://e.cn/m.onnx', modelId: 'modnet-q8' };
+
+  // 无缓存 → download
+  const miss = resolveModelPlan({ config: cfg, runtime: { hasOrt: true }, cached: { exists: false } });
+  assert.strictEqual(miss.action, 'download');
+  assert.strictEqual(miss.spec.id, 'modnet-q8', '返回值必须带上规格，供后续按规格推理');
+
+  // 缓存体积正常 → use-cached
+  const hit = resolveModelPlan({
+    config: cfg, runtime: { hasOrt: true },
+    cached: { exists: true, size: spec.approxBytes, sha256: '' },
+  });
+  assert.strictEqual(hit.action, 'use-cached');
+
+  // 缓存体积异常 → 重新下载（而不是继续用坏缓存）
+  const bad = resolveModelPlan({
+    config: cfg, runtime: { hasOrt: true },
+    cached: { exists: true, size: 1024, sha256: '' },
+  });
+  assert.strictEqual(bad.action, 'download');
+  assert.ok(/重新下载/.test(bad.reason));
+});
+
+test('mattingModel：下载失败退避 —— 冷却期内不重试，超次数彻底停止', () => {
+  const now = 1_000_000;
+  // 从未失败 → 可以重试
+  assert.strictEqual(shouldRetryDownload({ failCount: 0, now }).retry, true);
+
+  // 刚失败 1 次，冷却 30 分钟内 → 不重试
+  const cooling = shouldRetryDownload({ failCount: 1, lastFailAt: now - 60 * 1000, now, cooldownMs: 30 * 60 * 1000 });
+  assert.strictEqual(cooling.retry, false);
+  assert.ok(/冷却中/.test(cooling.reason));
+
+  // 冷却已过 → 可重试
+  assert.strictEqual(
+    shouldRetryDownload({ failCount: 1, lastFailAt: now - 31 * 60 * 1000, now, cooldownMs: 30 * 60 * 1000 }).retry,
+    true,
+  );
+
+  // 失败次数达上限 → 彻底停止（即使冷却已过）
+  const stop = shouldRetryDownload({
+    failCount: 3, lastFailAt: now - 999 * 60 * 1000, now, cooldownMs: 30 * 60 * 1000, maxFail: 3,
+  });
+  assert.strictEqual(stop.retry, false);
+  assert.ok(/停止重试/.test(stop.reason), '达上限后应明确停止，避免反复耗流量');
 });

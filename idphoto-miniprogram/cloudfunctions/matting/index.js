@@ -4,8 +4,16 @@
 //   { region, purpose, retain, train, consent, width, height, image(base64 裁剪人像区域) }
 // 返回：{ alphaB64, region }
 // 合规：仅处理裁剪人像区域(非全图)、retain:false 处理完销毁、train:false 不留存、region 固定 CN（数据不出境）。
-// 算法：当前为强抠图影子实现（多高斯+引导滤波保边，优于端侧单高斯基线）；
-//       真 BiRefNet 经同契约替换即可（入参/出参不变）。
+//
+// ⚠️⚠️ 算法：本文件是【影子实现】—— 多高斯 + 引导滤波保边，**不是真 BiRefNet 模型**。
+//    原因：微信 CloudBase 云函数是 **CPU 运行环境、无 GPU**，而 BiRefNet 1024×1024 推理
+//    约需 5.5GB 显存，跑不动。本实现的价值是「链路可跑通、质量可对比、降级有兜底」。
+//
+//    真 BiRefNet 推理服务见 **`部署/birefnet/`**（server.py + Dockerfile + 部署手册），
+//    需部署在**自有境内 GPU 实例**，走《小程序发布准备包》第八节的「形态 B」。
+//    两者的入参/出参契约完全一致，切换时只需改前端 CLOUD_CONFIG.endpoint 与 adapter。
+//
+//    若未来 CloudBase 提供 GPU 云函数，可直接把本文件的 strongSegment 换成真实模型推理。
 
 // ---------- 基础序列化 ----------
 function toBase64(bytes) {

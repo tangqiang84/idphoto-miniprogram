@@ -5,6 +5,10 @@
 //   - runRealModel / preprocess：RMBG-1.4（onnxruntime）接入契约，设备侧部署权重后自动接管。
 //   - estimateQuality：由 alpha 产出 confidence，喂给路由决策（歧义像素多 / 前景异常 → 置信低 → 上云增强）。
 
+// 模型规格表（输入尺寸 / 归一化 / 输出后处理）—— 任务 #3 起由 core/mattingModel 统一声明，
+// 避免把某个模型的参数硬编码进推理代码（详见 mattingModel.js 头注释）。
+const mattingModel = require('./mattingModel');
+
 // ===================== 数学工具 =====================
 function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
 
@@ -138,19 +142,15 @@ function estimateQuality(alphaFlat) {
   return { confidence, ambiguousRatio, foregroundRatio, fgAnomaly };
 }
 
-// ===================== RMBG-1.4 接入契约（设备侧部署后启用） =====================
-// 预处理：resize 到 size×size + ImageNet 归一化 + HWC→CHW float32
-function preprocess(rgba, w, h, size) {
-  const src = resizeBilinearRGBA(rgba, w, h, size, size);
-  const mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225];
-  const out = new Float32Array(3 * size * size);
-  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-    const si = (y * size + x) * 4;
-    out[(0 * size + y) * size + x] = (src[si] / 255 - mean[0]) / std[0];
-    out[(1 * size + y) * size + x] = (src[si + 1] / 255 - mean[1]) / std[1];
-    out[(2 * size + y) * size + x] = (src[si + 2] / 255 - mean[2]) / std[2];
-  }
-  return out;
+// ===================== 真模型推理（规格驱动，设备侧部署权重后启用） =====================
+// 【2026-10-23 任务 #3 修正】原实现把「输入尺寸 1024 + ImageNet 归一化」写死，
+// 那是按 RMBG-1.4 的规格写的。本项目已改用 MODNet（512 / 归一化到 [-1,1]），
+// 沿用旧参数会让模型输出失真且不报错 —— 最难排查的那类 bug。
+// 现改为从 core/mattingModel 的规格表取参数，模型自己声明输入尺寸与归一化方式。
+//
+// 预处理：resize 到 size×size + 按规格归一化 + HWC→CHW float32
+function preprocess(rgba, w, h, spec) {
+  return mattingModel.preprocess(rgba, w, h, spec);
 }
 
 function resizeBilinearRGBA(src, sw, sh, dw, dh) {
@@ -184,32 +184,46 @@ function resizeBilinear(src, sw, sh, dw, dh) {
   return out;
 }
 
-// session：已加载的 onnxruntime InferenceSession（RMBG-1.4）
-// 约定：输入 [1,3,1024,1024] float32（本 preprocess 产出），输出 [1,1,1024,1024] 0~1 alpha
-async function runRealModel(session, rgba, w, h, size = 1024) {
-  const input = preprocess(rgba, w, h, size);
-  // Tensor 构造器按运行时注入，源码内不做静态 require：
-  // 小程序端用 onnxruntime-web 的 session.env.Tensor，Node/PoC 端用 onnxruntime-node 的 ort.Tensor。
-  // 这样小程序打包链不会去解析 Node 原生依赖 onnxruntime-node（否则 webpack 编译失败）。
+// session：已加载的 onnxruntime InferenceSession（规格见 core/mattingModel）
+// spec   ：模型规格对象（含 inputSize/normalize/output），不传时按 1024+ImageNet 兜底（旧行为）
+//
+// Tensor 构造器按运行时注入，源码内不做静态 require：
+// 小程序端用 onnxruntime-web 的 session.env.Tensor，Node/PoC 端用 onnxruntime-node 的 ort.Tensor。
+// 这样小程序打包链不会去解析 Node 原生依赖 onnxruntime-node（否则 webpack 编译失败），
+// 也满足项目硬约束「禁止在项目内 npm install 新包」。
+async function runRealModel(session, rgba, w, h, spec) {
+  const s = mattingModel.normalizeSpec(spec) || mattingModel.normalizeSpec(1024);
+  const size = s.inputSize;
+  const input = preprocess(rgba, w, h, s);
   const OrtTensor = (session.env && session.env.Tensor) || session.Tensor;
   if (typeof OrtTensor !== 'function') {
     throw new Error('runRealModel: 需要注入 onnxruntime 的 Tensor 构造器（小程序端 session.env.Tensor / Node 端 ort.Tensor）');
   }
   const tensor = new OrtTensor('float32', input, [1, 3, size, size]);
   const feeds = {};
-  feeds[session.inputNames[0]] = tensor;
+  // 输入名优先取规格声明（MODNet 导出常为 'input'），其次取 session 自报
+  const inName = (spec && spec.inputName) || (session.inputNames && session.inputNames[0]);
+  if (!inName) throw new Error('runRealModel: 无法确定模型输入名（spec.inputName 与 session.inputNames 均为空）');
+  feeds[inName] = tensor;
   const out = await session.run(feeds);
-  const raw = out[session.outputNames[0]].data; // [1,1,1024,1024]
-  return resizeBilinear(raw, size, size, w, h);
+  const outName = (session.outputNames && session.outputNames[0]);
+  const raw = out[outName] ? out[outName].data : out[Object.keys(out)[0]].data;
+  // 后处理：按规格把 logits / 显著图 / 已归一化的 matte 统一映射到 0~1，再 resize 回原尺寸
+  return mattingModel.postprocess(raw, s, w, h);
 }
 
 // 端侧统一入口：有 session 走真实模型，否则走经典基线
 // opts.bgSamples 透传给经典基线（任务 #24，缺省行为不变）
+// opts.spec      模型规格（驱动输入尺寸/归一化/输出后处理）
+//
+// 【重要】真模型推理失败**不在此处吞掉**：上层（modelService.segmentWithModel）负责
+// 捕获并降级到经典基线。理由：静默降级会让「模型坏了」表现为「抠图质量变差」，
+// 用户和日志都看不到原因。降级必须是显式、可观测、有提示的决策。
 async function localMatting(rgba, w, h, opts = {}) {
   let alpha, backend;
   if (opts.session) {
-    alpha = await runRealModel(opts.session, rgba, w, h, opts.size || 1024);
-    backend = 'rmbg-1.4';
+    alpha = await runRealModel(opts.session, rgba, w, h, opts.spec);
+    backend = 'onnx:' + ((opts.spec && opts.spec.id) || 'unknown');
   } else {
     alpha = runClassicalFallback(rgba, w, h, { bgSamples: opts.bgSamples });
     backend = 'classical';

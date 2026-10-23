@@ -10,6 +10,10 @@ import { alphaBBox, suitPlacement, suitCompose } from '../core/suit';
 import { planOutput, planWindowOutput, planDetectImage, MIN_WORK_EDGE, MAX_WORK_EDGE, MAX_WORK_PIXELS, DETECT_EDGE, WIN_MARGIN_RATIO } from '../core/compose';
 import { planHeadCrop, targetHeadRatio, HEAD_TOP_GAP_RATIO, CHIN_BOTTOM_GAP_RATIO } from '../core/headCrop';
 import { detectFace, measureHeadRatio, measureHeadMetrics, ratioWithinWindow } from './faceService';
+import {
+  EDGE_MODEL_CONFIG, configureEdgeModel, setOrtRuntime, getOrtRuntime,
+  getEdgeSession, prepareModelForSegment, getModelStatus,
+} from './modelService';
 
 // ===== 上云增强：部署配置与 adapter 工厂 =====
 // 部署时把 endpoint 改成你的【境内】GPU 云函数地址；trustedHosts 用于数据不出境白名单校验(fail-closed)。
@@ -48,6 +52,9 @@ export {
   planHeadCrop, targetHeadRatio, HEAD_TOP_GAP_RATIO, CHIN_BOTTOM_GAP_RATIO,
   // 人脸定位（任务 #4：VisionKit 优先 + faceDetect 降级，端侧完成）
   detectFace, measureHeadRatio, measureHeadMetrics, ratioWithinWindow,
+  // 端侧真模型（任务 #3：权重管理 + session 加载 + 优雅降级；默认关闭，零回归）
+  EDGE_MODEL_CONFIG, configureEdgeModel, setOrtRuntime, getOrtRuntime,
+  getEdgeSession, prepareModelForSegment, getModelStatus,
   // 上云增强（CLOUD_CONFIG 与各 build*Adapter 已在上方 export const/function 直接导出，此处不重复导出）
   makeHttpAdapter, makeLocalBiRefStub, assertDomestic, cropForeground, encodeAlphaB64, decodeAlphaB64,
   // 隐私
