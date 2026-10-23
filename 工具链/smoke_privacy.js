@@ -94,7 +94,7 @@ async function readPageText(page) {
     // 3. 断言全文关键承诺文本（与 privacy.js 行为对应的核心承诺）
     page = await miniProgram.currentPage();
     const txt = await readPageText(page);
-    const keys = ['隐私政策', '单独同意', '本地', '境内', '不用于任何模型训练', '90 天', 'xlltq@163.com', 'ICP 备案审核中', '撤回同意'];
+    const keys = ['隐私政策', '单独同意', '本地', '境内', '不用于任何模型训练', '90 天', 'tangqiang@vip.126.com', 'ICP 备案审核中', '撤回同意'];
     const missing = keys.filter((k) => !txt.includes(k));
     console.log(`3) 关键承诺文本 ${keys.length - missing.length}/${keys.length} ${missing.length === 0 ? 'OK' : 'FAIL 缺失: ' + missing.join('、')}`);
     await shot('05-privacy.png');
