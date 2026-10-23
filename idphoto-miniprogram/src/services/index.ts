@@ -6,6 +6,7 @@ import { decideRoute, CONF_THRESHOLD, segment, composite, compositeTransparent, 
 import { makeHttpAdapter, makeLocalBiRefStub, assertDomestic, cropForeground, encodeAlphaB64, decodeAlphaB64 } from '../core/mattingCloud';
 import { makeCloudFnAdapter } from './cloudFnAdapter';
 import { requiredConsents, buildConsentRecord, CONSENT_ITEMS, TOOL_CONSENTS } from '../core/privacy';
+import { alphaBBox, suitPlacement, suitCompose } from '../core/suit';
 
 // ===== 上云增强：部署配置与 adapter 工厂 =====
 // 部署时把 endpoint 改成你的【境内】GPU 云函数地址；trustedHosts 用于数据不出境白名单校验(fail-closed)。
@@ -35,6 +36,8 @@ export {
   check,
   // 抠图
   decideRoute, CONF_THRESHOLD, segment, composite, compositeTransparent, cloudMatting,
+  // 换装（T3 端侧贴图合成）
+  alphaBBox, suitPlacement, suitCompose,
   // 上云增强（CLOUD_CONFIG 与各 build*Adapter 已在上方 export const/function 直接导出，此处不重复导出）
   makeHttpAdapter, makeLocalBiRefStub, assertDomestic, cropForeground, encodeAlphaB64, decodeAlphaB64,
   // 隐私

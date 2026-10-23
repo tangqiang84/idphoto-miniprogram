@@ -5,6 +5,7 @@ const { getSpec, getPixelSize, listSpecs, BG } = require('../specLibrary');
 const { check } = require('../compliance');
 const { decideRoute, CONF_THRESHOLD, localMatting, estimateQuality, composite, compositeTransparent } = require('../matting');
 const { requiredConsents, buildConsentRecord } = require('../privacy');
+const { alphaBBox, suitPlacement, suitCompose } = require('../suit');
 
 test('规格库：一寸 300dpi 像素正确 (25mm→295, 35mm→413)', () => {
   const px = getPixelSize('one-inch', 300);
@@ -228,4 +229,58 @@ test('上云增强：adapter 调用失败 → 降级端侧(degraded=true)', asyn
   assert.strictEqual(res.degraded, true);
   assert.strictEqual(res.backend, 'cloud->edge');
   assert.ok(rec.some((m) => m.stage === 'cloud_fail'));
+});
+
+test('换装：alphaBBox 框出前景包围盒', () => {
+  const w = 6, h = 4;
+  const alpha = new Float32Array(w * h);
+  // 前景：x∈[1,4], y∈[1,2]
+  for (let y = 1; y <= 2; y++) for (let x = 1; x <= 4; x++) alpha[y * w + x] = 1;
+  const bbox = alphaBBox(alpha, w, h);
+  assert.deepStrictEqual(bbox, { x: 1, y: 1, w: 4, h: 2 });
+});
+
+test('换装：全背景 alphaBBox 返回 null', () => {
+  assert.strictEqual(alphaBBox(new Float32Array(8), 4, 2), null);
+});
+
+test('换装：suitPlacement 肩宽/顶部定位规则', () => {
+  const bbox = { x: 40, y: 20, w: 100, h: 200 };
+  const headH = 60;
+  const p = suitPlacement(bbox, headH);
+  assert.ok(Math.abs(p.w - 150) < 1e-9); // 100*1.5
+  assert.ok(Math.abs(p.h - 110) < 1e-9); // 200*0.55
+  assert.ok(Math.abs(p.x - (40 + 50 - 75)) < 1e-9); // 水平居中
+  assert.ok(Math.abs(p.y - (20 + 51)) < 1e-9); // 颈部 0.85*60
+});
+
+test('换装：suitPlacement 缺参抛错', () => {
+  assert.throws(() => suitPlacement(null, 60), /bbox/);
+  assert.throws(() => suitPlacement({ x: 0, y: 0, w: 1, h: 1 }, 0), /headH/);
+});
+
+test('换装：suitCompose 只覆盖前景区且不改输入', () => {
+  const w = 4, h = 2;
+  const rgba = new Uint8ClampedArray([10, 10, 10, 255, 20, 20, 20, 255, 30, 30, 30, 255, 40, 40, 40, 255]);
+  const alpha = new Float32Array([1, 1, 0, 0]); // 仅前 2 像素是人体
+  const tplW = 2, tplH = 1;
+  // 模板全部不透明，RGB=99
+  const tpl = new Uint8ClampedArray([99, 99, 99, 255, 99, 99, 99, 255]);
+  const place = { x: 0, y: 0, w: 4, h: 1 };
+  const out = suitCompose(rgba, alpha, w, h, tpl, tplW, tplH, place);
+  assert.strictEqual(out[0], 99); // 前景区被模板覆盖
+  assert.strictEqual(out[4], 99);
+  assert.strictEqual(out[8], 30); // 背景区原样
+  assert.strictEqual(out[12], 40);
+  assert.strictEqual(rgba[0], 10); // 输入未被修改
+});
+
+test('换装：suitCompose 模板透明处不覆盖', () => {
+  const w = 2, h = 1;
+  const rgba = new Uint8ClampedArray([10, 10, 10, 255, 20, 20, 20, 255]);
+  const alpha = new Float32Array([1, 1]);
+  const tpl = new Uint8ClampedArray([99, 99, 99, 255, 50, 50, 50, 0]); // 第 2 像素模板透明
+  const out = suitCompose(rgba, alpha, w, h, tpl, 2, 1, { x: 0, y: 0, w: 2, h: 1 });
+  assert.strictEqual(out[0], 99);
+  assert.strictEqual(out[4], 20); // 模板透明 → 保留原色
 });
