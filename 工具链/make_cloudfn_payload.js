@@ -20,9 +20,15 @@
 // 输出：终端打印尺寸/字节数/base64 长度；JSON 落盘；macOS 自动 `pbcopy`（非 macOS 跳过）。
 //
 // 注意：
-//   1. 像素越多 base64 越长，粘贴越慢；40 万像素 ≈ 2.1MB 字符，够用且可控。
-//   2. 云函数 callFunction 上限 5MB，前端 mattingCloud.js 另有 64 万像素封顶，本脚本默认在其之下。
-//   3. 缩小用的是 baiduSeg.js 已导出的 downsampleRGBA（面积平均），不重复造轮子。
+//   1. 【硬闸门·台账 #53】云开发控制台「云端测试」走腾讯云 OpenAPI **旧签名**方式，
+//      请求体上限 **1MB**；超过会报
+//      `AuthFailure.SignatureFailure ... exceeding request size limit, please use new signature method TC3-HMAC-SHA256`
+//      —— 这是**控制台网关**拦的，请求根本没到云函数，改代码没用。
+//      本脚本按 900KB 预算自动收敛像素数（不够就自动缩小），并做落盘前断言。
+//   2. 像素越多 base64 越长；每条像素 costs ≈ 5.334 个 JSON 字符（4 字节 RGBA → base64）。
+//      900KB 预算 ≈ 17 万像素 ≈ 360×480，足够验证抠图质量。
+//   3. 云函数 callFunction 上限 5MB，前端 mattingCloud.js 另有 64 万像素封顶（那是**运行时**限制，比控制台宽得多）。
+//   4. 缩小用的是 baiduSeg.js 已导出的 downsampleRGBA（面积平均），不重复造轮子。
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -33,8 +39,21 @@ const CF = path.join(APP, 'cloudfunctions', 'matting');
 const { decodePNG } = require(path.join(CF, 'png'));
 const { downsampleRGBA } = require(path.join(CF, 'baiduSeg'));
 
+// ---- 台账 #53：控制台请求体预算（旧签名上限 1MB，留 ~10% 余量）----
+const CONSOLE_LIMIT_BYTES = 900 * 1024;
+const JSON_OVERHEAD = 200; // consent/region/width/height 及 JSON 括号引号等固定开销
+// 安全余量：downsampleRGBA 会把目标像素数向上取整到整数宽高（如 172762 → 360×480 = 172800），
+// 不留余量会正好顶穿 1MB 上限（实测踩过一次）。
+const SAFETY = 0.96;
+
+/** 每像素在 JSON 里占的字符数：RGBA 4 字节 → base64 后 4/3×4 ≈ 5.334 */
+const CHARS_PER_PIXEL = (4 / 3) * 4;
+function maxPixelsForBudget() {
+  return Math.max(1, Math.floor((CONSOLE_LIMIT_BYTES * SAFETY - JSON_OVERHEAD) / CHARS_PER_PIXEL));
+}
+
 const DEFAULT_IMG = path.resolve(__dirname, '..', '素材', '测试图', 'test_real.png');
-const DEFAULT_MAX_PIXELS = 400000;
+const DEFAULT_MAX_PIXELS = maxPixelsForBudget();
 
 function die(msg) {
   console.error('❌ ' + msg);
@@ -43,9 +62,16 @@ function die(msg) {
 
 function main() {
   const imgPath = process.argv[2] ? path.resolve(process.argv[2]) : DEFAULT_IMG;
-  const maxPixels = Number(process.argv[3] || DEFAULT_MAX_PIXELS);
+  const budget = maxPixelsForBudget();
+  const want = Number(process.argv[3] || DEFAULT_MAX_PIXELS);
   if (!fs.existsSync(imgPath)) die('找不到图片：' + imgPath);
-  if (!(maxPixels > 0)) die('maxPixels 必须为正数：' + maxPixels);
+  if (!(want > 0)) die('maxPixels 必须为正数：' + process.argv[3]);
+  let maxPixels = want;
+  if (maxPixels > budget) {
+    console.log(`⚠️  请求 ${maxPixels} 像素 → 约 ${((maxPixels * CHARS_PER_PIXEL) / 1024).toFixed(0)}KB JSON，`);
+    console.log(`    超过云开发控制台「云端测试」1MB 请求体上限（旧签名方法，台账 #53）→ 自动收敛到 ${budget} 像素。`);
+    maxPixels = budget;
+  }
 
   let src;
   try {
@@ -74,13 +100,27 @@ function main() {
   };
   const json = JSON.stringify(payload);
 
+  // ---- 台账 #53 出口断言：宁可不生成，也不产出粘贴上去必然失败的载荷 ----
+  const jsonBytes = Buffer.byteLength(json, 'utf8');
+  if (jsonBytes > CONSOLE_LIMIT_BYTES) {
+    die(
+      `载荷 ${(jsonBytes / 1024).toFixed(0)}KB 超过 1MB 控制台上限（台账 #53），已拒绝生成。\n` +
+      `   请降低像素数，最大约 ${budget} 像素；例：\n` +
+      `   NODE_OPTIONS= node ../工具链/make_cloudfn_payload.js <图> ${budget}`,
+    );
+  }
+
   const out = process.env.PAYLOAD_OUT || path.resolve(__dirname, 'cloudfn-payload.json');
   fs.writeFileSync(out, json);
 
-  console.log('✅ 载荷已生成');
+  console.log('✅ 载荷已生成（控制台预算内）');
   console.log('   源图：' + path.basename(imgPath) + ` ${src.width}×${src.height}` + (w !== src.width ? ` → 缩至 ${w}×${h}` : ''));
   console.log('   RGBA 字节 ' + bytes.length + '（应为 w×h×4 = ' + w * h * 4 + '）');
-  console.log('   JSON 落盘：' + out + '（' + (json.length / 1024).toFixed(0) + 'KB）');
+  console.log(
+    '   JSON 落盘：' + out + '（' + (jsonBytes / 1024).toFixed(0) + 'KB / 上限 ' +
+      (CONSOLE_LIMIT_BYTES / 1024).toFixed(0) + 'KB，余量 ' +
+      (((CONSOLE_LIMIT_BYTES - jsonBytes) / CONSOLE_LIMIT_BYTES) * 100).toFixed(0) + '%）',
+  );
 
   if (!process.env.NO_CLIPBOARD) {
     const r = spawnSync('pbcopy', [], { input: json });
