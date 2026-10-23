@@ -188,6 +188,12 @@ function shouldAcceptCloudAlpha({ cloudAlpha, localAlpha, provider } = {}) {
   return { accept: true, reason: 'confidence_ok', ...meta };
 }
 
+/**
+ * 路2（自有/HTTP）上云 adapter。
+ * @param {{endpoint:string, trustedHosts:string[], authToken?:string, fetchImpl?:Function, region?:string}} cfg
+ *   `authToken` / `fetchImpl` 为**可选**：路2 未启用时 `services/index.ts` 只传
+ *   `{endpoint, trustedHosts, region}`（该处为占位配置，见问题台账 #12）。
+ */
 function makeHttpAdapter({ endpoint, trustedHosts, authToken, fetchImpl, region = 'CN' }) {
   assertDomestic(endpoint, trustedHosts);
   const doFetch = fetchImpl || (typeof fetch !== 'undefined' ? fetch.bind(globalThis) : null);

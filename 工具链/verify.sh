@@ -10,7 +10,8 @@
 # 注意：
 #   1. 编译在「沙箱内」会失败（fs shim 拦截 mkdir，CODEBUDDY_BROKER_DENY），
 #      需在本机终端或沙箱外执行；类型+单测沙箱内可跑。
-#   2. tsc 结果记为 WARN 不阻断：现有 2 项告警已接受（台账 #12），Taro 用 babel 转译 TS 不做类型检查。
+#   2. tsc 结果记为 WARN 不阻断：Taro 用 babel 转译 TS 不做类型检查。
+#      2026-10-24 起基线为 **0 告警**（台账 #12 已关闭）——若 tsc 有输出，一律视为新增错误，须处理或登记台账。
 
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -27,9 +28,11 @@ say "1/3 类型检查 tsc --noEmit"
 if npx tsc --noEmit 2>&1 | tail -15; then :; fi
 TSC_CODE=${PIPESTATUS[0]}
 if [ "$TSC_CODE" -ne 0 ]; then
-  echo "WARN: tsc 有输出（现有 2 项告警已接受，见台账 #12；新增错误需处理）"
+  # 2026-10-24 起基线为 0 告警（台账 #12 已关闭）→ 升级为**硬闸门**，不许再当 WARN 放过
+  echo "FAIL: tsc 有类型错误（基线已为 0，见台账 #12；须修复或登记台账后重跑）"
+  FAIL=1
 else
-  echo "OK: tsc 无错误"
+  echo "OK: tsc 无错误（基线 0 告警）"
 fi
 
 say "2/3 core 单测 test:core"
