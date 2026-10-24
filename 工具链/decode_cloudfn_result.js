@@ -65,7 +65,12 @@ function extractAlpha(text) {
     // 裸 base64 字符串
     const t = text.trim().replace(/^"|"$/g, '');
     if (/^[A-Za-z0-9+/=]+$/.test(t)) return { alphaB64: t, raw: {} };
-    die('结果既不是合法 JSON 也不是裸 base64，无法解析。前 200 字符：\n' + text.slice(0, 200));
+    // 常见误操作：复制了终端输出 / 网页整页
+    const hint = /(NODE_OPTIONS|npm run|%|✅|❌|apiIdentifier|wxAppId)/.test(text)
+      ? '\n   看起来复制的是**终端输出或控制台页面文本**，不是函数返回结果。\n'
+        + '   要复制的是：控制台点「运行」后**返回区**那段 JSON（关键标志：含 alphaB64）。'
+      : '';
+    die('结果既不是合法 JSON 也不是裸 base64，无法解析。前 200 字符：\n' + text.slice(0, 200) + hint);
   }
   if (typeof obj === 'string') return { alphaB64: obj, raw: {} };
   // 控制台可能外层包一层 {"result": ...}
@@ -73,7 +78,18 @@ function extractAlpha(text) {
   while (node && typeof node === 'object' && node.result && !node.alphaB64) node = node.result;
   if (typeof node === 'string') return { alphaB64: node, raw: obj };
   if (node && node.alphaB64) return { alphaB64: String(node.alphaB64), raw: obj };
-  die('结果里找不到 alphaB64 字段。可用字段：' + Object.keys(node || {}).join(', '));
+
+  // 最常见的误操作：把「载荷」当成了「返回结果」——两者都是 JSON，字段名看着也像。
+  if (node && node.image && node.consent) {
+    die(
+      '⚠️ 你复制的是**要发送的载荷**（有 consent/image/width/height），不是云函数的**返回结果**。\n' +
+      '   正确顺序：控制台粘贴载荷 → 点「运行」→ 复制**下方返回区**的内容 → 再跑本脚本。\n' +
+      '   返回结果的关键标志是含有 `alphaB64` 字段。\n' +
+      '   （若你还没点运行，先去点；点完把返回区整段复制，本脚本会自动读剪贴板）',
+    );
+  }
+  die('结果里找不到 alphaB64 字段。可用字段：' + Object.keys(node || {}).join(', ') +
+    '\n   提示：需要的是"返回结果"（含 alphaB64），不是"载荷"（含 image）。');
 }
 
 function main() {
