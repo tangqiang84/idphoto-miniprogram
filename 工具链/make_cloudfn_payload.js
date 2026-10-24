@@ -20,14 +20,17 @@
 // 输出：终端打印尺寸/字节数/base64 长度；JSON 落盘；macOS 自动 `pbcopy`（非 macOS 跳过）。
 //
 // 注意：
-//   1. 【硬闸门·台账 #53】云开发控制台「云端测试」走腾讯云 OpenAPI **旧签名**方式，
-//      请求体上限 **1MB**；超过会报
+//   1. 【硬闸门·台账 #53】云开发控制台「云端测试」走腾讯云 OpenAPI **旧签名**方式，走不通就报
 //      `AuthFailure.SignatureFailure ... exceeding request size limit, please use new signature method TC3-HMAC-SHA256`
-//      —— 这是**控制台网关**拦的，请求根本没到云函数，改代码没用。
-//      本脚本按 900KB 预算自动收敛像素数（不够就自动缩小），并做落盘前断言。
-//   2. 像素越多 base64 越长；每条像素 costs ≈ 5.334 个 JSON 字符（4 字节 RGBA → base64）。
-//      900KB 预算 ≈ 17 万像素 ≈ 360×480，足够验证抠图质量。
-//   3. 云函数 callFunction 上限 5MB，前端 mattingCloud.js 另有 64 万像素封顶（那是**运行时**限制，比控制台宽得多）。
+//      —— 这是**控制台网关/插件**拦的，请求根本没到云函数，改代码没用，只能缩小载荷。
+//      **实测数据（2026-10-24）**：156KB ✅ 通过 / 864KB ❌ 失败 → 真实阈值在两者之间，
+//      明显低于官方文档的「1MB」口径（文档写的是通用 API 上限，控制台插件另有更严限制）。
+//      故本脚本默认按 **128KB** 预算生成（已实证安全区），落盘前还有出口断言。
+//      想自行试探上限用环境变量覆盖：`CONSOLE_LIMIT_KB=512 node make_cloudfn_payload.js`。
+//   2. 每像素约占 5.334 个 JSON 字符（RGBA 4 字节 → base64）。128KB 预算 ≈ 2.3 万像素 ≈ 133×177。
+//      **结论：控制台只用来验证「路由/出图是否正常」；抠图质量验证改走小程序端 `callFunction`（5MB）
+//      或本地 `工具链/baidu_live.js`（全分辨率），别在控制台上追求大图。**
+//   3. 云函数运行时 `callFunction` 上限 5MB，前端 mattingCloud.js 另有 64 万像素封顶，比控制台宽得多。
 //   4. 缩小用的是 baiduSeg.js 已导出的 downsampleRGBA（面积平均），不重复造轮子。
 
 const fs = require('node:fs');
@@ -40,7 +43,9 @@ const { decodePNG } = require(path.join(CF, 'png'));
 const { downsampleRGBA } = require(path.join(CF, 'baiduSeg'));
 
 // ---- 台账 #53：控制台请求体预算（旧签名上限 1MB，留 ~10% 余量）----
-const CONSOLE_LIMIT_BYTES = 900 * 1024;
+// 默认 128KB：实测 156KB 通过、864KB 失败（台账 #53），取已实证安全值。
+// 官方口径「旧签名 1MB」是通用 API 上限，云开发控制台插件实测更严——别按文档设预算。
+const CONSOLE_LIMIT_BYTES = Number(process.env.CONSOLE_LIMIT_KB || 128) * 1024;
 const JSON_OVERHEAD = 200; // consent/region/width/height 及 JSON 括号引号等固定开销
 // 安全余量：downsampleRGBA 会把目标像素数向上取整到整数宽高（如 172762 → 360×480 = 172800），
 // 不留余量会正好顶穿 1MB 上限（实测踩过一次）。

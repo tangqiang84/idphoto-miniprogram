@@ -52,10 +52,12 @@
 - **密钥铁律**：`BAIDU_API_KEY` / `BAIDU_SECRET_KEY` 只走云函数环境变量，**禁止进小程序包体/文件/git**；单测有静态断言。
 - **取 scoremap 不取 foreground**：scoremap 灰度 = 置信度×255 → 软 alpha，发丝边缘最好；foreground 只兜底。
 - **三个限制**：base64 **再 urlencode 后 ≤4MB**（最坏 ×3；实测 base64 只膨胀 4.5%，960×1280≈1.89MB 无需降采样）；最短边≥15 / 最长边≤4096；个人免费 1 万次、QPS 2（企业 5 万/5）。
-- **控制台「云端测试」另有 1MB 硬限制（#53）**：云开发控制台走腾讯 OpenAPI **旧签名**，body >1MB →
+- **控制台「云端测试」载荷大小限制（#53，实测口径）**：云开发控制台走腾讯 OpenAPI **旧签名**，超限 →
   `AuthFailure.SignatureFailure ... exceeding request size limit, please use new signature method TC3-HMAC-SHA256`
-  ——**不是密钥问题**，请求没到云函数。载荷一律用 `工具链/make_cloudfn_payload.js`（内置 900KB 硬闸门）。
-  注意区分：控制台 1MB ≠ 运行时 `callFunction` 5MB。
+  ——**不是密钥问题**，请求没到云函数（改代码无用）。
+  **官方「1MB」是通用 API 口径，控制台插件实测更严：156KB ✅ / 864KB ❌（2026-10-24 双点实测）**。
+  载荷一律用 `工具链/make_cloudfn_payload.js`（默认 128KB 预算 = 实证安全区；`CONSOLE_LIMIT_KB` 可覆盖）。
+  **控制台只验路由/是否出图；抠图质量验证走小程序端 `callFunction`（5MB）或本地 `baidu_live.js`（全分辨率）。**
 - **触发时机**：沿用端侧置信 <0.85 且已授权 `faceCloudEnhance` 才上云 —— 省额度，断网/失败自动降级。
 - **PNG 编解码手写**：CloudBase 无 sharp/canvas → `cloudfunctions/matting/png.js`（纯 zlib），已用 PIL 双向交叉验证。
 - **判据铁律（#45）**：真模型软 alpha 的 `confidence` 天然更低，**不得**用 `1−ambiguousRatio` 判优劣 →
