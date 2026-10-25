@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>第三方信息共享说明</title>
+<style>
+  @page { size: A4; margin: 13mm 15mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    font-size: 9.3pt; line-height: 1.5; color: #1a1a1a; margin: 0; padding: 0;
+  }
+  h1 { font-size: 14pt; text-align: center; margin: 0 0 2px; letter-spacing: 1px; }
+  .sub { text-align: center; font-size: 8.3pt; color: #555; margin-bottom: 9px; }
+  .lead {
+    background: #f5f7fa; border-left: 3px solid #4a6fa5; padding: 6px 8px;
+    font-size: 8.9pt; margin-bottom: 9px;
+  }
+  h2 { font-size: 10.3pt; margin: 9px 0 4px; border-bottom: 1px solid #ddd; padding-bottom: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+  th, td { border: 1px solid #c8cdd4; padding: 3px 6px; vertical-align: top; }
+  th { background: #eef2f7; width: 25%; font-weight: 600; text-align: left; }
+  ul { margin: 4px 0 0; padding-left: 16px; }
+  li { margin-bottom: 1px; }
+  .note { font-size: 8.7pt; color: #444; margin-top: 6px; }
+  .sign { margin-top: 10px; font-size: 9pt; line-height: 1.6; }
+  .hr { border-top: 1px dashed #bbb; margin: 8px 0; }
+</style>
+</head>
+<body>
+
+<h1>第三方信息共享说明</h1>
+<div class="sub">《标准照裁剪 小程序用户隐私保护指引》补充文档 ｜ AppID：wxd7ff2aaa541a62e4</div>
+
+<div class="lead">
+本说明为《标准照裁剪 小程序用户隐私保护指引》的补充文档，说明本小程序<strong>向第三方提供个人信息（含敏感个人信息）</strong>的情形、接收方、目的与保护措施；内容与实际技术实现一致，可在代码与服务端配置中核验。
+</div>
+
+<h2>一、共享信息基本情况</h2>
+<table>
+  <tr><th>是否存在共享/提供情形</th><td>是（<strong>仅限</strong>用户单独授权「云端增强」后触发）</td></tr>
+  <tr><th>接收方名称</th><td>百度智能云（北京百度网讯科技有限公司）「人像分割」接口</td></tr>
+  <tr><th>接收方联系方式</th><td>以百度智能云官方公开联系方式为准</td></tr>
+  <tr><th>提供的个人信息种类</th><td>用户主动上传照片中<strong>裁剪后的人像区域</strong>（不含完整原图），可能包含人脸信息（敏感个人信息）</td></tr>
+  <tr><th>使用目的</th><td>提升人像抠图精度（仅设备本地处理精度不足时的可选增强），用于生成证件照</td></tr>
+  <tr><th>处理方式</th><td>API 接口调用，HTTPS 加密传输，处理地域为中国境内，不跨境</td></tr>
+  <tr><th>是否留存</th><td>否。处理完成即时删除，开发者与接收方均不留存，不用于任何模型训练</td></tr>
+  <tr><th>接收方权限限制</th><td>仅按开发者指令完成计算，无权将所接收信息用于任何其他目的</td></tr>
+  <tr><th>法律依据</th><td>《个人信息保护法》第 23 条（向第三方提供需单独同意）、第 28 条（敏感个人信息单独同意）</td></tr>
+</table>
+
+<h2>二、保障与限制措施</h2>
+<ul>
+  <li><strong>端侧优先、默认不上云</strong>：抠图与合成默认在用户设备本地完成，原图不上传任何服务器。</li>
+  <li><strong>单独同意、不静默降级</strong>：仅本地精度不足且用户单独勾选授权「云端增强」时才上云；未授权即不上传。</li>
+  <li><strong>最小必要</strong>：仅上传裁剪后的人像区域，不上传完整原图；请求体不含身份标识、位置等无关信息。</li>
+  <li><strong>密钥隔离</strong>：API 密钥仅存于服务端云函数环境变量，不进入小程序包体。</li>
+  <li><strong>随时可撤回</strong>：用户可随时关闭授权，撤回后立即停止向第三方提供，本地功能不受影响。</li>
+  <li><strong>故障兜底</strong>：第三方服务不可用时自动退回本地处理，不导致功能失败。</li>
+</ul>
+
+<div class="note">除上述情形外，本小程序不会向任何第三方共享、转让或公开披露用户的照片与人脸信息；亦不收集通讯录、位置、通话记录、短信等无关信息。</div>
+
+<div class="hr"></div>
+
+<h2>三、其他说明</h2>
+<ul>
+  <li><strong>存储期限</strong>：照片与人脸数据处理完成即删除；非内容性日志（处理时间、是否启用云端增强、处理耗时等，不含照片内容与人脸数据）保留 90 天，用于故障排查与安全审计。</li>
+  <li><strong>权利行使与联系</strong>：撤回同意、删除可通过小程序内授权开关操作；咨询或投诉邮箱 tangqiang@vip.126.com，受理时限 15 个工作日。</li>
+  <li><strong>变更告知</strong>：本说明如有更新将在小程序内提示；涉及人脸处理方式的重大变更，将重新取得用户的单独同意。</li>
+</ul>
+
+<div class="sign">开发者：个人开发者　｜　更新日期：2026 年 10 月 25 日</div>
+
+</body>
+</html>
