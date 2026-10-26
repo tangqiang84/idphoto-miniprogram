@@ -10,6 +10,7 @@ import { alphaBBox, suitPlacement, suitCompose } from '../core/suit';
 import { planOutput, planWindowOutput, planDetectImage, MIN_WORK_EDGE, MAX_WORK_EDGE, MAX_WORK_PIXELS, DETECT_EDGE, WIN_MARGIN_RATIO } from '../core/compose';
 import { planHeadCrop, targetHeadRatio, HEAD_TOP_GAP_RATIO, CHIN_BOTTOM_GAP_RATIO } from '../core/headCrop';
 import { detectFace, measureHeadRatio, measureHeadMetrics, ratioWithinWindow } from './faceService';
+import { applyBeauty, COMPLIANCE_MODE, COMPLIANCE_MSG, BEAUTY_CATALOG, assertCompliance } from '../core/beauty';
 import {
   EDGE_MODEL_CONFIG, configureEdgeModel, setOrtRuntime, getOrtRuntime,
   getEdgeSession, prepareModelForSegment, getModelStatus,
@@ -59,4 +60,6 @@ export {
   makeHttpAdapter, makeLocalBiRefStub, assertDomestic, cropForeground, encodeAlphaB64, decodeAlphaB64,
   // 隐私
   requiredConsents, buildConsentRecord, CONSENT_ITEMS, TOOL_CONSENTS,
+  // 受限美颜（任务 #38 / PRD E 章 / AC2）
+  applyBeauty, COMPLIANCE_MODE, COMPLIANCE_MSG, BEAUTY_CATALOG, assertCompliance,
 };

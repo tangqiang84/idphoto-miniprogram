@@ -1,0 +1,87 @@
+// 受限美颜控制面板（PRD E 章 / AC2）
+.beauty {
+  margin-top: 12px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+  }
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  &__switch {
+    font-size: 13px;
+    color: #999;
+  }
+  &__switch.is-on {
+    color: #438edb;
+  }
+
+  &__panel {
+    margin-top: 10px;
+  }
+
+  &__hint {
+    display: block;
+    font-size: 11px;
+    color: #e07b00;
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+  }
+
+  &__label {
+    width: 48px;
+    font-size: 14px;
+    color: #333;
+  }
+
+  &__slider {
+    flex: 1;
+    margin-left: 8px;
+  }
+
+  // E2 禁止项：置灰、不可点
+  &__forbidden {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    opacity: 0.6;
+  }
+  &__forbidden-title {
+    display: block;
+    font-size: 13px;
+    color: #999;
+    text-decoration: line-through;
+  }
+  &__forbidden-tip {
+    display: block;
+    font-size: 11px;
+    color: #c62828;
+    margin-top: 2px;
+  }
+
+  &__apply {
+    margin-top: 10px;
+    background: #438edb;
+    color: #fff;
+    border-radius: 10px;
+    font-size: 15px;
+  }
+}

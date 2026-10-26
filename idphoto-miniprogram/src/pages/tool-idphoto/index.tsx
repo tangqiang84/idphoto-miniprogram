@@ -13,6 +13,8 @@ import {
   DPI_STD, DPI_HD,
 } from '../../services';
 import { useImagePicker } from '../../hooks/useImagePicker';
+import { applyBeauty } from '../../services';
+import BeautyControl, { type BeautyState } from '../../components/BeautyControl';
 
 // T1 一键证件照：完整链路（真实功能，非占位）
 // 选图 → 端侧抠图 →（置信不足且已授权则走 CloudBase 云函数增强）→ 换底
@@ -32,7 +34,10 @@ export default function ToolIdPhoto() {
   const consentItems = requiredConsents(TOOL);
   const [granted, setGranted] = useState<string[]>([]);
   const rec = buildConsentRecord(TOOL, granted);
-  const picker = useImagePicker((img) => run(img.path, img.width, img.height));
+  const picker = useImagePicker((img) => {
+    setLastPick(img);
+    run(img.path, img.width, img.height);
+  });
 
   const specs = listSpecs();
   const [specIndex, setSpecIndex] = useState(0);
@@ -42,6 +47,12 @@ export default function ToolIdPhoto() {
   const [msg, setMsg] = useState('');
   const [preview, setPreview] = useState('');
   const [result, setResult] = useState<any>(null);
+  // 受限美颜（PRD E 章 / AC2，任务 #38）：默认关闭，用户显式开启并调节（轻度）
+  const [beauty, setBeauty] = useState<BeautyState>({
+    enabled: false, smooth: 0.35, whiten: 0.3, brighten: 0.2,
+  });
+  // 最近一次取图（用于美颜「重新生成」时复用，无需重新选图）
+  const [lastPick, setLastPick] = useState<{ path: string; width: number; height: number } | null>(null);
   // 头部占比测量结果（PRD B3 / T1-16，任务 #4）：null = 未检测到人脸
   const [headInfo, setHeadInfo] = useState<any>(null);
   // 输出构图提示（如「原图分辨率不足」/「已达处理分辨率上限」）
@@ -172,6 +183,21 @@ export default function ToolIdPhoto() {
       const ctx = work.ctx;
       const imageData = work.imageData;
       const rgba = work.rgba;
+
+      // 4.0 受限美颜（PRD E 章 / AC2，任务 #38）：在抠图前对原图做轻度磨皮/美白/亮眼。
+      //     仅当用户开启美颜时执行；合规模式由 core/beauty.js 内的 assertCompliance 兜底硬拦截禁止项。
+      //     异常（理论上不会触发，因 UI 仅传允许项）静默跳过，绝不阻断主流程。
+      if (beauty.enabled) {
+        try {
+          applyBeauty(rgba, w, h, {
+            smooth: beauty.smooth,
+            whiten: beauty.whiten,
+            brighten: beauty.brighten,
+          });
+        } catch (e) {
+          console.warn('[T1] 美颜跳过（合规拦截或异常）:', (e && e.message) || e);
+        }
+      }
 
       // 4.1 背景色采样集（任务 #24）
       // 经典抠图基线的背景色由「画布四边环带」估计。自动裁剪时工作画布只含
@@ -481,6 +507,14 @@ export default function ToolIdPhoto() {
               头部占比：未检测到人脸，当前环境不支持人脸检测
             </Text>
           )}
+          {/* 受限美颜（PRD E 章 / AC2，任务 #38）：折叠控制面板，开启后调节并重新生成 */}
+          <BeautyControl
+            value={beauty}
+            onChange={setBeauty}
+            onApply={() => {
+              if (lastPick) run(lastPick.path, lastPick.width, lastPick.height);
+            }}
+          />
           {/* AC1 镜像自查（导出前勾选，未勾选禁用保存） */}
           {picker.MirrorCheck}
           <Button style={{ marginTop: '8px' }} onClick={save} disabled={!picker.mirrorConfirmed}>
