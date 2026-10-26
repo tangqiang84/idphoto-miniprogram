@@ -53,6 +53,10 @@
   .pricenote { font-size:12px; color:#e6a23c; margin-top:8px; }
   .success { text-align:center; padding-top:30px; }
   .success .ico { font-size:48px; }
+  .sheetbox { background:#fff; border:1px solid #e2e7ec; border-radius:4px; margin:0 auto; position:relative; overflow:hidden; }
+  .sheetbox .ptile { background:linear-gradient(180deg,#5aa0e0,#4a90d9); border-radius:2px; }
+  .sheetbox .cropf { outline:1px dashed #07c160; outline-offset:-3px; }
+  .sheetbox .x { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#e6a23c; font-size:13px; font-weight:600; background:#fbf6ec; padding:6px; text-align:center; }
 </style>
 </head>
 <body>
@@ -73,6 +77,7 @@
         <div class="toolcard" onclick="go('s_t3')"><div class="ico">👔</div><div class="t">单独 AI 换装</div><div class="d">已有照片换职业装</div><div class="free">可选</div></div>
         <div class="toolcard" onclick="go('s_t4')"><div class="ico">🔍</div><div class="t">合规检测</div><div class="d">检测是否达标出报告</div><div class="free">免费</div></div>
         <div class="toolcard" onclick="go('s_t5')"><div class="ico">📐</div><div class="t">规格转换</div><div class="d">按规格裁剪/改dpi</div><div class="free">免费</div></div>
+        <div class="toolcard" onclick="go('s_t6');t6update()"><div class="ico">🖨</div><div class="t">冲印排版</div><div class="d">证件照拼版打印</div><div class="free">免费</div></div>
       </div>
     </div>
   </div>
@@ -191,6 +196,61 @@
     </div>
   </div>
 
+  <!-- T6 冲印排版（无需人脸授权） -->
+  <div class="screen" id="s_t6">
+    <div class="nav"><span class="back" onclick="go('s_home')">‹ 首页</span> 冲印排版（无需授权）</div>
+    <div class="body">
+      <div class="upload-box"><div style="font-size:30px;margin-bottom:8px;">🖼</div><div style="position:absolute;bottom:14px;font-size:12px;">上传已做好的证件照<br>（纯拼版，无需人脸授权）</div></div>
+      <div class="card">
+        <h3>选择规格（复用规格库）</h3>
+        <div id="t6-specs">
+          <span class="chip sel" data-spec="one-inch" onclick="t6selSpec(this)">一寸</span>
+          <span class="chip" data-spec="two-inch" onclick="t6selSpec(this)">二寸</span>
+          <span class="chip" data-spec="small-two-inch" onclick="t6selSpec(this)">小二寸</span>
+          <span class="chip" data-spec="big-one-inch" onclick="t6selSpec(this)">大一寸</span>
+          <span class="chip" data-spec="visa-us" onclick="t6selSpec(this)">美国签证</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>选择相纸</h3>
+        <div class="tag" style="margin-bottom:6px;">常规冲印纸</div>
+        <div>
+          <span class="chip sel" data-paper="paper-6in" onclick="t6selPaper(this)">6寸(4R)</span>
+          <span class="chip" data-paper="paper-5in" onclick="t6selPaper(this)">5寸</span>
+          <span class="chip" data-paper="paper-6in-plus" onclick="t6selPaper(this)">大6寸</span>
+          <span class="chip" data-paper="paper-7in" onclick="t6selPaper(this)">7寸</span>
+          <span class="chip" data-paper="paper-8in" onclick="t6selPaper(this)">8寸</span>
+          <span class="chip" data-paper="paper-10in" onclick="t6selPaper(this)">10寸</span>
+          <span class="chip" data-paper="paper-12in" onclick="t6selPaper(this)">12寸</span>
+        </div>
+        <div class="tag" style="margin:8px 0 6px;">迷你打印机纸</div>
+        <div>
+          <span class="chip" data-paper="instax-mini" onclick="t6selPaper(this)">instax mini</span>
+          <span class="chip" data-paper="instax-square" onclick="t6selPaper(this)">instax SQUARE</span>
+          <span class="chip" data-paper="instax-wide" onclick="t6selPaper(this)">instax WIDE</span>
+          <span class="chip" data-paper="selphy-card" onclick="t6selPaper(this)">SELPHY 卡片</span>
+          <span class="chip" data-paper="selphy-l" onclick="t6selPaper(this)">SELPHY L</span>
+          <span class="chip" data-paper="selphy-postcard" onclick="t6selPaper(this)">SELPHY 明信片</span>
+          <span class="chip" data-paper="selphy-sticker-square" onclick="t6selPaper(this)">SELPHY 方形贴纸</span>
+          <span class="chip" data-paper="zink-2x3" onclick="t6selPaper(this)">ZINK 2×3</span>
+          <span class="chip" data-paper="zink-2.3x3.4" onclick="t6selPaper(this)">ZINK 2.3×3.4</span>
+        </div>
+        <div class="row" style="border:none;padding-top:10px;">
+          <span>裁剪参考线</span>
+          <span><span class="chip sel" data-crop="1" onclick="t6selCrop(this)">开</span> <span class="chip" data-crop="0" onclick="t6selCrop(this)">关</span></span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>本版预览</h3>
+        <div id="t6-count" class="ok" style="font-weight:600;margin-bottom:8px;">本版预览：10 张</div>
+        <div id="t6-sheet" class="sheetbox"></div>
+        <div id="t6-meta" class="tag" style="margin-top:8px;">输出 1795×1205px · 300dpi</div>
+        <div id="t6-note" class="warn" style="font-size:12px;margin-top:6px;display:none;"></div>
+      </div>
+      <button class="btn" onclick="t6export()">导出拼版图（无水印 · 免费）</button>
+    </div>
+  </div>
+
   <!-- 隐私授权弹窗 -->
   <div class="modal" id="m_auth">
     <div class="sheet">
@@ -227,6 +287,140 @@
   function openSelfCheck(){ openModal('m_self'); }
   function doSelfCheck(){ if(!document.getElementById('selfok').checked){ alert('请确认未改动五官'); return; } closeModal('m_self'); go('s_export'); }
   function showReport(){ document.getElementById('t4report').style.display='block'; }
+
+  // ===== T6 冲印排版（原型联动，算法移植自 src/core/paperLibrary.js） =====
+  const T6_SPECS = [
+    { id:'one-inch',       name:'一寸',      w:25,   h:35   },
+    { id:'two-inch',       name:'二寸',      w:35,   h:49   },
+    { id:'small-two-inch', name:'小二寸',    w:35,   h:45   },
+    { id:'big-one-inch',   name:'大一寸',    w:33,   h:48   },
+    { id:'visa-us',        name:'美国签证',  w:50.8, h:50.8 },
+  ];
+  const T6_PAPERS = [
+    { id:'paper-5in',            name:'5寸',           pw:127, ph:89,  aw:124, ah:86,  dpi:300, tile:true  },
+    { id:'paper-6in',            name:'6寸(4R)',       pw:152, ph:102, aw:148, ah:98,  dpi:300, tile:true,  note:'最主流' },
+    { id:'paper-6in-plus',       name:'大6寸',         pw:152, ph:114, aw:148, ah:110, dpi:300, tile:true  },
+    { id:'paper-7in',            name:'7寸',           pw:178, ph:127, aw:174, ah:123, dpi:300, tile:true  },
+    { id:'paper-8in',            name:'8寸',           pw:203, ph:152, aw:199, ah:148, dpi:300, tile:true  },
+    { id:'paper-10in',           name:'10寸',          pw:254, ph:203, aw:250, ah:199, dpi:300, tile:true  },
+    { id:'paper-12in',           name:'12寸',          pw:305, ph:254, aw:301, ah:250, dpi:300, tile:true  },
+    { id:'instax-mini',          name:'instax mini',   pw:86,  ph:54,  aw:62,  ah:46,  dpi:300, tile:false, note:'每版仅 1 张，四周白边不可裁掉用于拼版' },
+    { id:'instax-square',        name:'instax SQUARE', pw:86,  ph:72,  aw:62,  ah:62,  dpi:300, tile:false, note:'每版仅 1 张' },
+    { id:'instax-wide',          name:'instax WIDE',   pw:108, ph:86,  aw:99,  ah:62,  dpi:300, tile:false, note:'每版仅 1 张，横构图' },
+    { id:'selphy-card',          name:'SELPHY 卡片',   pw:54,  ph:86,  aw:50,  ah:84,  dpi:300, tile:true  },
+    { id:'selphy-l',             name:'SELPHY L',      pw:89,  ph:119, aw:85,  ah:117, dpi:300, tile:true  },
+    { id:'selphy-postcard',      name:'SELPHY 明信片', pw:100, ph:148, aw:94,  ah:144, dpi:300, tile:true  },
+    { id:'selphy-sticker-square',name:'SELPHY 方形贴', pw:50,  ph:50,  aw:48,  ah:48,  dpi:300, tile:false, note:'每版仅 1 张' },
+    { id:'zink-2x3',             name:'ZINK 2×3',      pw:76,  ph:51,  aw:74,  ah:49,  dpi:313, tile:true  },
+    { id:'zink-2.3x3.4',         name:'ZINK 2.3×3.4',  pw:87,  ph:58,  aw:85,  ah:56,  dpi:313, tile:true  },
+  ];
+  const T6_MARGIN_MM = 3, T6_GAP_MM = 2;
+  function t6mmToPx(mm,dpi){ return Math.round((mm/25.4)*dpi); }
+  function t6tiling(areaW,areaH,pw,ph,m,g){
+    const iw=areaW-2*m, ih=areaH-2*m;
+    if(iw<=0||ih<=0) return {cols:0,rows:0,count:0};
+    const cols=Math.floor((iw+g)/(pw+g));
+    const rows=Math.floor((ih+g)/(ph+g));
+    return {cols,rows,count:cols*rows};
+  }
+  function t6best(aw,ah,pw,ph,m,g){
+    const combos=[[false,false],[true,false],[false,true],[true,true]];
+    let best={count:0,cols:0,rows:0,pr:false,por:false};
+    for(const [pr,por] of combos){
+      const aW=pr?ah:aw, aH=pr?aw:ah;
+      const pW=por?ph:pw, pH=por?pw:ph;
+      const t=t6tiling(aW,aH,pW,pH,m,g);
+      if(t.count>best.count) best={count:t.count,cols:t.cols,rows:t.rows,pr,por};
+    }
+    return best;
+  }
+  function t6plan(paperId,specId){
+    const paper=T6_PAPERS.find(p=>p.id===paperId);
+    const spec=T6_SPECS.find(s=>s.id===specId);
+    if(!paper||!spec) return null;
+    const sw=spec.w, sh=spec.h;
+    if(!paper.tile){
+      const fit=t6best(paper.aw,paper.ah,sw,sh,0,0);
+      const count=Math.min(fit.count,1);
+      return { tile:false, count, cols:count, rows:count>0?1:0,
+        sheet:{w:t6mmToPx(paper.pw,paper.dpi),h:t6mmToPx(paper.ph,paper.dpi)}, dpi:paper.dpi,
+        note: count===0 ? '该相纸成像区小于所选证件照，无法容纳，请换更大相纸或更小规格' : paper.note };
+    }
+    const b=t6best(paper.aw,paper.ah,sw,sh,T6_MARGIN_MM,T6_GAP_MM);
+    const pw=b.por?sh:sw, ph=b.por?sw:sh;
+    return { tile:true, count:b.count, cols:b.cols, rows:b.rows,
+      sheet:{w:t6mmToPx(paper.pw,paper.dpi),h:t6mmToPx(paper.ph,paper.dpi)}, dpi:paper.dpi,
+      photoPx:{w:t6mmToPx(pw,paper.dpi),h:t6mmToPx(ph,paper.dpi)}, note:paper.note||'' };
+  }
+  function t6selSpec(el){ el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); t6update(); }
+  function t6selPaper(el){ document.querySelectorAll('#s_t6 [data-paper]').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); t6update(); }
+  function t6selCrop(el){ el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); t6update(); }
+  function t6update(){
+    const specEl=document.querySelector('#s_t6 [data-spec].sel');
+    const paperEl=document.querySelector('#s_t6 [data-paper].sel');
+    const cropEl=document.querySelector('#s_t6 [data-crop].sel');
+    const box=document.getElementById('t6-sheet');
+    const countEl=document.getElementById('t6-count');
+    const metaEl=document.getElementById('t6-meta');
+    const noteEl=document.getElementById('t6-note');
+    if(!specEl||!paperEl) return;
+    const r=t6plan(paperEl.dataset.paper, specEl.dataset.spec);
+    if(!r) return;
+    const cropOn = cropEl && cropEl.dataset.crop==='1';
+    const maxW=200, scale=maxW/r.sheet.w;
+    box.style.width=maxW+'px';
+    box.style.height=Math.round(r.sheet.h*scale)+'px';
+    box.innerHTML='';
+    if(r.count===0){
+      countEl.textContent='本版预览：无法容纳';
+      metaEl.textContent=`输出 ${r.sheet.w}×${r.sheet.h}px · ${r.dpi}dpi`;
+      noteEl.style.display='block'; noteEl.textContent='⚠ '+r.note;
+      const x=document.createElement('div'); x.className='x'; x.textContent='✗ 无法容纳'; box.appendChild(x);
+      return;
+    }
+    countEl.textContent=`本版预览：${r.count} 张`;
+    metaEl.textContent=`输出 ${r.sheet.w}×${r.sheet.h}px · ${r.dpi}dpi`;
+    noteEl.style.display = r.note ? 'block' : 'none';
+    noteEl.textContent = r.note ? 'ℹ '+r.note : '';
+    if(!r.tile){
+      const paper=T6_PAPERS.find(p=>p.id===paperEl.dataset.paper);
+      const padL=((paper.pw-paper.aw)/2)/paper.pw*100;
+      const padT=((paper.ph-paper.ah)/2)/paper.ph*100;
+      const inner=document.createElement('div');
+      inner.style.position='absolute';
+      inner.style.left=padL+'%'; inner.style.right=padL+'%';
+      inner.style.top=padT+'%'; inner.style.bottom=padT+'%';
+      inner.style.background='#4a90d9';
+      inner.style.display='flex'; inner.style.alignItems='center'; inner.style.justifyContent='center';
+      const t=document.createElement('div'); t.className='ptile';
+      t.style.width='80%'; t.style.height='80%';
+      if(cropOn){ t.classList.add('cropf'); }
+      inner.appendChild(t); box.appendChild(inner);
+    } else {
+      const inner=document.createElement('div');
+      inner.style.position='absolute'; inner.style.inset='0';
+      inner.style.display='grid';
+      inner.style.gridTemplateColumns=`repeat(${r.cols},1fr)`;
+      inner.style.gridTemplateRows=`repeat(${r.rows},1fr)`;
+      inner.style.gap='2px'; inner.style.padding='3px'; inner.style.background='#fff';
+      for(let i=0;i<r.cols*r.rows;i++){
+        const t=document.createElement('div'); t.className='ptile';
+        if(cropOn){ t.classList.add('cropf'); }
+        inner.appendChild(t);
+      }
+      box.appendChild(inner);
+    }
+  }
+  function t6export(){
+    const specEl=document.querySelector('#s_t6 [data-spec].sel');
+    const paperEl=document.querySelector('#s_t6 [data-paper].sel');
+    if(!specEl||!paperEl) return;
+    const r=t6plan(paperEl.dataset.paper, specEl.dataset.spec);
+    if(r && r.count===0){ alert('当前组合无法容纳，请换更大相纸或更小规格'); return; }
+    const paper=T6_PAPERS.find(p=>p.id===paperEl.dataset.paper);
+    const cnt = r ? r.count : 0;
+    alert(`拼版图已保存至相册\n${paper.name} + ${specEl.textContent} = ${cnt} 张\n输出 ${r.sheet.w}×${r.sheet.h}px · ${r.dpi}dpi\n（无水印 · 免费）`);
+  }
 </script>
 </body>
 </html>
