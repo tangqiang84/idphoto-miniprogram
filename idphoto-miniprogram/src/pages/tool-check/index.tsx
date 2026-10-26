@@ -2,6 +2,7 @@ import { View, Text, Button, Image, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { useState } from 'react';
 import { requiredConsents, buildConsentRecord, BG, listSpecs, getSpec, check, specLabel, measureHeadRatio } from '../../services';
+import { useImagePicker } from '../../hooks/useImagePicker';
 
 // T4 合规检测：只读检测，不生成、不改动原图（PRD J2 / AC10）——无保存相册入口。
 // 检测项与口径（2026-10-23 与 owner 确认）：
@@ -48,6 +49,7 @@ export default function ToolCheck() {
   const consentItems = requiredConsents(TOOL);
   const [granted, setGranted] = useState<string[]>([]);
   const rec = buildConsentRecord(TOOL, granted);
+  const picker = useImagePicker((img) => run(img.path, img.width, img.height));
 
   const specs = listSpecs();
   const [specIndex, setSpecIndex] = useState(0);
@@ -65,7 +67,7 @@ export default function ToolCheck() {
     setGranted((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
-  async function run() {
+  async function run(path: string, srcW: number, srcH: number) {
     if (!rec.ready) {
       Taro.showToast({ title: '请先勾选所需授权', icon: 'none' });
       return;
@@ -79,26 +81,17 @@ export default function ToolCheck() {
         throw new Error('当前基础库不支持离屏 canvas，请升级基础库到 2.16.1+');
       }
 
-      // 1. 选图（original 保证实测 KB 真实）
-      const pick: any = await Taro.chooseImage({
-        count: 1,
-        sizeType: ['original'],
-        sourceType: ['album', 'camera'],
-      });
-      const path = pick.tempFilePaths[0];
-
-      // 2. 真实尺寸 + 真实 KB
-      const info: any = await Taro.getImageInfo({ src: path });
+      // 2. 真实尺寸 + 真实 KB（取图已剥离到 useImagePicker，PRD A1 引导框在拍摄路径叠加）
       let fileKb = 0;
       try {
         const fi: any = await Taro.getFileInfo({ filePath: path });
         fileKb = Math.max(1, Math.round((fi.size || 0) / 1024));
-      } catch (_) { fileKb = Math.round((pick.tempFiles?.[0]?.size || 0) / 1024); }
+      } catch (_) { fileKb = 0; }
 
       // 3. 工作图（长边 ≤ MAX_EDGE）用于底色采样与人脸检测
-      const scale = Math.min(1, MAX_EDGE / Math.max(info.width, info.height));
-      const w = Math.max(1, Math.round(info.width * scale));
-      const h = Math.max(1, Math.round(info.height * scale));
+      const scale = Math.min(1, MAX_EDGE / Math.max(srcW, srcH));
+      const w = Math.max(1, Math.round(srcW * scale));
+      const h = Math.max(1, Math.round(srcH * scale));
       const canvas = anyTaro.createOffscreenCanvas({ type: '2d', width: w, height: h });
       const ctx = canvas.getContext('2d');
       const img = canvas.createImage();
@@ -117,8 +110,8 @@ export default function ToolCheck() {
       // 5. 等效 dpi（#24 口径：像素 ÷ 目标规格英寸，取宽高较劣者）
       // 注意：listSpecs() 只含 {id,name,note}，完整字段（widthMm 等）须经 getSpec 取
       const full = getSpec(spec.id)!;
-      const dpiW = info.width / (full.widthMm / 25.4);
-      const dpiH = info.height / (full.heightMm / 25.4);
+      const dpiW = srcW / (full.widthMm / 25.4);
+      const dpiH = srcH / (full.heightMm / 25.4);
       const eqDpi = Math.round(Math.min(dpiW, dpiH));
 
       // 6. 头部占比（统一走 services/faceService：VisionKit 优先 → faceDetect 降级 → 几何估算）
@@ -132,8 +125,8 @@ export default function ToolCheck() {
 
       // 7. 出报告（core/compliance 引擎；只读，无任何写文件动作 → AC10）
       const measured: any = {
-        widthPx: info.width,
-        heightPx: info.height,
+        widthPx: srcW,
+        heightPx: srcH,
         dpi: eqDpi,
         fileKb,
         bg: bgKey || 'unknown',
@@ -206,8 +199,11 @@ export default function ToolCheck() {
         </Text>
       </View>
 
-      <Button className='btn-primary' loading={busy} onClick={run}>
-        {busy ? '检测中…' : '选择照片并检测'}
+      <Button className='btn-primary' loading={busy} onClick={picker.pickAlbum}>
+        {busy ? '检测中…' : '从相册选择'}
+      </Button>
+      <Button className='btn-camera' onClick={picker.openCamera}>
+        📷 拍摄（引导框）
       </Button>
 
       {msg ? <Text style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
@@ -258,6 +254,9 @@ export default function ToolCheck() {
           </Text>
         </View>
       ) : null}
+
+      {/* A1 半透明人脸引导框：拍摄入口（相册走上方 .btn-primary） */}
+      {picker.Guide}
     </View>
   );
 }

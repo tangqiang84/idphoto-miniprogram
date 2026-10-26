@@ -12,6 +12,7 @@ import {
   BG, getSpec, getPixelSize, listSpecs, specLabel,
   DPI_STD, DPI_HD,
 } from '../../services';
+import { useImagePicker } from '../../hooks/useImagePicker';
 
 // T1 一键证件照：完整链路（真实功能，非占位）
 // 选图 → 端侧抠图 →（置信不足且已授权则走 CloudBase 云函数增强）→ 换底
@@ -31,6 +32,7 @@ export default function ToolIdPhoto() {
   const consentItems = requiredConsents(TOOL);
   const [granted, setGranted] = useState<string[]>([]);
   const rec = buildConsentRecord(TOOL, granted);
+  const picker = useImagePicker((img) => run(img.path, img.width, img.height));
 
   const specs = listSpecs();
   const [specIndex, setSpecIndex] = useState(0);
@@ -53,7 +55,7 @@ export default function ToolIdPhoto() {
     setGranted((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
-  async function process() {
+  async function run(path: string, srcW: number, srcH: number) {
     if (!rec.ready) {
       Taro.showToast({ title: '请先勾选所需授权', icon: 'none' });
       return;
@@ -70,17 +72,7 @@ export default function ToolIdPhoto() {
         throw new Error('当前基础库不支持离屏 canvas，请升级基础库到 2.16.1+');
       }
 
-      // 1. 选图
-      const pick: any = await Taro.chooseImage({
-        count: 1,
-        sizeType: ['original'],
-        sourceType: ['album', 'camera'],
-      });
-      const path = pick.tempFilePaths[0];
-      const info: any = await Taro.getImageInfo({ src: path });
-      const srcW = info.width;
-      const srcH = info.height;
-
+      // 取图已剥离到 useImagePicker（相册 picker.pickAlbum / 拍摄 CameraGuide，PRD A1 引导框）。
       const spec = getSpec(specs[specIndex].id);
       const target = getPixelSize(spec!, dpi)!;
 
@@ -428,8 +420,11 @@ export default function ToolIdPhoto() {
         ))}
       </View>
 
-      <Button className='btn-primary' loading={busy} onClick={process}>
-        {busy ? '处理中…' : '选择照片并制作'}
+      <Button className='btn-primary' loading={busy} onClick={picker.pickAlbum}>
+        {busy ? '处理中…' : '从相册选择'}
+      </Button>
+      <Button className='btn-camera' onClick={picker.openCamera}>
+        📷 拍摄（引导框）
       </Button>
 
       {msg ? <Text style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
@@ -512,6 +507,9 @@ export default function ToolIdPhoto() {
           ))}
         </View>
       ) : null}
+
+      {/* A1 半透明人脸引导框：拍摄入口（相册走上方 .btn-primary） */}
+      {picker.Guide}
     </View>
   );
 }

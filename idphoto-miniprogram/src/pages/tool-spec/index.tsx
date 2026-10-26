@@ -2,6 +2,7 @@ import { View, Text, Button, Image, Picker, Input, Switch } from '@tarojs/compon
 import Taro from '@tarojs/taro';
 import { useState } from 'react';
 import { getSpec, getPixelSize, listSpecs, DPI_STD, DPI_HD, specLabel } from '../../services';
+import { useImagePicker } from '../../hooks/useImagePicker';
 
 // T5 规格转换：已有照片按所选规格「裁剪 / 改 dpi / 压 KB」后导出（真实功能，非占位）
 // 选图 → 目标像素计算（内置规格×dpi 或 自定义宽高）→ 居中裁剪缩放 → KB 上限压缩（quality 逐步降）→ 保存相册
@@ -31,6 +32,7 @@ export default function ToolSpec() {
   const [msg, setMsg] = useState('');
   const [preview, setPreview] = useState('');
   const [outInfo, setOutInfo] = useState('');
+  const picker = useImagePicker((img) => run(img.path, img.width, img.height));
 
   const spec = mode === 'spec' ? getSpec(specs[specIndex].id) : null;
   const targetPx = mode === 'spec'
@@ -50,7 +52,7 @@ export default function ToolSpec() {
     return null;
   }
 
-  async function process() {
+  async function run(path: string, srcW: number, srcH: number) {
     const err = validate();
     if (err) {
       Taro.showToast({ title: err, icon: 'none' });
@@ -64,16 +66,9 @@ export default function ToolSpec() {
         throw new Error('当前基础库不支持离屏 canvas，请升级基础库到 2.16.1+');
       }
 
-      // 1. 选图（无需人脸授权）
-      const pick: any = await Taro.chooseImage({
-        count: 1,
-        sizeType: ['original'],
-        sourceType: ['album', 'camera'],
-      });
-      const path = pick.tempFilePaths[0];
-      const info: any = await Taro.getImageInfo({ src: path });
-      const w = info.width;
-      const h = info.height;
+      // 取图已剥离到 useImagePicker（相册 picker.pickAlbum / 拍摄 CameraGuide，PRD A1 引导框）。
+      const w = srcW;
+      const h = srcH;
 
       // 2. 目标画布：居中裁剪到目标宽高比，再缩放到目标像素
       setMsg('裁剪缩放中…');
@@ -284,8 +279,11 @@ export default function ToolSpec() {
         />
       </View>
 
-      <Button className='btn-primary' loading={busy} onClick={process}>
-        {busy ? '处理中…' : '选择照片并转换'}
+      <Button className='btn-primary' loading={busy} onClick={picker.pickAlbum}>
+        {busy ? '处理中…' : '从相册选择'}
+      </Button>
+      <Button className='btn-camera' onClick={picker.openCamera}>
+        📷 拍摄（引导框）
       </Button>
 
       {msg ? <Text style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
@@ -304,6 +302,9 @@ export default function ToolSpec() {
       <Text style={{ display: 'block', fontSize: '11px', color: '#aaa', marginTop: '14px' }}>
         说明：dpi 决定输出像素数量（同一规格 600dpi 像素翻倍）；文件本身不含 dpi 元数据，报名/办证系统按像素校验。
       </Text>
+
+      {/* A1 半透明人脸引导框：拍摄入口（相册走上方 .btn-primary） */}
+      {picker.Guide}
     </View>
   );
 }

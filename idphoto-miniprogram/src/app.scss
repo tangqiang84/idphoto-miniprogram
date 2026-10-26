@@ -63,6 +63,15 @@ page {
   font-size: 30px;
 }
 
+// A1 拍摄入口（半透明人脸引导框）：次级按钮，与 .btn-primary（相册）并列
+.btn-camera {
+  margin-top: 12px;
+  background: #2b6cb0;
+  color: #fff;
+  border-radius: 12px;
+  font-size: 30px;
+}
+
 .steps {
   padding: 20px;
   background: #ffffff;
