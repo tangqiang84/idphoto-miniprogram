@@ -3,7 +3,7 @@ import Taro from '@tarojs/taro';
 import { useState } from 'react';
 import {
   requiredConsents, buildConsentRecord,
-  segment, composite, check,
+  segment, composite, check, applyPatches,
   buildCloudFnAdapter,
   measureHeadMetrics, ratioWithinWindow,
   planOutput, planWindowOutput, planDetectImage,
@@ -15,6 +15,7 @@ import {
 import { useImagePicker } from '../../hooks/useImagePicker';
 import { applyBeauty } from '../../services';
 import BeautyControl, { type BeautyState } from '../../components/BeautyControl';
+import AlphaPatch from '../../components/AlphaPatch';
 
 // T1 一键证件照：完整链路（真实功能，非占位）
 // 选图 → 端侧抠图 →（置信不足且已授权则走 CloudBase 云函数增强）→ 换底
@@ -61,10 +62,17 @@ export default function ToolIdPhoto() {
   //   auto=false → 未检出人脸，已降级为「按宽高比居中裁剪」（与 #24 前行为一致）
   //   degraded     → 已按占比反解裁剪，但原片构图不足，如实提示（owner 决策：不阻断导出）
   const [cropInfo, setCropInfo] = useState<any>(null);
+  // 手动修补（PRD B1 / T1-17，任务 #42）：修补面板开关 + 修补所需的工作画布数据
+  //   patchBase = { rgba, alpha, w, h, plan, target, bg, workPreviewPath }
+  const [patching, setPatching] = useState(false);
+  const [patchBase, setPatchBase] = useState<any>(null);
 
   const toggleConsent = (id: string) => {
     setGranted((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
+
+  // 放宽 Taro 类型（微信 canvas 2d API 在部分基础库类型不全，统一用 any 访问）
+  const anyTaro: any = Taro;
 
   async function run(path: string, srcW: number, srcH: number) {
     if (!rec.ready) {
@@ -78,7 +86,6 @@ export default function ToolIdPhoto() {
     setPlanNote('');
     setCropInfo(null);
     try {
-      const anyTaro: any = Taro;
       if (typeof anyTaro.createOffscreenCanvas !== 'function') {
         throw new Error('当前基础库不支持离屏 canvas，请升级基础库到 2.16.1+');
       }
@@ -179,9 +186,6 @@ export default function ToolIdPhoto() {
           cx.drawImage(im, 0, 0, w, h);
         }
       });
-      const canvas = work.canvas;
-      const ctx = work.ctx;
-      const imageData = work.imageData;
       const rgba = work.rgba;
 
       // 4.0 受限美颜（PRD E 章 / AC2，任务 #38）：在抠图前对原图做轻度磨皮/美白/亮眼。
@@ -218,32 +222,15 @@ export default function ToolIdPhoto() {
         tool: TOOL,
       });
 
-      // 6. 换底合成
+      // 6. 换底合成：暂存工作画布的 RGBA 与 alpha，供「手动修补」重合成（PRD B1 / T1-17）
       setMsg('合成底色…');
-      const composed = composite(rgba, seg.alpha, w, h, BG[bg]);
+      const workRgbaCopy = new Uint8ClampedArray(rgba);
+      const baseAlphaCopy = new Uint8ClampedArray(seg.alpha);
 
-      // 7. 裁剪缩放到目标规格尺寸并导出
-      // 注：不使用 createImageData —— 微信部分基础库对它报
-      // "Value is not of type 'long'"。改为复用第 4 步 getImageData 返回的
-      // ImageData 直接写回工作 canvas，再经 drawImage 裁剪缩放到目标尺寸。
-      imageData.data.set(composed);
-      ctx.putImageData(imageData, 0, 0);
-
-      const outCanvas = anyTaro.createOffscreenCanvas({
-        type: '2d',
-        width: target.width,
-        height: target.height,
-      });
-      const octx = outCanvas.getContext('2d');
-      // 裁剪窗口：自动裁剪 = 按头占比反解的窗口；降级 = 居中窗口（三端口径一致，均由 core/compose.js 产出）
-      const sx = plan.sx, sy = plan.sy, sw = plan.sw, sh = plan.sh;
-      octx.drawImage(canvas, sx, sy, sw, sh, 0, 0, target.width, target.height);
-
-      // 7.1 头部占比（PRD B3 / 功能清单 T1-16，任务 #4；任务 #24 后口径由「反解目标」+「实测复核」双报）
+      // 7. 头部占比测量（与 alpha 无关，复用第 2 步人脸度量，不重复检测）
       // 口径：在【裁剪窗口】坐标系中测量 —— 头长 ÷ 成品图高，与审核员在成品图上量的口径一致。
-      // 复用第 2 步已测得的人脸度量按窗口换算，【不重复调用平台检测】：
-      // 真机上每次人脸检测是百毫秒级开销，且二次调用可能失败 → 占比忽有忽无。
       // 坐标换算：检测用图坐标 → 原图坐标（÷det.scale）→ 工作图坐标（×plan.scale）。
+      const sx = plan.sx, sy = plan.sy, sw = plan.sw, sh = plan.sh;
       setMsg('测量头部占比…');
       let headRatio: number | null = null;
       let headExtra: any = null;
@@ -263,23 +250,18 @@ export default function ToolIdPhoto() {
       // 未检出人脸时降级为「未检测」，其余 4 项照常预审（不因一项缺失而阻断整张图）
       setHeadInfo(headRatio != null ? { ratio: headRatio, ...headExtra } : null);
 
-      const exported: any = await Taro.canvasToTempFilePath({
-        canvas: outCanvas,
-        x: 0,
-        y: 0,
-        width: target.width,
-        height: target.height,
-        destWidth: target.width,
-        destHeight: target.height,
-        fileType: 'jpg',
-        quality: 0.95,
-      });
-      setPreview(exported.tempFilePath);
+      // 8. 合成 + 裁剪导出（提取为 composeAndExport，手动修补重合成复用同一套）
+      setMsg('合成与导出…');
+      const exp = await composeAndExport(workRgbaCopy, seg.alpha, w, h, plan, BG[bg], target);
+      setPreview(exp.preview);
+      // 8.1 生成工作画布修补底图（合成底色后的整图），供手动修补面板显示边缘
+      const wp = await saveWorkPreview(workRgbaCopy, seg.alpha, w, h, BG[bg]);
+      setPatchBase({ rgba: workRgbaCopy, alpha: baseAlphaCopy, w, h, plan, target, bg, workPreviewPath: wp });
 
-      // 8. 合规预审
+      // 9. 合规预审
       const fs = Taro.getFileSystemManager();
       const fileInfo: any = await new Promise((resolve, reject) => {
-        fs.getFileInfo({ filePath: exported.tempFilePath, success: resolve, fail: reject });
+        fs.getFileInfo({ filePath: exp.preview, success: resolve, fail: reject });
       });
       const fileKb = Math.round(fileInfo.size / 1024);
       const cr = check(specs[specIndex].id, {
@@ -302,6 +284,78 @@ export default function ToolIdPhoto() {
         setMsg('处理失败：' + m);
       }
       console.error('[T1]', e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // 合成 + 裁剪导出（与 run 共用：把工作画布 RGBA + alpha 合成底色、按裁剪窗缩放到目标规格并导出）
+  // 返回 { preview, fileKb }。手动修补调用 regenerate 时复用本函数重合成。
+  async function composeAndExport(workRgba: Uint8ClampedArray, alpha: Uint8ClampedArray | number[], w: number, h: number, plan: any, bgHex: string, target: { width: number; height: number }) {
+    const composed = composite(workRgba, alpha, w, h, bgHex);
+    const cv = anyTaro.createOffscreenCanvas({ type: '2d', width: w, height: h });
+    const cx = cv.getContext('2d');
+    const blank: any = cx.getImageData(0, 0, w, h);
+    blank.data.set(composed);
+    cx.putImageData(blank, 0, 0);
+
+    const outCanvas = anyTaro.createOffscreenCanvas({ type: '2d', width: target.width, height: target.height });
+    const octx = outCanvas.getContext('2d');
+    octx.drawImage(cv, plan.sx, plan.sy, plan.sw, plan.sh, 0, 0, target.width, target.height);
+
+    const exported: any = await Taro.canvasToTempFilePath({
+      canvas: outCanvas,
+      x: 0, y: 0, width: target.width, height: target.height,
+      destWidth: target.width, destHeight: target.height,
+      fileType: 'jpg', quality: 0.95,
+    });
+    const fs = Taro.getFileSystemManager();
+    const fi: any = await new Promise((resolve, reject) => {
+      fs.getFileInfo({ filePath: exported.tempFilePath, success: resolve, fail: reject });
+    });
+    return { preview: exported.tempFilePath, fileKb: Math.round(fi.size / 1024) };
+  }
+
+  // 生成工作画布修补底图（合成底色后的整图，PNG），供手动修补面板显示抠图边缘
+  async function saveWorkPreview(workRgba: Uint8ClampedArray, alpha: Uint8ClampedArray | number[], w: number, h: number, bgHex: string) {
+    const composed = composite(workRgba, alpha, w, h, bgHex);
+    const cv = anyTaro.createOffscreenCanvas({ type: '2d', width: w, height: h });
+    const cx = cv.getContext('2d');
+    const blank: any = cx.getImageData(0, 0, w, h);
+    blank.data.set(composed);
+    cx.putImageData(blank, 0, 0);
+    const exported: any = await Taro.canvasToTempFilePath({
+      canvas: cv,
+      x: 0, y: 0, width: w, height: h,
+      destWidth: w, destHeight: h,
+      fileType: 'png',
+    });
+    return exported.tempFilePath;
+  }
+
+  // 手动修补：对基线 alpha 应用用户笔画，重合成并刷新预览 + 合规预审
+  async function regenerate(strokes: any[]) {
+    if (!patchBase) return;
+    try {
+      setBusy(true);
+      setMsg('应用修补并重合成…');
+      const patched = applyPatches(patchBase.alpha, patchBase.w, patchBase.h, strokes);
+      const exp = await composeAndExport(patchBase.rgba, patched, patchBase.w, patchBase.h, patchBase.plan, BG[patchBase.bg], patchBase.target);
+      setPreview(exp.preview);
+      const cr = check(specs[specIndex].id, {
+        widthPx: patchBase.target.width,
+        heightPx: patchBase.target.height,
+        dpi,
+        fileKb: exp.fileKb,
+        bg: patchBase.bg,
+        headHeightRatio: headInfo != null ? headInfo.ratio : undefined,
+      });
+      setResult(cr);
+      setPatching(false);
+      setMsg('修补完成');
+    } catch (e: any) {
+      setMsg('修补失败：' + String((e && e.message) || e));
+      console.error('[T1] regenerate', e);
     } finally {
       setBusy(false);
     }
@@ -507,6 +561,20 @@ export default function ToolIdPhoto() {
               头部占比：未检测到人脸，当前环境不支持人脸检测
             </Text>
           )}
+          {/* 手动修补（PRD B1 / T1-17，任务 #42）：低置信边缘自行涂改修正 */}
+          <Button style={{ marginTop: '8px' }} onClick={() => setPatching(true)} disabled={!patchBase || busy}>
+            ✏️ 手动修补边缘
+          </Button>
+          {patching && patchBase ? (
+            <AlphaPatch
+              workPreviewPath={patchBase.workPreviewPath}
+              workW={patchBase.w}
+              workH={patchBase.h}
+              onApply={(strokes: any[]) => regenerate(strokes)}
+              onCancel={() => setPatching(false)}
+            />
+          ) : null}
+
           {/* 受限美颜（PRD E 章 / AC2，任务 #38）：折叠控制面板，开启后调节并重新生成 */}
           <BeautyControl
             value={beauty}

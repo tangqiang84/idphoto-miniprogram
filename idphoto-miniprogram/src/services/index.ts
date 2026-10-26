@@ -12,6 +12,7 @@ import { planOutput, planWindowOutput, planDetectImage, MIN_WORK_EDGE, MAX_WORK_
 import { planHeadCrop, targetHeadRatio, HEAD_TOP_GAP_RATIO, CHIN_BOTTOM_GAP_RATIO } from '../core/headCrop';
 import { detectFace, measureHeadRatio, measureHeadMetrics, ratioWithinWindow } from './faceService';
 import { applyBeauty, COMPLIANCE_MODE, COMPLIANCE_MSG, BEAUTY_CATALOG, assertCompliance } from '../core/beauty';
+import { applyPatches, newStroke, addPoint, boundsOfStrokes } from '../core/alphaPatch';
 import {
   EDGE_MODEL_CONFIG, configureEdgeModel, setOrtRuntime, getOrtRuntime,
   getEdgeSession, prepareModelForSegment, getModelStatus,
@@ -65,4 +66,6 @@ export {
   applyBeauty, COMPLIANCE_MODE, COMPLIANCE_MSG, BEAUTY_CATALOG, assertCompliance,
   // 冲印排版（T6 / K 模块）：相纸尺寸库与平铺算法
   listPapers, getPaper, planLayout, mmToPx, PAPERS, DEFAULT_MARGIN_MM, DEFAULT_GAP_MM, sheetPixelSize,
+  // 手动修补（任务 #42 / PRD B1 / T1-17）：笔刷涂改修正抠图 alpha
+  applyPatches, newStroke, addPoint, boundsOfStrokes,
 };
