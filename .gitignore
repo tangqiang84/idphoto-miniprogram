@@ -19,6 +19,12 @@ idphoto-miniprogram/project.private.config.json
 # Taro 脚手架自带 1 次 Initial Commit；已改名保留作追溯，不参与版本管理
 idphoto-miniprogram/.git.scaffold-backup/
 
+# ---- 项目内部数据（永不入库）----
+# .workbuddy/ 存储项目记忆 / 每日日志 / 任务台账等内部数据，按项目纪律一律排除，
+# 不得入库（避免内部状态外泄与无意义 diff）。实体目录保留在本地，仅解除 git 跟踪。
+# 台账 #44（2026-10-26）：清理此前误跟踪的 5 个 .workbuddy/ 文件。
+.workbuddy/
+
 # ---- 操作系统 ----
 .DS_Store
 Thumbs.db
