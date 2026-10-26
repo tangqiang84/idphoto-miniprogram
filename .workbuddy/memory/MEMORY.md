@@ -36,6 +36,14 @@
 ## 真模型接入口径（#3）
 许可红线：查 HF 模型卡 License（非 GitHub）；BiRefNet 官方 MIT 可商用，briaai/RMBG-2.0 非商用已禁用（#40）。三层：core/mattingModel.js（规格驱动）→ services/modelService.ts（下载/退避）→ miniprogram/onnxMatting.ts（注入式 ort）。端侧默认关闭零回归；点亮三步见《小程序开发指南》6.1。云端 BiRefNet 需境内 GPU≥8GB（部署/birefnet/）。
 
+## T6 冲印排版模块（2026-10-26 落地骨架）
+- 独立工具 T6「冲印排版」：上传已做好的证件照 → 选规格 → 选相纸 → 自动平铺多张 → 导出可打印拼版图；**无需人脸授权**（纯拼版，不处理人脸）。只做"导出拼版图"，不做实际打印/邮寄/相纸售卖（延续非目标）。
+- 代码骨架 `idphoto-miniprogram/src/core/paperLibrary.js`（CommonJS，纯数据+`planLayout`，Node 可单测）：16 种纸（7 常规 R 系列 5/6/7/8/10/12 寸 + 9 迷你 instax/SELPHY/ZINK），每条带 `source`（富士/佳能/惠普官方 + 冲印店出货）；字段 `paperMm/printMm(可打印区或成像区)/dpi/tileable`；`planLayout(paperId,specId)` 复用 `specLibrary.getSpec` 取证件照 mm，4 朝向组合取最多平铺，instax/方贴纸强制 count≤1 并带白边提示。导出自 `NODE_OPTIONS=` 下 `node -e require` 验过 8 API。
+- 原型 `prototype.html` 已含 P12 交互屏（内联 `t6plan`，与 paperLibrary 同套数据/算法，已 Node 复跑一致：6寸+1寸=10、12寸+1寸=72、instax-mini+1寸=1 带提示、selphy-postcard+1寸=10、zink-2x3+1寸=2、visa-us+instax-mini=0 触发无法容纳）。
+- 尺寸 SSOT 三处同步：paperLibrary.js ↔ 《相纸尺寸口径对照表.md》↔ 《产品功能清单》T6 章节（改尺寸须三处齐改）。
+- 提交：`5acecd5 feat(T6)`（paperLibrary.js + prototype.html）+ `a839130 docs(T6)`（PRD大纲/正文/页面原型设计/相纸对照表），已 push，**未打 tag**（待 T6 页面落地）。
+- 待办：pages/tool-print/index + canvas 合成导出（把 planLayout 接真实 canvas 绘制与保存相册）；prototype.html 已是 P12 交互屏。
+
 ## 智能裁切（#24）/ 600dpi（#33）/ 人脸定位（#4）
 - 裁切：sh=头长÷占比、占比取区间中值；留白 0.13/0.16（0.16 仅校验）；裁剪窗必须全在原图内（否则纯色图 #37）；背景采样注入 `segment({bgSamples})`；无人脸→居中裁剪降级不阻断。数值字段用 `getSpec(id)`，`listSpecs()` 是摘要（#25）。
 - 600dpi：构图统一 `planOutput`（够用即止/下限800px/上限1600px）；filesize 降 advisory；上云64万像素封顶；suit.js 双线性。
