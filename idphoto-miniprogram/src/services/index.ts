@@ -1,6 +1,7 @@
 // 业务服务聚合：复用 core 纯逻辑 + UI 层辅助
 // core 为框架无关纯 JS，Taro(weapp) 与 Node 测试共用同一份实现。
 import { getSpec, getPixelSize, listSpecs, BG, BG_LABELS, DPI_STD, DPI_HD, specLabel } from '../core/specLibrary';
+import { listPapers, getPaper, planLayout, mmToPx, PAPERS, DEFAULT_MARGIN_MM, DEFAULT_GAP_MM, sheetPixelSize } from '../core/paperLibrary';
 import { check } from '../core/compliance';
 import { decideRoute, CONF_THRESHOLD, segment, composite, compositeTransparent, cloudMatting, collectEdgeSamples } from '../core/matting';
 import { makeHttpAdapter, makeLocalBiRefStub, assertDomestic, cropForeground, encodeAlphaB64, decodeAlphaB64 } from '../core/mattingCloud';
@@ -62,4 +63,6 @@ export {
   requiredConsents, buildConsentRecord, CONSENT_ITEMS, TOOL_CONSENTS,
   // 受限美颜（任务 #38 / PRD E 章 / AC2）
   applyBeauty, COMPLIANCE_MODE, COMPLIANCE_MSG, BEAUTY_CATALOG, assertCompliance,
+  // 冲印排版（T6 / K 模块）：相纸尺寸库与平铺算法
+  listPapers, getPaper, planLayout, mmToPx, PAPERS, DEFAULT_MARGIN_MM, DEFAULT_GAP_MM, sheetPixelSize,
 };

@@ -7,6 +7,7 @@ export default {
     'pages/tool-suit/index',
     'pages/tool-check/index',
     'pages/tool-spec/index',
+    'pages/tool-print/index',
     'pages/privacy/index',
   ],
   window: {
