@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   requiredConsents, buildConsentRecord,
   segment, composite, check, applyPatches,
+  alphaBBox, suitPlacement, suitCompose,
   buildCloudFnAdapter,
   measureHeadMetrics, ratioWithinWindow,
   planOutput, planWindowOutput, planDetectImage,
@@ -30,6 +31,34 @@ import AlphaPatch from '../../components/AlphaPatch';
 const TOOL = 'T1';
 
 type BgKey = 'white' | 'blue' | 'blueLight' | 'red';
+
+// AI 换装（PRD D 章 / T1-11/12，任务 #43）：复用 T3 端侧贴图合成能力。
+// 自绘模板（AI 自绘，自有版权，PRD Q3 合规）：与 T3 同一套透明 PNG。
+const SUIT_TEMPLATES = [
+  { id: 'black', name: '黑西装', src: require('../../assets/suits/suit_black.png') },
+  { id: 'navy', name: '深蓝西装', src: require('../../assets/suits/suit_navy.png') },
+  { id: 'gray', name: '灰西装', src: require('../../assets/suits/suit_gray.png') },
+];
+// 换装单独授权项（个保法敏感个人信息单独同意 / AC5）：取 T3 同一份 CONSENT 定义，避免文案漂移
+const SUIT_CONSENT =
+  requiredConsents('T3').find((c: any) => c.id === 'suitSwap') ||
+  { id: 'suitSwap', label: 'AI换装', desc: '合成职业装，仅换装不改五官，需单独授权' };
+
+// 读模板 PNG → RGBA 像素（离屏 canvas；与 tool-suit 同一实现）
+async function loadTemplatePixels(src: string): Promise<{ data: Uint8ClampedArray; w: number; h: number }> {
+  const anyTaro: any = Taro;
+  const canvas = anyTaro.createOffscreenCanvas({ type: '2d', width: 400, height: 400 });
+  const ctx = canvas.getContext('2d');
+  const img = canvas.createImage();
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = (e: any) => reject(e || new Error('模板加载失败'));
+    img.src = src;
+  });
+  ctx.drawImage(img, 0, 0, 400, 400);
+  const d = ctx.getImageData(0, 0, 400, 400);
+  return { data: d.data, w: 400, h: 400 };
+}
 
 export default function ToolIdPhoto() {
   const consentItems = requiredConsents(TOOL);
@@ -66,6 +95,14 @@ export default function ToolIdPhoto() {
   //   patchBase = { rgba, alpha, w, h, plan, target, bg, workPreviewPath }
   const [patching, setPatching] = useState(false);
   const [patchBase, setPatchBase] = useState<any>(null);
+  // AI 换装（PRD D 章 / T1-11/12，任务 #43）：
+  //   suitPanelOpen = 面板展开；suitTplIndex = 模板选择；suitOn = 用户意图（应用换装）；
+  //   suitApplied = 当前预览是否已换装（决定是否强制五官自检闸门）；selfChecked = D3/AC6 自检确认。
+  const [suitPanelOpen, setSuitPanelOpen] = useState(false);
+  const [suitTplIndex, setSuitTplIndex] = useState(0);
+  const [suitOn, setSuitOn] = useState(false);
+  const [suitApplied, setSuitApplied] = useState(false);
+  const [selfChecked, setSelfChecked] = useState(false);
 
   const toggleConsent = (id: string) => {
     setGranted((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -74,17 +111,20 @@ export default function ToolIdPhoto() {
   // 放宽 Taro 类型（微信 canvas 2d API 在部分基础库类型不全，统一用 any 访问）
   const anyTaro: any = Taro;
 
-  async function run(path: string, srcW: number, srcH: number) {
+  async function run(path: string, srcW: number, srcH: number, opts?: { suitOn?: boolean }) {
     if (!rec.ready) {
       Taro.showToast({ title: '请先勾选所需授权', icon: 'none' });
       return;
     }
+    // 换装意图：显式传参优先（避免 setState 异步 → 同一函数内读到旧值，见下方第 136 行同类注释）
+    const wantSuit = opts && typeof opts.suitOn === 'boolean' ? opts.suitOn : suitOn;
     setBusy(true);
     setMsg('读取图片…');
     setResult(null);
     setHeadInfo(null);
     setPlanNote('');
     setCropInfo(null);
+    setSelfChecked(false); // 每次重新生成都使旧自检失效（AC6：未自检不得导出）
     try {
       if (typeof anyTaro.createOffscreenCanvas !== 'function') {
         throw new Error('当前基础库不支持离屏 canvas，请升级基础库到 2.16.1+');
@@ -227,6 +267,25 @@ export default function ToolIdPhoto() {
       const workRgbaCopy = new Uint8ClampedArray(rgba);
       const baseAlphaCopy = new Uint8ClampedArray(seg.alpha);
 
+      // 6.1 AI 换装（可选，PRD D 章 / T1-11，任务 #43）：端侧贴图合成（复用 core/suit.js）。
+      //   D2：仅覆盖肩颈前景区（alpha>0.5 且模板不透明），不触碰脸部像素；D3/AC6 强制自检在页面层。
+      //   仅在「应用换装」且已勾选 suitSwap 单独授权时执行；否则使用原图 RGBA（零回归）。
+      let exportRgba: Uint8ClampedArray = workRgbaCopy;
+      let suitAppliedNow = false;
+      if (wantSuit && granted.includes('suitSwap')) {
+        setMsg('合成职业装…');
+        const bbox = alphaBBox(seg.alpha, w, h);
+        if (bbox) {
+          const headRes = await measureHeadMetrics(workRgbaCopy, w, h, bbox);
+          const headH = headRes.ok && headRes.headLengthPx ? headRes.headLengthPx : bbox.h * 0.30;
+          const tpl = await loadTemplatePixels(SUIT_TEMPLATES[suitTplIndex].src as any);
+          const place = suitPlacement(bbox, headH);
+          exportRgba = suitCompose(workRgbaCopy, seg.alpha, w, h, tpl.data, tpl.w, tpl.h, place);
+          suitAppliedNow = true;
+        }
+      }
+      setSuitApplied(suitAppliedNow);
+
       // 7. 头部占比测量（与 alpha 无关，复用第 2 步人脸度量，不重复检测）
       // 口径：在【裁剪窗口】坐标系中测量 —— 头长 ÷ 成品图高，与审核员在成品图上量的口径一致。
       // 坐标换算：检测用图坐标 → 原图坐标（÷det.scale）→ 工作图坐标（×plan.scale）。
@@ -252,11 +311,11 @@ export default function ToolIdPhoto() {
 
       // 8. 合成 + 裁剪导出（提取为 composeAndExport，手动修补重合成复用同一套）
       setMsg('合成与导出…');
-      const exp = await composeAndExport(workRgbaCopy, seg.alpha, w, h, plan, BG[bg], target);
+      const exp = await composeAndExport(exportRgba, seg.alpha, w, h, plan, BG[bg], target);
       setPreview(exp.preview);
       // 8.1 生成工作画布修补底图（合成底色后的整图），供手动修补面板显示边缘
-      const wp = await saveWorkPreview(workRgbaCopy, seg.alpha, w, h, BG[bg]);
-      setPatchBase({ rgba: workRgbaCopy, alpha: baseAlphaCopy, w, h, plan, target, bg, workPreviewPath: wp });
+      const wp = await saveWorkPreview(exportRgba, seg.alpha, w, h, BG[bg]);
+      setPatchBase({ rgba: exportRgba, alpha: baseAlphaCopy, w, h, plan, target, bg, workPreviewPath: wp });
 
       // 9. 合规预审
       const fs = Taro.getFileSystemManager();
@@ -361,8 +420,26 @@ export default function ToolIdPhoto() {
     }
   }
 
+  // 应用换装：需先勾选 suitSwap 单独授权；用最近一次取图重跑（避免重复选图）
+  function applySuit() {
+    if (!lastPick) { Taro.showToast({ title: '请先选择照片', icon: 'none' }); return; }
+    if (!granted.includes('suitSwap')) { Taro.showToast({ title: '请先勾选「AI换装」单独授权', icon: 'none' }); return; }
+    setSuitOn(true);
+    run(lastPick.path, lastPick.width, lastPick.height, { suitOn: true });
+  }
+  function cancelSuit() {
+    setSuitOn(false);
+    setSuitApplied(false);
+    if (lastPick) run(lastPick.path, lastPick.width, lastPick.height, { suitOn: false });
+  }
+
   async function save() {
     if (!preview) return;
+    // D3/AC6：换装后未完成五官自检不得导出
+    if (suitApplied && !selfChecked) {
+      Taro.showToast({ title: '请先完成五官自检', icon: 'none' });
+      return;
+    }
     try {
       await Taro.saveImageToPhotosAlbum({ filePath: preview });
       Taro.showToast({ title: '已保存到相册' });
@@ -583,10 +660,83 @@ export default function ToolIdPhoto() {
               if (lastPick) run(lastPick.path, lastPick.width, lastPick.height);
             }}
           />
+
+          {/* AI 换装（可选，PRD D 章 / T1-11/12，任务 #43）：端侧贴图合成 + 强制五官自检 */}
+          <View style={{ marginTop: '10px', padding: '10px', borderRadius: '6px', border: '1px solid #e6e6e6', background: '#fafafa' }}>
+            <View onClick={() => setSuitPanelOpen(!suitPanelOpen)}>
+              <Text style={{ fontWeight: 'bold' }}>{suitPanelOpen ? '▾ ' : '▸ '}👔 AI 换装（可选）</Text>
+              <Text style={{ display: 'block', fontSize: '12px', color: '#999', marginTop: '2px' }}>
+                {suitApplied ? '已换装（更换模板后请点「应用换装」）' : '点开可选职业装模板；仅换装、不改五官'}
+              </Text>
+            </View>
+            {suitPanelOpen ? (
+              <View style={{ marginTop: '8px' }}>
+                {/* suitSwap 单独授权（个保法敏感信息单独同意 / AC5） */}
+                {!granted.includes('suitSwap') ? (
+                  <View
+                    onClick={() => toggleConsent('suitSwap')}
+                    style={{ border: '1px solid #ddd', background: '#fff', padding: '8px', borderRadius: '6px', marginBottom: '8px' }}
+                  >
+                    <Text>☐ {SUIT_CONSENT.label}（需单独授权）</Text>
+                    <Text className='consent__desc'>{SUIT_CONSENT.desc}</Text>
+                  </View>
+                ) : (
+                  <Text style={{ display: 'block', fontSize: '12px', color: '#2e7d32', marginBottom: '8px' }}>✓ 已授权 AI 换装</Text>
+                )}
+                {/* 职业装模板（自绘素材，AI 自绘自有版权，PRD Q3 合规） */}
+                <View style={{ display: 'flex', flexDirection: 'row' }}>
+                  {SUIT_TEMPLATES.map((t, i) => (
+                    <View
+                      key={t.id}
+                      onClick={() => setSuitTplIndex(i)}
+                      style={{
+                        flex: 1,
+                        marginRight: i < SUIT_TEMPLATES.length - 1 ? '8px' : 0,
+                        padding: '6px 4px',
+                        borderRadius: '6px',
+                        textAlign: 'center',
+                        border: suitTplIndex === i ? '2px solid #333' : '1px solid #ccc',
+                        background: suitTplIndex === i ? '#eef5fd' : '#fff',
+                      }}
+                    >
+                      <Image src={t.src as any} style={{ width: '44px', height: '44px' }} mode='aspectFit' />
+                      <Text style={{ display: 'block', fontSize: '12px', marginTop: '2px' }}>{t.name}</Text>
+                    </View>
+                  ))}
+                </View>
+                <View style={{ display: 'flex', flexDirection: 'row', marginTop: '8px' }}>
+                  <Button size='mini' style={{ marginRight: '8px' }} loading={busy} disabled={busy} onClick={applySuit}>应用换装</Button>
+                  {suitApplied ? <Button size='mini' onClick={cancelSuit}>取消换装</Button> : null}
+                </View>
+                <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '6px' }}>
+                  端侧贴图合成，只覆盖肩颈区域、不改五官；换装后须完成五官自检方可导出。
+                </Text>
+              </View>
+            ) : null}
+          </View>
+
+          {/* D3/AC6 强制五官自检：换装后未确认不得导出 */}
+          {suitApplied ? (
+            <View
+              className='selfcheck'
+              onClick={() => setSelfChecked(!selfChecked)}
+              style={{ marginTop: '10px', padding: '10px', borderRadius: '6px', border: selfChecked ? '1px solid #438EDB' : '1px solid #ddd', background: selfChecked ? '#eef5fd' : '#fff' }}
+            >
+              <Text style={{ fontWeight: 'bold' }}>{selfChecked ? '☑ ' : '☐ '}五官自检（PRD D3 / AC6）</Text>
+              <Text style={{ display: 'block', fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                请核对：换装后的照片五官未被改动。端侧合成只覆盖肩颈区域，理论上不触碰脸部像素；如发现五官异常请勿导出，重拍或换模板。未确认自检无法导出。
+              </Text>
+            </View>
+          ) : null}
+
           {/* AC1 镜像自查（导出前勾选，未勾选禁用保存） */}
           {picker.MirrorCheck}
-          <Button style={{ marginTop: '8px' }} onClick={save} disabled={!picker.mirrorConfirmed}>
-            保存到相册
+          <Button
+            style={{ marginTop: '8px' }}
+            onClick={save}
+            disabled={!picker.mirrorConfirmed || (suitApplied && !selfChecked)}
+          >
+            {suitApplied && !selfChecked ? '请先完成五官自检' : '保存到相册'}
           </Button>
         </View>
       ) : null}
