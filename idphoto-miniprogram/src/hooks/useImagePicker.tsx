@@ -4,6 +4,7 @@ import CameraGuide from '../components/CameraGuide';
 import QualityTip, { type QualityTipProps } from '../components/QualityTip';
 import MirrorCheck from '../components/MirrorCheck';
 import { assessQuality } from '../core/quality';
+import { validateUpload } from '../core/validateFile';
 
 export interface PickedImage {
   path: string;
@@ -64,12 +65,36 @@ async function samplePixels(path: string): Promise<Uint8ClampedArray | null> {
 }
 
 /**
+ * 取得文件字节数（PRD A2 大小校验用）。
+ * 优先用 chooseImage 返回的 tempFiles[].size（真实字节）；否则用 getFileInfo 兜底；
+ * 读取失败返回 -1（调用方按「降级放行」处理，避免误杀正常图片）。
+ */
+async function getFileSizeBytes(
+  taro: any,
+  path: string,
+  fallback?: number,
+): Promise<number> {
+  if (typeof fallback === 'number' && fallback >= 0) return fallback;
+  try {
+    const fs = taro.getFileSystemManager();
+    const info: any = await new Promise((resolve, reject) => {
+      fs.getFileInfo({ filePath: path, success: resolve, fail: reject });
+    });
+    return typeof info?.size === 'number' ? info.size : -1;
+  } catch (e) {
+    return -1;
+  }
+}
+
+/**
  * 统一「从相册选择」与「拍摄（A1 半透明人脸引导框）」两个取图入口。
  *
  * - pickAlbum：Taro.chooseImage sourceType=['album']（剥离 camera，避免原生相机无法叠加引导框）；
  *   并在用户取消时不报错。保留相册入口以便自动化冒烟 mock chooseImage。
  * - openCamera：打开页面内 <camera> 实时预览 + cover-view 引导框；拍照后 onCapture 回传临时路径。
  * - 两种路径取到图后都会即时做质量评估（assessQuality），结果通过 QualityTip 非阻断展示。
+ * - 两种路径取到图后、进入处理(onImage)前，先做 **PRD A2 硬校验**（格式 JPG/PNG/WebP +
+ *   大小 ≤10MB，见 core/validateFile）；不通过则 Toast 提示并 return，**拒绝进入抠图/换底等处理链路**。
  *
  * 各工具传入的 onImage 为「已剥离取图逻辑」的真实处理入口（读图 → 处理），
  * 由本 hook 在相册/拍照两种路径拿到路径与尺寸后统一调用。
@@ -102,6 +127,13 @@ export function useImagePicker(
       });
       const path = pick.tempFilePaths[0];
       const info: any = await Taro.getImageInfo({ src: path });
+      // —— PRD A2 硬校验（格式 / 大小）：不通过则拦截，绝不进入处理链路 ——
+      const bytes = await getFileSizeBytes(Taro, path, pick.tempFiles?.[0]?.size);
+      const v = validateUpload(path, info.type, bytes);
+      if (!v.ok) {
+        Taro.showToast({ title: v.message || '图片不符合要求', icon: 'none' });
+        return;
+      }
       await evaluate(path, info.width, info.height);
       await onImage({ path, width: info.width, height: info.height });
     } catch (e: any) {
@@ -121,6 +153,13 @@ export function useImagePicker(
     setMirrorConfirmed(false); // 重新取图须重新自查（AC1）
     try {
       const info: any = await Taro.getImageInfo({ src: path });
+      // —— PRD A2 硬校验（格式 / 大小）：不通过则拦截，绝不进入处理链路 ——
+      const bytes = await getFileSizeBytes(Taro, path);
+      const v = validateUpload(path, info.type, bytes);
+      if (!v.ok) {
+        Taro.showToast({ title: v.message || '图片不符合要求', icon: 'none' });
+        return;
+      }
       await evaluate(path, info.width, info.height);
       await onImage({ path, width: info.width, height: info.height });
     } catch (e) {
