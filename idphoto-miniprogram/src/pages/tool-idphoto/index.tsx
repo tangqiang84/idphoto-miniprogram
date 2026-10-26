@@ -481,7 +481,9 @@ export default function ToolIdPhoto() {
               头部占比：未检测到人脸，当前环境不支持人脸检测
             </Text>
           )}
-          <Button style={{ marginTop: '8px' }} onClick={save}>
+          {/* AC1 镜像自查（导出前勾选，未勾选禁用保存） */}
+          {picker.MirrorCheck}
+          <Button style={{ marginTop: '8px' }} onClick={save} disabled={!picker.mirrorConfirmed}>
             保存到相册
           </Button>
         </View>
@@ -510,6 +512,8 @@ export default function ToolIdPhoto() {
 
       {/* A1 半透明人脸引导框：拍摄入口（相册走上方 .btn-primary） */}
       {picker.Guide}
+      {/* A3 原图质量提示（非阻断，建议性） */}
+      {picker.QualityTip}
     </View>
   );
 }

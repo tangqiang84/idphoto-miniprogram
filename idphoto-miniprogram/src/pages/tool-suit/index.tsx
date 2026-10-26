@@ -185,10 +185,15 @@ export default function ToolSuit() {
     }
   }
 
-  // AC6/D3：未通过五官自检不得导出
+  // AC6/D3：未通过五官自检不得导出；AC1：未确认非镜像照不得导出
   async function exportSave() {
-    if (!preview || !selfChecked) {
+    if (!preview) return;
+    if (!selfChecked) {
       Taro.showToast({ title: '请先确认五官未被改动', icon: 'none' });
+      return;
+    }
+    if (!picker.mirrorConfirmed) {
+      Taro.showToast({ title: '请先确认照片非镜像照', icon: 'none' });
       return;
     }
     try {
@@ -380,18 +385,23 @@ export default function ToolSuit() {
             </Text>
           </View>
 
+          {/* AC1 镜像自查（与 T3 五官自检并列，导出前双闸门） */}
+          {picker.MirrorCheck}
           <Button
             style={{ marginTop: '10px' }}
-            type={selfChecked ? 'primary' : 'default'}
+            type={selfChecked && picker.mirrorConfirmed ? 'primary' : 'default'}
             onClick={exportSave}
+            disabled={!selfChecked || !picker.mirrorConfirmed}
           >
-            {selfChecked ? '导出并保存到相册' : '请先完成五官自检'}
+            {!selfChecked ? '请先完成五官自检' : (!picker.mirrorConfirmed ? '请先确认照片非镜像照' : '导出并保存到相册')}
           </Button>
         </View>
       ) : null}
 
       {/* A1 半透明人脸引导框：拍摄入口（相册走上方 .btn-primary） */}
       {picker.Guide}
+      {/* A3 原图质量提示（非阻断，建议性） */}
+      {picker.QualityTip}
     </View>
   );
 }

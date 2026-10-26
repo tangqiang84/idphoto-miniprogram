@@ -252,11 +252,17 @@ export default function ToolCheck() {
           <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '6px' }}>
             仅检测，不生成、不改动原图（AC10）
           </Text>
+          {/* AC1 镜像提示（检测工具无导出，仅做引导文案提示） */}
+          <Text style={{ display: 'block', marginTop: '6px', fontSize: '12px', color: '#ad6800' }}>
+            ⚠️ 若照片为镜像自拍（左右颠倒），请关闭镜像/翻转后重拍，否则将导致审核失败。
+          </Text>
         </View>
       ) : null}
 
       {/* A1 半透明人脸引导框：拍摄入口（相册走上方 .btn-primary） */}
       {picker.Guide}
+      {/* A3 原图质量提示（非阻断，建议性） */}
+      {picker.QualityTip}
     </View>
   );
 }

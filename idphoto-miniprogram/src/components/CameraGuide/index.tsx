@@ -58,6 +58,9 @@ export default function CameraGuide({ visible, onCapture, onCancel }: Props) {
         <CoverView className='cam-guide__tips'>
           请正脸平视 · 光线均匀 · 肩部入框
         </CoverView>
+        <CoverView className='cam-guide__warn'>
+          ⚠️ 请勿开启镜像/美颜翻转，镜像照将导致审核失败
+        </CoverView>
       </Camera>
 
       {/* 底部操作栏（cover-view 浮于相机之上） */}

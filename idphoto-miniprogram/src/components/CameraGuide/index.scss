@@ -55,11 +55,25 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 20%;
+  bottom: 26%;
   text-align: center;
   color: #fff;
   font-size: 14px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+// 镜像拍摄警示（AC1 务实方案：拍摄引导文案，提示勿开镜像/翻转）
+.cam-guide__warn {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 20%;
+  text-align: center;
+  color: #ffd591;
+  font-size: 13px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
   pointer-events: none;
 }
 

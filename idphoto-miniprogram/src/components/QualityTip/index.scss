@@ -1,0 +1,32 @@
+.quality-tip {
+  margin: 12px 0;
+  padding: 12px 14px;
+  background: #fff7e6;
+  border: 1px solid #ffd591;
+  border-radius: 10px;
+}
+
+.quality-tip__title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #ad6800;
+  margin-bottom: 6px;
+}
+
+.quality-tip__item {
+  display: flex;
+  align-items: flex-start;
+  font-size: 24px;
+  color: #ad6800;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
+.quality-tip__icon {
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.quality-tip__text {
+  flex: 1;
+}

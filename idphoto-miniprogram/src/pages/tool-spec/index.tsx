@@ -292,7 +292,9 @@ export default function ToolSpec() {
         <View style={{ marginTop: '14px' }}>
           <Image src={preview} style={{ width: '100%', height: '260px' }} mode='aspectFit' />
           {outInfo ? <Text style={{ display: 'block', fontSize: '12px', color: '#888', marginTop: '4px' }}>{outInfo}</Text> : null}
-          <Button style={{ marginTop: '8px' }} onClick={save}>
+          {/* AC1 镜像自查（导出前勾选，未勾选禁用保存） */}
+          {picker.MirrorCheck}
+          <Button style={{ marginTop: '8px' }} onClick={save} disabled={!picker.mirrorConfirmed}>
             保存到相册
           </Button>
         </View>
@@ -305,6 +307,8 @@ export default function ToolSpec() {
 
       {/* A1 半透明人脸引导框：拍摄入口（相册走上方 .btn-primary） */}
       {picker.Guide}
+      {/* A3 原图质量提示（非阻断，建议性） */}
+      {picker.QualityTip}
     </View>
   );
 }

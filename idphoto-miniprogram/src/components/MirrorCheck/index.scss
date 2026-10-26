@@ -1,0 +1,40 @@
+// AC1 镜像自拍自查条（MirrorCheck 组件）
+// 与 T3 换装自检同视觉语言：黄色警示底 + 自定义勾选框。
+
+.mirror-check {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #fff7e6;
+  border: 1px solid #ffd591;
+  border-radius: 10px;
+}
+
+.mirror-check__box {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  margin-right: 10px;
+  border: 2px solid #fa8c16;
+  border-radius: 8px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  line-height: 1;
+  color: #fff;
+  background: #fff;
+}
+
+.mirror-check__box--on {
+  background: #fa8c16;
+}
+
+.mirror-check__label {
+  flex: 1;
+  font-size: 24px;
+  line-height: 1.45;
+  color: #ad6800;
+}
