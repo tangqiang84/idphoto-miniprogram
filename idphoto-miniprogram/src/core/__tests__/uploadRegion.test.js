@@ -68,3 +68,29 @@ test('阈值常量符合预期（端侧前景占比低于 0.12 视为不可信�
   assert.ok(MIN_FG_RATIO > 0 && MIN_FG_RATIO < 0.3);
   assert.ok(MAX_BBOX_RATIO > 0.3 && MAX_BBOX_RATIO < 1);
 });
+
+// ===================== 2026-10-27（问题台账 #66）：区域不能切断人体 =====================
+
+test('② bbox 底部越过中线 → 区域延伸贴图底（躯干必然延续，不能切断）', () => {
+  // 头+肩 bbox：底部在 0.67H 处（>0.5H）→ 应延伸到 H
+  const a = makeAlpha(0.2, { x: 60, y: 40, w: 80, h: 160 });
+  const r = pickUploadRegion(makeImage(), a, W, H, null);
+  assert.strictEqual(r.mode, 'alpha_bbox');
+  assert.strictEqual(r.y + r.h, H, 'bbox 底部过中线后区域必须贴图底');
+});
+
+test('② bbox 仅在头部（底部未及中线）→ 不贴底', () => {
+  // 头部 bbox：40 + 90 = 130 < 150（0.5H）→ 底部不外延
+  const a = makeAlpha(0.12, { x: 60, y: 40, w: 80, h: 90 });
+  const r = pickUploadRegion(makeImage(), a, W, H, null);
+  assert.strictEqual(r.mode, 'alpha_bbox');
+  assert.ok(r.y + r.h < H, '头部 bbox 不应贴图底');
+});
+
+test('③ 居中回退区域：加宽且底部贴图底（证件照躯干必然到图底）', () => {
+  const r = pickUploadRegion(makeImage(), new Float32Array(W * H), W, H, null);
+  assert.strictEqual(r.mode, 'center_region');
+  assert.strictEqual(r.y + r.h, H, '居中区域底部必须贴图底');
+  assert.ok(r.w >= W * 0.7, '居中区域应加宽（原 60% 太窄，肩膀被切）');
+  assert.ok(r.w < W, '仍须小于整图（合规：只上传人像区域）');
+});

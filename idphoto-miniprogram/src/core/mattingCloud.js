@@ -88,10 +88,22 @@ function cropForeground(rgba, alpha, w, h, pad) {
  *   ① 调用方给的人像区域提示（faceRegion）：T1 用人脸几何推出的区域，最可信；
  *   ② 端侧 alpha 可信（前景占比 ≥ MIN_FG_RATIO 且 bbox 面积 ≤ MAX_BBOX_RATIO）→ 用 alpha bbox；
  *   ③ 否则**回退为居中人像区**（几何裁剪，不是整图，仍满足「只上传人像区域」的合规意图）。
+ *
+ * ⚠️ 2026-10-27 二次修正（问题台账 #66，真机成品矩形接缝）：
+ *   区域**绝不能切断人体**——证件照/自拍人像的躯干必然延续到画面底部，
+ *   区域底边切在脖子/胸口处时，云端只重算区域内 alpha，区域外保留端侧 alpha
+ *   （而端侧在这类图上恰恰不可信，才会走上云）→ 硬贴回必然露出矩形接缝。
+ *   故：② bbox 底部过画面中线下部 → 直接延伸贴图底；③ 居中区域从顶部 2% 一路到图底。
  */
 const MIN_FG_RATIO = 0.12;     // 端侧全图前景占比低于此 → 端侧 alpha 不可信
 const MIN_BBOX_DENSITY = 0.35; // **bbox 内前景密度**低于此 → bbox 框不住人（框进大片背景）→ 不可信
 const MAX_BBOX_RATIO = 0.7;    // 前景 bbox 占全图超过此 → 说明框不住人、框进了大片背景
+const BBOX_PAD_MIN = 16;       // alpha bbox 外扩下限（px，原固定 8 太小，边缘信息不足）
+const BBOX_PAD_RATIO = 0.08;   // alpha bbox 外扩比例（按 bbox 长边）
+const BOTTOM_EXTEND_Y = 0.5;   // bbox 底部超过画面高度此比例 → 躯干必然延续，延伸贴图底
+const EDGE_SNAP = 0.1;         // bbox 边距图边小于此比例 → 直接贴边（消灭窄条残留）
+const CENTER_REGION_W = 0.8;   // 居中回退区域宽占比
+const CENTER_REGION_TOP = 0.02;// 居中回退区域顶留白占比（底部贴图底）
 
 function pickUploadRegion(rgba, alpha, w, h, hintRegion) {
   const full = { x: 0, y: 0, w, h, mode: 'full' };
@@ -106,6 +118,7 @@ function pickUploadRegion(rgba, alpha, w, h, hintRegion) {
   // ② 端侧 alpha 是否可信
   //    判据一：全图前景占比（太低 → alpha 几乎没抓到人）
   //    判据二：**bbox 内的前景密度**（bbox 是"框住人"的区域，密度低 → 框里大半是背景 → 不可信）
+  //    注：可信度判定用**原始 bbox**；通过后再做外扩/贴边/贴底（#66：区域不能切断人体）
   const q = estimateQuality(alpha);
   const fgRatio = q.foregroundRatio;
   if (fgRatio >= MIN_FG_RATIO) {
@@ -116,24 +129,186 @@ function pickUploadRegion(rgba, alpha, w, h, hintRegion) {
       for (let i = 0; i < c.alpha.length; i++) if (c.alpha[i] >= 0.5) fgInBox++;
       const density = fgInBox / (c.w * c.h);
       if (density >= MIN_BBOX_DENSITY && areaRatio <= MAX_BBOX_RATIO) {
-        return { x: c.x, y: c.y, w: c.w, h: c.h, mode: 'alpha_bbox', fgRatio, density };
+        // 外扩：固定 8px 太小（切断发丝/轮廓信息），改为 bbox 长边的 8%（下限 16px）
+        const pad = Math.max(BBOX_PAD_MIN, Math.round(Math.max(c.w, c.h) * BBOX_PAD_RATIO));
+        let x0 = c.x - pad, y0 = c.y - pad, x1 = c.x + c.w - 1 + pad, y1 = c.y + c.h - 1 + pad;
+        // 贴边：距图边 <10% 的窄条留在外面既无信息量又会留接缝，直接贴边
+        if (x0 < w * EDGE_SNAP) x0 = 0;
+        if (y0 < h * EDGE_SNAP) y0 = 0;
+        if (x1 > w * (1 - EDGE_SNAP)) x1 = w - 1;
+        // 贴底（#66 关键）：bbox 底部已越过画面中线下部 → 躯干/肩膀必然延续到图底，必须延伸
+        if (c.y + c.h - 1 > h * BOTTOM_EXTEND_Y) y1 = h - 1;
+        x0 = Math.max(0, x0); y0 = Math.max(0, y0);
+        x1 = Math.min(w - 1, x1); y1 = Math.min(h - 1, y1);
+        return { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1, mode: 'alpha_bbox', fgRatio, density };
       }
     }
   }
-  // ③ 回退：居中人像区（人像通常在画面中央）
-  const cw = Math.max(16, Math.round(w * 0.6));
-  const ch = Math.max(16, Math.round(h * 0.9));
+  // ③ 回退：居中人像区（人像通常在画面中央；**底部贴图底**——躯干必然延续，#66）
+  const cw = Math.max(16, Math.round(w * CENTER_REGION_W));
   const x = Math.max(0, Math.round((w - cw) / 2));
-  const y = Math.max(0, Math.round((h - ch) / 2));
-  return { x, y, w: Math.min(cw, w - x), h: Math.min(ch, h - y), mode: 'center_region', fgRatio };
+  const y = Math.max(0, Math.round(h * CENTER_REGION_TOP));
+  return { x, y, w: Math.min(cw, w - x), h: h - y, mode: 'center_region', fgRatio };
 }
 
-// 把子图 alpha 贴回全图对应区域，其余保持端侧 alpha
-function placeBack(fullAlpha, subAlpha, crop, w, h) {
+// ===================== 云端 alpha 去斑（scoremap 背景噪声抑制，问题台账 #66） =====================
+// 百度 scoremap 是软 alpha：发丝半透明是优点，但**复杂背景下会有孤立的中低值噪声斑块**
+// （真机实测：矩形上传区内的蓝底斑驳）。这些斑块远离人体，合成时把原背景又混了回来。
+// 判据：alpha 中低值（<0.35）且 r 邻域内没有强前景（≥0.6）→ 是孤立噪声，清零。
+// 发丝/轮廓过渡带紧邻人体强前景，密度门控不会误伤。
+function cleanCloudAlpha(alpha, w, h) {
+  const strong = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) strong[i] = alpha[i] >= 0.6 ? 1 : 0;
+  const dens = boxFilter(strong, w, h, 6); // 13×13 邻域内强前景密度
+  const out = Float32Array.from(alpha);
+  for (let i = 0; i < w * h; i++) {
+    if (out[i] < 0.35 && dens[i] < 0.02) out[i] = 0;
+  }
+  return out;
+}
+
+// ===================== 云端 alpha 贴回全图（v2：门控 + 羽化，问题台账 #66） =====================
+// v1 硬贴回的教训：区域内用云端 alpha、区域外**无脑保留端侧 alpha**——而端侧在
+// 「需要上云的图」上恰恰不可信（实测墙面被误判前景、整片泥浆值 0.15~0.5），
+// 区域边界处两套 alpha 各说各话 → 成品露出矩形接缝、区域外原背景残留。
+//
+// v2 策略：
+//   1) 区域外：不再直接信端侧，按「云端前景在区域边界的接触位置」做行/列门控 ——
+//      云端说人从左边界第 y 行跨出 → 只保留左条带第 y 行的端侧前景（S 曲线固化），
+//      其余行归零（背景）。人的躯干得以延续，墙面泥浆被清掉。
+//   2) 门控保留区内再做一次阈值：端侧 ≥0.5 才保留（真机复跑发现：门打开后
+//      0.15~0.5 的墙面泥浆仍会以 ~35% 不透明度糊在成品底角，必须再卡一道）。
+//   3) 保留区的判定分两层（关键教训：区域外的端侧 alpha 整体不可信——
+//      真机实测西装延续带的端侧值全是 0.48~0.51 的泥浆，西装与墙它根本分不开）：
+//      - 传入了 rgba（正常链路）→ **颜色一致性是唯一保留标准**：门开的行/列里，
+//        颜色与边界云端前景参考色相近 → 高置信人像延续，直接给近不透明（0.92）；
+//        墙面/污渍色 → 清零。密度与端侧数值均不参与（它们在这类图上都是噪声）。
+//      - 无 rgba（单测/旧调用兜底）→ 端侧 ≥0.5 + 17×17 邻域密度 ≥0.25 + S 曲线固化。
+//   4) 区域内侧 6px 羽化带：云端 alpha 与「同口径门控后的」端侧值平滑过渡，消灭边界台阶。
+//   5) crop.full（区域=整图）→ 直接返回云端 alpha，无需任何拼接。
+function placeBack(fullAlpha, subAlpha, crop, w, h, rgba) {
   if (crop.full) return subAlpha;
-  const out = Float32Array.from(fullAlpha);
-  for (let y = 0; y < crop.h; y++) for (let x = 0; x < crop.w; x++) {
-    out[(crop.y + y) * w + (crop.x + x)] = subAlpha[y * crop.w + x];
+  const GATE = 0.5;    // 云端前景「接触到边」的判定阈值；同时复用为端侧保留阈值
+  const BAND = 3;      // 看边界内侧几 px 判定接触（抗 1px 毛刺）
+  const FEATHER = 6;   // 区域内侧羽化带宽（px）
+  const COLOR_GATE = 80; // 颜色一致性闸：与边界云端前景参考色的 RGB 距离上限
+  const x0 = crop.x, y0 = crop.y;
+  const x1 = crop.x + crop.w - 1, y1 = crop.y + crop.h - 1;
+  const firm = (v) => { const t = Math.max(0, Math.min(1, v)); return t * t * (3 - 2 * t); };
+
+  // ① 边界接触门控表：左/右边按行，顶/底边按列
+  const rowGateL = new Uint8Array(h), rowGateR = new Uint8Array(h);
+  const colGateT = new Uint8Array(w), colGateB = new Uint8Array(w);
+  for (let yy = 0; yy < crop.h; yy++) {
+    for (let b = 0; b < BAND && b < crop.w; b++) {
+      if (subAlpha[yy * crop.w + b] >= GATE) rowGateL[y0 + yy] = 1;
+      if (subAlpha[yy * crop.w + crop.w - 1 - b] >= GATE) rowGateR[y0 + yy] = 1;
+    }
+  }
+  for (let xx = 0; xx < crop.w; xx++) {
+    for (let b = 0; b < BAND && b < crop.h; b++) {
+      if (subAlpha[b * crop.w + xx] >= GATE) colGateT[x0 + xx] = 1;
+      if (subAlpha[(crop.h - 1 - b) * crop.w + xx] >= GATE) colGateB[x0 + xx] = 1;
+    }
+  }
+
+  // 端侧强前景密度图（密度闸用）：孤立的强值斑点密度低，成片的躯干延续密度高
+  const strongLocal = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) strongLocal[i] = fullAlpha[i] >= GATE ? 1 : 0;
+  const densLocal = boxFilter(strongLocal, w, h, 8); // 17×17 邻域
+  const MIN_LOCAL_DENSITY = 0.25;
+
+  // 边界云端前景参考色（颜色闸用）：每条边的每行/列，取边界内侧云端前景像素的加权平均色
+  // 人无跨出（门关闭）的行/列无参考色——反正门控已拦，无需颜色判断
+  const refL = new Array(h).fill(null), refR = new Array(h).fill(null);
+  const refT = new Array(w).fill(null), refB = new Array(w).fill(null);
+  if (rgba) {
+    const avgRef = (hits) => {
+      let r = 0, g = 0, b = 0, n = 0;
+      for (const pi of hits) { r += rgba[pi]; g += rgba[pi + 1]; b += rgba[pi + 2]; n++; }
+      return n ? [r / n, g / n, b / n] : null;
+    };
+    for (let yy = 0; yy < crop.h; yy++) {
+      const hitsL = [], hitsR = [];
+      for (let b = 0; b < BAND && b < crop.w; b++) {
+        if (subAlpha[yy * crop.w + b] >= GATE) hitsL.push(((y0 + yy) * w + x0 + b) * 4);
+        if (subAlpha[yy * crop.w + crop.w - 1 - b] >= GATE) hitsR.push(((y0 + yy) * w + x1 - b) * 4);
+      }
+      if (x0 > 0 && hitsL.length) refL[y0 + yy] = avgRef(hitsL);
+      if (x1 < w - 1 && hitsR.length) refR[y0 + yy] = avgRef(hitsR);
+    }
+    for (let xx = 0; xx < crop.w; xx++) {
+      const hitsT = [], hitsB = [];
+      for (let b = 0; b < BAND && b < crop.h; b++) {
+        if (subAlpha[b * crop.w + xx] >= GATE) hitsT.push(((y0 + b) * w + x0 + xx) * 4);
+        if (subAlpha[(crop.h - 1 - b) * crop.w + xx] >= GATE) hitsB.push(((y1 - b) * w + x0 + xx) * 4);
+      }
+      if (y0 > 0 && hitsT.length) refT[x0 + xx] = avgRef(hitsT);
+      if (y1 < h - 1 && hitsB.length) refB[x0 + xx] = avgRef(hitsB);
+    }
+  }
+  const colorOk = (x, y, refs) => {
+    if (!rgba) return true; // 未传 rgba → 跳过颜色闸（单测/旧调用兼容）
+    for (const ref of refs) {
+      if (!ref) continue;
+      const i = (y * w + x) * 4;
+      const dr = rgba[i] - ref[0], dg = rgba[i + 1] - ref[1], db = rgba[i + 2] - ref[2];
+      if (Math.sqrt(dr * dr + dg * dg + db * db) > COLOR_GATE) return false;
+    }
+    return true;
+  };
+
+  // 端侧值的「保留口径」（见函数头注释第 3 条）：
+  //   有 rgba → 门控 + 颜色一致性（人像延续近不透明；墙色清零）
+  //   无 rgba → 门控 + 端侧 ≥GATE + 密度闸 + S 曲线固化（兜底）
+  const CONTINUATION_ALPHA = 0.92; // 颜色确认的人像延续：近不透明（西装/衬衫延续带）
+  const gatedLocal = (x, y, edgeL, edgeR, edgeT, edgeB) => {
+    const i = y * w + x;
+    const refs = [];
+    if (edgeL) { if (!rowGateL[y]) return 0; if (refL[y]) refs.push(refL[y]); }
+    if (edgeR) { if (!rowGateR[y]) return 0; if (refR[y]) refs.push(refR[y]); }
+    if (edgeT) { if (!colGateT[x]) return 0; if (refT[x]) refs.push(refT[x]); }
+    if (edgeB) { if (!colGateB[x]) return 0; if (refB[x]) refs.push(refB[x]); }
+    if (rgba) {
+      if (!refs.length) return 0; // 门开但无参考色（理论不发生）→ 保守清零
+      return colorOk(x, y, refs) ? CONTINUATION_ALPHA : 0;
+    }
+    const lv = fullAlpha[i];
+    if (lv < GATE) return 0;
+    if (densLocal[i] < MIN_LOCAL_DENSITY) return 0;
+    return firm(lv);
+  };
+
+  // ② 区域外：门控 + 阈值后的端侧固化值（人跨出的行/列才保留，其余归零）
+  const out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (x >= x0 && x <= x1 && y >= y0 && y <= y1) continue; // 区域内下一步填
+      out[y * w + x] = gatedLocal(x, y, x < x0, x > x1, y < y0, y > y1);
+    }
+  }
+
+  // ③ 区域内：云端 alpha；靠图像内侧的边界留 6px 羽化带，与同口径门控端侧值平滑过渡
+  for (let yy = 0; yy < crop.h; yy++) {
+    for (let xx = 0; xx < crop.w; xx++) {
+      const i = (y0 + yy) * w + (x0 + xx);
+      const cv = subAlpha[yy * crop.w + xx];
+      // 只在与「图内区域」相邻的边羽化；贴图边的边界外没有像素，无需羽化
+      let d = Infinity;
+      const nearL = x0 > 0 && xx < FEATHER;
+      const nearR = x1 < w - 1 && crop.w - 1 - xx < FEATHER;
+      const nearT = y0 > 0 && yy < FEATHER;
+      const nearB = y1 < h - 1 && crop.h - 1 - yy < FEATHER;
+      if (x0 > 0) d = Math.min(d, xx);
+      if (x1 < w - 1) d = Math.min(d, crop.w - 1 - xx);
+      if (y0 > 0) d = Math.min(d, yy);
+      if (y1 < h - 1) d = Math.min(d, crop.h - 1 - yy);
+      if (d >= FEATHER) { out[i] = cv; continue; }
+      const t = (d + 1) / (FEATHER + 1);
+      const wgt = t * t * (3 - 2 * t);
+      const lv = gatedLocal(x0 + xx, y0 + yy, nearL, nearR, nearT, nearB);
+      out[i] = cv * wgt + lv * (1 - wgt);
+    }
   }
   return out;
 }
@@ -468,10 +643,14 @@ async function cloudMatting({ rgba, alpha, width, height, adapter, consents = []
 
   const subAlphaRaw = decodeAlphaB64(resp.alphaB64, upW * upH);
   // 若上传时降采样过，把 alpha 双线性放大回裁剪区原始尺寸再贴回全图
-  const subAlpha = downSampled
+  const subAlphaUp = downSampled
     ? upscaleAlpha(subAlphaRaw, upW, upH, crop.w, crop.h)
     : subAlphaRaw;
-  const enhanced = placeBack(alpha, subAlpha, crop, width, height);
+  // 去斑（#66）：scoremap 软 alpha 的孤立背景噪声清零后再参与判责与贴回，
+  // 否则复杂背景图合成后矩形区内会看到斑驳的原背景残影
+  const subAlpha = cleanCloudAlpha(subAlphaUp, crop.w, crop.h);
+  // 传入 rgba：启用颜色一致性闸（区域外保留的躯干延续必须与边界云端前景同色，#66）
+  const enhanced = placeBack(alpha, subAlpha, crop, width, height, rgba);
   // 子图尺度公平比较：云端只看到裁剪区域(见 PRD 第171行仅上传裁剪人像区域)，
   // 与全图像素数无关，避免尺度差异造成的歧义占比偏差误判「上云变差」。
   // 云端身份：真模型（baidu/birefnet）走「前景占比合理性」判据，避免软 alpha 被误杀
@@ -510,7 +689,7 @@ module.exports = {
   // 序列化
   toBase64, fromBase64, encodeAlphaB64, decodeAlphaB64,
   // 裁剪
-  cropForeground, cropRect, placeBack,
+  cropForeground, cropRect, placeBack, cleanCloudAlpha,
   // 上传区域选择（三级策略：人脸区域 → alpha bbox → 居中回退，问题台账 #64）
   pickUploadRegion, MIN_FG_RATIO, MIN_BBOX_DENSITY, MAX_BBOX_RATIO,
   // 境内断言
