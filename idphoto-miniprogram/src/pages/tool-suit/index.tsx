@@ -78,7 +78,9 @@ export default function ToolSuit() {
   const specs = listSpecs();
   const [tplIndex, setTplIndex] = useState(0);
   const [bg, setBg] = useState<BgKey>('blue');
-  const [specIndex, setSpecIndex] = useState(-1); // -1 = 保持原图尺寸（不裁剪）
+  // R1：换装只针对 specLibrary 现有 9 个标准规格画布 → 规格【必选】，默认一寸。
+  // （"保持原图尺寸"选项废止：未定规格就没有物理标尺，西装尺寸只能靠猜，正是四轮失败的病根。）
+  const [specIndex, setSpecIndex] = useState(0);
   const [dpi, setDpi] = useState(DPI_STD);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
@@ -474,26 +476,25 @@ export default function ToolSuit() {
         </View>
       </View>
 
-      {/* 输出尺寸（可选规格）+ 输出档位（dpi） */}
+      {/* 输出尺寸（R1：换装必须锚定标准规格画布，默认一寸）+ 输出档位（dpi） */}
       <View style={{ margin: '12px 0' }}>
-        <Text>输出尺寸（可选）：</Text>
+        <Text>输出尺寸：</Text>
         <Picker
           mode='selector'
-          range={['保持原图尺寸', ...specs.map((s: any) => `${s.name}（${s.note}）`)]}
-          value={specIndex < 0 ? 0 : specIndex + 1}
+          range={specs.map((s: any) => `${s.name}（${s.note}）`)}
+          value={specIndex < 0 ? 0 : specIndex}
           onChange={(e: any) => {
-            const v = Number(e.detail.value);
-            const nextIdx = v === 0 ? -1 : v - 1;
+            const nextIdx = Number(e.detail.value);
             setSpecIndex(nextIdx);
             reprocess({ specIndex: nextIdx }); // 任务 #50：换规格自动重跑
           }}
         >
           <View style={{ color: '#438EDB', padding: '4px 0' }}>
-            {specIndex < 0 ? '保持原图尺寸' : `${specs[specIndex].name} ▾`}
+            {specIndex < 0 ? '一寸' : `${specs[specIndex].name} ▾`}
           </View>
         </Picker>
         {/* 输出档位（dpi）：300/600 两档全部免费（owner 2026-10-23 决策，不设付费档） */}
-        {specIndex >= 0 ? (
+        {true ? (
           <View style={{ marginTop: '8px' }}>
             <Text>输出档位：</Text>
             <View style={{ display: 'flex', flexDirection: 'row', marginTop: '4px' }}>
