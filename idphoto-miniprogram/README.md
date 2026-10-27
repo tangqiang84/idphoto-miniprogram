@@ -23,7 +23,7 @@ idphoto-miniprogram/
 │   │   └── __tests__/core.test.js   # 13 条单测
 │   ├── services/index.ts    # 业务聚合：复用 core + UI 辅助
 │   └── pages/
-│       ├── home/            # 首页工具箱（5 卡片入口）
+│       ├── home/            # 首页工具箱（6 卡片入口：T1–T6）
 │       ├── tool-idphoto/    # T1 一键证件照
 │       ├── tool-bg/         # T2 单独换底色
 │       ├── tool-suit/       # T3 AI 换装（独立授权）
