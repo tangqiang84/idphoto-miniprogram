@@ -9,6 +9,8 @@ const TOOLS = [
   { id: 'T3', title: 'AI 换装', desc: '职业装一键合成（独立授权）', icon: '👔', path: '/pages/tool-suit/index', tag: '换装' },
   { id: 'T4', title: '合规检测', desc: '只读检测头部占比/像素/KB/底色', icon: '✅', path: '/pages/tool-check/index', tag: '检测' },
   { id: 'T5', title: '规格转换', desc: '按规格裁剪 / 改 dpi / 压 KB', icon: '📐', path: '/pages/tool-spec/index', tag: '转换' },
+  // T6 冲印排版（PRD K1 独立工具）：首页入口此前缺失 → 任务 #49
+  { id: 'T6', title: '冲印排版', desc: '已做好的证件照平铺到相纸，导出可打印拼版图', icon: '🖨️', path: '/pages/tool-print/index', tag: '排版' },
 ];
 
 export default function Home() {

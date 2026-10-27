@@ -10,6 +10,8 @@ import {
   mmToPx,
   DEFAULT_MARGIN_MM,
   DEFAULT_GAP_MM,
+  decodeSrcParam,
+  resolveHandoff,
 } from '../../services';
 import { useImagePicker, type PickedImage } from '../../hooks/useImagePicker';
 
@@ -33,6 +35,31 @@ interface T6Result {
   fileKb: number;
 }
 
+/**
+ * 读取上游传来的成品图路径（?src=），**只负责取到原始字符串**，
+ * 解码与承接结论交给 core/printHandoff（纯函数，有单测）。
+ * 取参方式：用 getCurrentPages() 读页面实例 options（非 hook，避免 Taro.useRouter
+ * 在部分运行时/自动化环境下不可用导致整页崩），再回退到 getCurrentInstance().router.params。
+ */
+function readSrcParam(): string {
+  try {
+    const pages: any = (Taro as any).getCurrentPages ? (Taro as any).getCurrentPages() : [];
+    const cur: any = pages && pages[pages.length - 1];
+    const opt = cur && (cur.options || (cur.__route__ && cur.__route__.query));
+    if (opt && opt.src) return String(opt.src);
+  } catch (e) {
+    /* ignore */
+  }
+  try {
+    const inst: any = (Taro as any).getCurrentInstance ? (Taro as any).getCurrentInstance() : null;
+    const p = inst && inst.router && inst.router.params;
+    if (p && p.src) return String(p.src);
+  } catch (e) {
+    /* ignore */
+  }
+  return '';
+}
+
 export default function ToolPrint() {
   const specs = listSpecs();
   const papers = listPapers();
@@ -47,9 +74,32 @@ export default function ToolPrint() {
   const [msg, setMsg] = useState('');
   const [preview, setPreview] = useState('');
   const [result, setResult] = useState<T6Result | null>(null);
+  const [incoming, setIncoming] = useState('');
 
   const pick = useImagePicker((img: PickedImage) => setSrcImg(img));
   const paperLabel = getPaper(paperId);
+
+  // 承接上一步成品图：读不到（路径失效/被清理）时静默降级为「手动从相册选择」，绝不阻断
+  // 判定逻辑在 core/printHandoff（纯函数 + 单测），页面只做取参与调用。
+  useEffect(() => {
+    const raw = readSrcParam();
+    if (!raw) return;
+    (async () => {
+      let info: any = null;
+      try {
+        const decoded = decodeSrcParam(raw);
+        if (decoded) info = await Taro.getImageInfo({ src: decoded });
+      } catch (e) {
+        info = null;
+      }
+      const r = resolveHandoff(raw, info);
+      if (r.ok && r.width && r.height) {
+        setSrcImg({ path: r.src, width: r.width, height: r.height });
+      }
+      setIncoming(r.message);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 实时拼版：源图 / 规格 / 相纸 / 参考线任一变化即重算（带竞态保护）
   useEffect(() => {
@@ -220,6 +270,16 @@ export default function ToolPrint() {
     <View className='page'>
       <Text className='page__title'>冲印排版</Text>
       <Text className='page__hint'>上传已制作好的证件照，选规格与相纸，自动平铺成可打印拼版图。纯拼版，无需人脸授权。</Text>
+      {incoming ? (
+        <Text
+          style={{
+            display: 'block', fontSize: '12px', marginTop: '6px',
+            color: incoming.indexOf('未能') === 0 ? '#e53e3e' : '#2b6cb0',
+          }}
+        >
+          {incoming}
+        </Text>
+      ) : null}
 
       {/* 上传 */}
       <Button className='btn-primary' loading={busy} onClick={pick.pickAlbum}>

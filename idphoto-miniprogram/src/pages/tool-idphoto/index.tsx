@@ -448,6 +448,19 @@ export default function ToolIdPhoto() {
     }
   }
 
+  // PRD K1 入口①：从 T1 导出页「另存为排版版」进入 T6 冲印排版（承接已做好的证件照）
+  // 说明：只传导出图路径（临时文件），T6 侧读不到时自动降级为「手动从相册选择」，不阻断。
+  async function goPrintLayout() {
+    if (!preview) return;
+    try {
+      await Taro.navigateTo({
+        url: `/pages/tool-print/index?src=${encodeURIComponent(preview)}`,
+      });
+    } catch (e) {
+      Taro.showToast({ title: '打开冲印排版失败，请从首页进入', icon: 'none' });
+    }
+  }
+
   const bgOptions: { key: BgKey; label: string; color: string }[] = [
     { key: 'white', label: '白底', color: BG.white },
     { key: 'blue', label: '标准深蓝', color: BG.blue },
@@ -737,6 +750,13 @@ export default function ToolIdPhoto() {
             disabled={!picker.mirrorConfirmed || (suitApplied && !selfChecked)}
           >
             {suitApplied && !selfChecked ? '请先完成五官自检' : '保存到相册'}
+          </Button>
+          {/* PRD K1 入口①：另存为排版版 → T6 冲印排版（纯拼版，不需要人脸授权） */}
+          <Button
+            style={{ marginTop: '8px' }}
+            onClick={goPrintLayout}
+          >
+            🖨️ 另存为冲印排版（拼版打印）
           </Button>
         </View>
       ) : null}

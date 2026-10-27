@@ -85,12 +85,22 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       catch (e) { console.log('   navigateTo 失败:', e.message); }
     }
 
-    // 1. 首页断言
+    // 1. 首页断言（6 张卡片 = T1–T6，T6 冲印排版入口为任务 #49 新增）
     let page = await miniProgram.currentPage();
     const cards = await page.$$('.tool-card');
     await shot('01-home.png');
-    console.log(`1) 首页工具卡片数 = ${cards.length} ${cards.length >= 5 ? 'OK' : 'FAIL(应≥5)'}`);
-    if (cards.length < 5) throw new Error('首页卡片数异常，检查 home/index.tsx 或当前页面');
+    console.log(`1) 首页工具卡片数 = ${cards.length} ${cards.length >= 6 ? 'OK' : 'FAIL(应≥6)'}`);
+    if (cards.length < 6) throw new Error('首页卡片数异常，检查 home/index.tsx 或当前页面');
+    // 第 6 张必须是 T6 冲印排版（任务 #49 的回归护栏：入口不得再次丢失）
+    try {
+      const lastTxt = (await cards[cards.length - 1].text()) || '';
+      const ok6 = lastTxt.indexOf('冲印排版') >= 0;
+      console.log(`1.1) 第 ${cards.length} 张卡片 = "${lastTxt}" ${ok6 ? 'OK(冲印排版)' : 'FAIL(应为冲印排版)'}`);
+      if (!ok6) throw new Error('首页缺少 T6 冲印排版入口卡片');
+    } catch (e) {
+      if (String(e.message || '').indexOf('首页缺少') >= 0) throw e;
+      console.log('1.1) 读卡片文案失败（跳过该断言）:', e.message);
+    }
 
     // 2. 进 T1（tap 会触发页面切换，可能与本版本 automator 不兼容 → 失败则改 navigateTo）
     try {
@@ -156,6 +166,46 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     }
     await shot('02-t1.png');
 
+    // 6.5 可选：PRD K1 入口① —— T1 出图后「另存为冲印排版」应能带图进入 T6
+    // 用法：NODE_OPTIONS= node 工具链/smoke_auto.js --with-print
+    let printHandoff = 'skipped';
+    if (args.includes('--with-print')) {
+      const btns = await page.$$('button');
+      let target = null;
+      for (const b of btns) {
+        let t = '';
+        try { t = (await b.text()) || ''; } catch (_) {}
+        if (t.indexOf('另存为冲印排版') >= 0) { target = b; break; }
+      }
+      if (!target) {
+        printHandoff = 'FAIL(未找到「另存为冲印排版」按钮)';
+      } else {
+        try {
+          await target.tap();
+          await sleep(4000);
+          const st2 = await miniProgram.pageStack().catch(() => []);
+          const p6 = (st2[st2.length - 1] || {}).path || '';
+          const pg6 = await miniProgram.currentPage();
+          // 页面文本既可能在 <text> 也在 <button>（Taro Button 编译成 button）
+          let txt6 = '';
+          for (const sel of ['text', 'button']) {
+            try {
+              const vs = await pg6.$$(sel);
+              for (const v of vs) { try { txt6 += ((await v.text()) || ''); } catch (_) {} }
+            } catch (_) {}
+          }
+          const gotIncoming = txt6.indexOf('已接收上一步导出的证件照') >= 0;
+          printHandoff = p6 === 'pages/tool-print/index' && gotIncoming
+            ? 'OK(进入 T6 且已承接上一步证件照)'
+            : `FAIL(path=${p6}, 承接提示=${gotIncoming ? '有' : '无'})`;
+          await shot('03-t1-to-t6.png');
+        } catch (e) {
+          printHandoff = 'FAIL(' + e.message + ')';
+        }
+      }
+      console.log(`6.5) T1→T6 承接 = ${printHandoff}`);
+    }
+
     const auditLogs = logs.filter((l) => l.includes('[audit]'));
 
     if (SKIP_CONSENT) {
@@ -171,7 +221,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       process.exit(blocked ? 0 : 1);
     }
 
-    const pass = finished && msg.includes('完成') && errors.length === 0;
+    const pass =
+      finished &&
+      msg.includes('完成') &&
+      errors.length === 0 &&
+      (printHandoff === 'skipped' || printHandoff.indexOf('OK') === 0);
 
     console.log('\n===== 冒烟结果 =====');
     console.log('处理完成:', finished ? (msg.includes('完成') ? 'OK' : 'FAIL(失败文案)') : 'FAIL(超时45s)');

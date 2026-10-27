@@ -13,6 +13,7 @@ import { planHeadCrop, targetHeadRatio, HEAD_TOP_GAP_RATIO, CHIN_BOTTOM_GAP_RATI
 import { detectFace, measureHeadRatio, measureHeadMetrics, ratioWithinWindow } from './faceService';
 import { applyBeauty, COMPLIANCE_MODE, COMPLIANCE_MSG, BEAUTY_CATALOG, assertCompliance } from '../core/beauty';
 import { applyPatches, newStroke, addPoint, boundsOfStrokes } from '../core/alphaPatch';
+import { decodeSrcParam, handoffMessage, resolveHandoff } from '../core/printHandoff';
 import {
   EDGE_MODEL_CONFIG, configureEdgeModel, setOrtRuntime, getOrtRuntime,
   getEdgeSession, prepareModelForSegment, getModelStatus,
@@ -68,4 +69,6 @@ export {
   listPapers, getPaper, planLayout, mmToPx, PAPERS, DEFAULT_MARGIN_MM, DEFAULT_GAP_MM, sheetPixelSize,
   // 手动修补（任务 #42 / PRD B1 / T1-17）：笔刷涂改修正抠图 alpha
   applyPatches, newStroke, addPoint, boundsOfStrokes,
+  // T6 上游成品图承接（任务 #49 / PRD K1 入口①）：参数解码 + 承接结论 + 降级提示
+  decodeSrcParam, handoffMessage, resolveHandoff,
 };
