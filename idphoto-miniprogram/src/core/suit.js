@@ -163,13 +163,25 @@ function suitPlacement(bbox, headH, chinY, maxW) {
 //   双线性在两个方向都做插值，放大后边缘平滑，代价仅是每像素多几次乘加（可接受）。
 // 注意：alpha 通道单独插值会���致半透明边界的颜色渗染（premultiplied 问题），
 //   故对 RGB 与 A 分别插值后按 A 加权混合，避免出现黑边。
-function suitCompose(rgba, alpha, width, height, tpl, tplW, tplH, place) {
+function suitCompose(rgba, alpha, width, height, tpl, tplW, tplH, place, rotateDeg) {
   if (!rgba || !alpha || !tpl) throw new Error('suitCompose: 缺少 rgba/alpha/tpl');
   const out = new Uint8ClampedArray(rgba);
-  const x0 = Math.max(0, Math.round(place.x));
-  const y0 = Math.max(0, Math.round(place.y));
-  const x1 = Math.min(width, Math.round(place.x + place.w));
-  const y1 = Math.min(height, Math.round(place.y + place.h));
+  // 【P1 新增 rotateDeg】suitFitV2 会按实测肩线给出模板旋转角（限位 ±15°）。
+  // 旧调用不传 → 默认 0，行为与 v1 完全一致（零回归）。
+  // 合成方式：画布像素 → 绕放置框中心**逆旋转** → 放置框局部坐标 → 模板像素（双线性）。
+  // 遍历范围取旋转后的包围盒（保证旋转后四个角都被覆盖，不会缺角）。
+  const deg = typeof rotateDeg === 'number' && isFinite(rotateDeg) ? rotateDeg : 0;
+  const rad = (deg * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const cx = place.x + place.w / 2;
+  const cy = place.y + place.h / 2;
+  const halfDiagX = (Math.abs(place.w * cos) + Math.abs(place.h * sin)) / 2;
+  const halfDiagY = (Math.abs(place.w * sin) + Math.abs(place.h * cos)) / 2;
+  const x0 = Math.max(0, Math.round(cx - halfDiagX));
+  const y0 = Math.max(0, Math.round(cy - halfDiagY));
+  const x1 = Math.min(width, Math.round(cx + halfDiagX));
+  const y1 = Math.min(height, Math.round(cy + halfDiagY));
   if (x1 <= x0 || y1 <= y0) return out;
   // 模板坐标映射：放置框 → 模板像素（双线性）
   const rx = tplW / place.w;
@@ -192,11 +204,25 @@ function suitCompose(rgba, alpha, width, height, tpl, tplW, tplH, place) {
     };
   };
   for (let y = y0; y < y1; y++) {
-    const fy = (y - place.y + 0.5) * ry - 0.5;
+    // 未旋转时：局部坐标就是「相对放置框左上角」（与 v1 口径逐像素一致，零回归）
+    const fyNoRot = (y - place.y + 0.5) * ry - 0.5;
     for (let x = x0; x < x1; x++) {
       const di = y * width + x;
       if (alpha[di] <= 0.5) continue; // 只贴人体区域
-      const fx = (x - place.x + 0.5) * rx - 0.5;
+      let fx;
+      let fy;
+      if (deg === 0) {
+        fx = (x - place.x + 0.5) * rx - 0.5;
+        fy = fyNoRot;
+      } else {
+        // 逆旋转：把画布点绕放置框中心转回「未旋转」的局部坐标，再映射到模板
+        const lx = x + 0.5 - cx;
+        const ly = y + 0.5 - cy;
+        const ux = lx * cos + ly * sin;
+        const uy = -lx * sin + ly * cos;
+        fx = (ux + place.w / 2) * rx - 0.5;
+        fy = (uy + place.h / 2) * ry - 0.5;
+      }
       const t = sampleTpl(fx, fy);
       const ta = t.a / 255;
       if (ta <= 0.001) continue; // 模板透明处不覆盖

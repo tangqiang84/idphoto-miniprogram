@@ -5,18 +5,20 @@ import {
   requiredConsents, buildConsentRecord,
   segment, composite, check, applyPatches,
   alphaBBox, tightBBox, estimateHeadByShoulder, suitPlacement, suitCompose,
+  fitSuitV2, checkComposition, SUIT_REASON,
   buildCloudFnAdapter,
   measureHeadMetrics, ratioWithinWindow,
-  planOutput, planWindowOutput, planDetectImage,
-  planHeadCrop, targetHeadRatio,
-  collectEdgeSamples,
+  // 构图与裁切：T1 已改用共享管线 services/pipeline.ts（F1），此处只保留仍在本页用到的导出
   BG, getSpec, getPixelSize, listSpecs, specLabel,
   DPI_STD, DPI_HD,
   backendLabel,
   withTimeout, IMG_LOAD_TIMEOUT_MS,
 } from '../../services';
 import { useImagePicker } from '../../hooks/useImagePicker';
+import { useConsentGate } from '../../hooks/useConsentGate';
 import { applyBeauty } from '../../services';
+import { requestPoseKeypoints, encodeCanvasToJpegB64 } from '../../services/poseService';
+import { prepareWorkCanvas } from '../../services/pipeline';
 import BeautyControl, { type BeautyState } from '../../components/BeautyControl';
 import AlphaPatch from '../../components/AlphaPatch';
 
@@ -71,6 +73,8 @@ export default function ToolIdPhoto() {
   const consentItems = requiredConsents(TOOL);
   const [granted, setGranted] = useState<string[]>([]);
   const rec = buildConsentRecord(TOOL, granted);
+  // F3（P1）：协议闸门前移到选图入口（run() 内的 rec.ready 保留为兜底第二道）
+  const gate = useConsentGate(rec.ready, '一键证件照');
   const picker = useImagePicker((img, q) => {
     setLastPick(img);
     run(img.path, img.width, img.height, { forceCloud: shouldForceCloud(q) });
@@ -157,82 +161,25 @@ export default function ToolIdPhoto() {
       const spec = getSpec(specs[specIdx].id);
       const target = getPixelSize(spec!, dpiVal)!;
 
-      // 把一张图片画进离屏 canvas 并取回 RGBA 像素（微信 canvas 通用取像素姿势）
-      const loadRgba = async (cw: number, ch: number, draw: (ctx: any, img: any) => void) => {
-        const cv = anyTaro.createOffscreenCanvas({ type: '2d', width: cw, height: ch });
-        const cx = cv.getContext('2d');
-        const im = cv.createImage();
-        // #70：主图加载加超时硬闸门（真机双不触发 → 永久转圈，见问题台账 #70）
-        await withTimeout(
-          new Promise<void>((resolve, reject) => {
-            im.onload = () => resolve();
-            im.onerror = (e: any) => reject(e || new Error('图片加载失败'));
-            im.src = path;
-          }),
-          IMG_LOAD_TIMEOUT_MS,
-          '图片加载超时',
-        );
-        draw(cx, im);
-        const id = cx.getImageData(0, 0, cw, ch);
-        return { canvas: cv, ctx: cx, imageData: id, rgba: id.data };
-      };
-
-      // 2. 人脸检测（任务 #24 / PRD B2 智能裁切的前置）
+      // 2. 人脸检测（任务 #24 / PRD B2 智能裁切的前置）——已下沉到共享管线：
       //    检测在【检测用图】上做（长边 ≤ DETECT_EDGE=1200）：人脸关键点需要足够像素细节，
       //    同时避免为检测而绘制全尺寸大图（RGBA 内存 = 长边²×4）。
-      //    此处拿到的头顶/下巴/面部中心都是检测用图坐标，需按 1/scale 换算回原图坐标。
-      setMsg('识别人脸…');
-      const det = planDetectImage(srcW, srcH);
-      if (!det) throw new Error('图片尺寸读取失败，请换一张照片');
-      const detImg = await loadRgba(det.width, det.height, (cx, im) => {
-        cx.drawImage(im, 0, 0, det.width, det.height);
+      //    管线拿到的头顶/下巴/面部中心已换算回**原图坐标**（srcMetrics）。
+      // 2~4. 【F1 共享管线（P1 / 台账 #75）】识别人脸 → 反解裁剪框 → 区域化工作画布 → 取像素。
+      //      这段逻辑原在本页（任务 #24 落地），现抽到 services/pipeline.ts 由 T1/T2/T3 共用，
+      //      保证三页「先裁剪到规格、再抠图」走**同一份实现**（避免同产品两种流程）。
+      const prep = await prepareWorkCanvas({
+        path, srcW, srcH, spec: spec!, dpi: dpiVal, target, onMsg: setMsg,
       });
-      const fm = await measureHeadMetrics(detImg.rgba, det.width, det.height, null);
-      // 换算回原图坐标（检测用图是原图的等比缩放，比例不变）
-      const srcMetrics = fm.ok && fm.metrics
-        ? {
-          ...fm.metrics,
-          crownY: fm.metrics.crownY / det.scale,
-          chinY: fm.metrics.chinY / det.scale,
-          faceCenterX: typeof fm.metrics.faceCenterX === 'number'
-            ? fm.metrics.faceCenterX / det.scale
-            : undefined,
-        }
-        : null;
-
-      // 3. 反解裁剪框（按规格头占比区间中值，core/headCrop.js）
-      //    检测不可用时 srcMetrics 为 null → 降级为「居中裁剪」，并在页面提示。
-      let crop: any = null;
-      let plan: any;
-      if (srcMetrics) {
-        crop = planHeadCrop({
-          workW: srcW,
-          workH: srcH,
-          targetW: target.width,
-          targetH: target.height,
-          crownY: srcMetrics.crownY,
-          chinY: srcMetrics.chinY,
-          faceCenterX: srcMetrics.faceCenterX,
-          ratioMin: spec!.headHeightRatioMin,
-          ratioMax: spec!.headHeightRatioMax,
-        });
-      }
-
-      if (crop) {
-        // 3.1 区域化工作画布：只把「要用到的那块」放大到足够像素，避免成品是放大糊图
-        plan = planWindowOutput(srcW, srcH, target.width, target.height, {
-          sx: crop.sx, sy: crop.sy, sw: crop.sw, sh: crop.sh,
-        });
-      }
-      if (!plan) {
-        // 降级路径：未检出人脸 / 反解失败 → 沿用「按目标宽高比居中裁剪」
-        plan = planOutput(srcW, srcH, target.width, target.height);
-      }
-      if (!plan) throw new Error('图片尺寸读取失败，请换一张照片');
-
-      const w = plan.workW;
-      const h = plan.workH;
-      setPlanNote(plan.reason || '');
+      const w = prep.w;
+      const h = prep.h;
+      const plan = prep.plan;
+      const crop = prep.crop;
+      const srcMetrics = prep.srcMetrics;
+      const bgSamples = prep.bgSamples;
+      const work = { canvas: prep.canvas, rgba: prep.rgba };
+      const rgba = prep.rgba;
+      setPlanNote(prep.reason || '');
       setCropInfo(crop
         ? {
           auto: true,
@@ -243,18 +190,6 @@ export default function ToolIdPhoto() {
           notes: crop.notes || [],
         }
         : { auto: false, notes: ['未检出人脸，已按画面居中裁剪；建议正对镜头、面部清晰的照片'] });
-
-      // 4. 取工作画布像素
-      //    自动裁剪路径：画「裁剪窗 + 余量」这一块（planWindowOutput 已算好源图区域）
-      //    降级路径：画整图（planOutput 的工作画布 = 整图等比缩放）
-      const work = await loadRgba(w, h, (cx, im) => {
-        if (plan.regionX != null) {
-          cx.drawImage(im, plan.regionX, plan.regionY, plan.regionW, plan.regionH, 0, 0, w, h);
-        } else {
-          cx.drawImage(im, 0, 0, w, h);
-        }
-      });
-      const rgba = work.rgba;
 
       // 4.0 受限美颜（PRD E 章 / AC2，任务 #38）：在抠图前对原图做轻度磨皮/美白/亮眼。
       //     仅当用户开启美颜时执行；合规模式由 core/beauty.js 内的 assertCompliance 兜底硬拦截禁止项。
@@ -271,11 +206,9 @@ export default function ToolIdPhoto() {
         }
       }
 
-      // 4.1 背景色采样集（任务 #24）
-      // 经典抠图基线的背景色由「画布四边环带」估计。自动裁剪时工作画布只含
-      // 「裁剪窗 + 余量」，四边可能压在头发/肩膀上 → 背景色估计失准。
-      // 故在【检测用图】（覆盖整张原图）上采一次注入，行为与整图抠图一致。
-      const bgSamples = crop ? collectEdgeSamples(detImg.rgba, det.width, det.height, 2) : undefined;
+      // 4.1 背景色采样集已由共享管线给出（prep.bgSamples）：
+      //     自动裁剪时工作画布四边可能压在头发/肩膀上 → 在【检测用图】上采样注入，
+      //     行为与整图抠图一致（任务 #24 口径，搬到 services/pipeline.ts 后逻辑不变）。
 
       // 5. 抠图：端侧优先，置信不足自动走 CloudBase 云函数增强（需 faceCloudEnhance 授权）
       setMsg('抠图处理中…');
@@ -305,26 +238,56 @@ export default function ToolIdPhoto() {
       //   仅在「应用换装」且已勾选 suitSwap 单独授权时执行；否则使用原图 RGBA（零回归）。
       let exportRgba: Uint8ClampedArray = workRgbaCopy;
       let suitAppliedNow = false;
+      // P1：换装被跳过的原因（非目标构图 / 引擎拒绝）——如实上状态行，不静默
+      let suitSkipReason = '';
       if (wantSuit && granted.includes('suitSwap')) {
         setMsg('合成职业装…');
-        // #69：tightBBox 收紧 + chinY 锚定（同 T3；alphaBBox 的 min/max 会被云端
-        // alpha 噪声前景撑爆，撑爆的 bbox 把换装定位带偏 → 盖脸/变形）
+        // #69：tightBBox 收紧（alphaBBox 的 min/max 会被云端 alpha 噪声前景撑爆，
+        // 撑爆的 bbox 把换装定位带偏 → 盖脸/变形）
         const bbox = tightBBox(seg.alpha, w, h) || alphaBBox(seg.alpha, w, h);
         if (bbox) {
           const headRes = await measureHeadMetrics(workRgbaCopy, w, h, bbox);
-          const headH = headRes.ok && headRes.headLengthPx ? headRes.headLengthPx : bbox.h * 0.30;
-          const chinY = headRes.ok && headRes.metrics ? headRes.metrics.chinY : null;
-          // #69：estimate 路径肩线法修正（同 T3；0.3×bbox.h 在胸像特写下低估一半会盖眼）
-          let suitHeadH = headH;
-          let suitChinY = chinY;
-          if (headRes.ok && headRes.source === 'estimate') {
-            const sh = estimateHeadByShoulder(seg.alpha, w, h, bbox);
-            if (sh) { suitHeadH = sh.headH; suitChinY = sh.shoulderY; }
+          // P1（#73/#74）：几何改由 suitFitV2 求解 —— 实测信号（L1 pose / L2 face）+ 规格物理标尺，
+          // 不再用 v1 的「0.30×bbox.h 估算 + 行宽突变」猜测链（四轮失败的结构性根因）。
+          const faceSig = headRes.ok && headRes.metrics ? {
+            chinY: headRes.metrics.chinY,
+            crownY: headRes.metrics.crownY,
+            headH: headRes.headLengthPx,
+            faceCenterX: headRes.metrics.faceCenterX,
+            source: headRes.source === 'landmarks' ? 'landmarks' : 'estimate',
+          } : null;
+          let poseSig: any = null;
+          let poseReason: string | null = null;
+          const jpegB64 = encodeCanvasToJpegB64(work.canvas);
+          if (jpegB64) {
+            const pr = await requestPoseKeypoints({
+              imageB64: jpegB64, width: w, height: h,
+              region: { x: 0, y: 0, w, h }, canvasW: w, canvasH: h,
+            });
+            if (pr.ok && pr.pose) poseSig = pr.pose;
+            else poseReason = pr.reason;
+          } else {
+            poseReason = 'posekey:encode_failed';
           }
-          const tpl = await loadTemplatePixels(SUIT_TEMPLATES[suitTplIndex].src as any);
-          const place = suitPlacement(bbox, suitHeadH, suitChinY, w);
-          exportRgba = suitCompose(workRgbaCopy, seg.alpha, w, h, tpl.data, tpl.w, tpl.h, place);
-          suitAppliedNow = true;
+          console.log('[audit]', {
+            stage: 'pose_signal', ok: !!poseSig, reason: poseReason,
+            model: poseSig ? poseSig.model : null, latencyMs: poseSig ? poseSig.latencyMs : null,
+          });
+
+          const comp = checkComposition({ face: faceSig, pose: poseSig, bbox });
+          const fit = comp.ok
+            ? fitSuitV2({ spec: spec as any, canvasW: w, canvasH: h, face: faceSig, pose: poseSig, bbox })
+            : { ok: false, reason: SUIT_REASON.UNSUPPORTED, message: comp.message, audit: {} } as any;
+          if (fit.ok) {
+            const tpl = await loadTemplatePixels(SUIT_TEMPLATES[suitTplIndex].src as any);
+            exportRgba = suitCompose(workRgbaCopy, seg.alpha, w, h, tpl.data, tpl.w, tpl.h, fit.place, fit.rotateDeg);
+            suitAppliedNow = true;
+            console.log('[audit]', Object.assign({ stage: 'suit_fit_v2', ok: true }, fit.audit));
+          } else {
+            // R1/契约 7：非目标构图或引擎拒绝 → 不换装，如实提示（不猜着摆、不静默出图）
+            suitSkipReason = fit.message + '（' + fit.reason + '）';
+            console.log('[audit]', { stage: 'suit_fit_v2', ok: false, reason: fit.reason, audit: fit.audit });
+          }
         }
       }
       setSuitApplied(suitAppliedNow);
@@ -381,7 +344,10 @@ export default function ToolIdPhoto() {
         headHeightRatio: headRatio != null ? headRatio : undefined,
       });
       setResult(cr);
-      setMsg(`完成（${backendLabel(seg.backend)}${seg.degraded ? `，云端不可用已降级${seg.cloudError ? '：' + String(seg.cloudError).slice(0, 60) : ''}` : ''}）`);
+      setMsg(
+        `完成（${backendLabel(seg.backend)}${seg.degraded ? `，云端不可用已降级${seg.cloudError ? '：' + String(seg.cloudError).slice(0, 60) : ''}` : ''}）` +
+        (suitSkipReason ? ` · 未换装：${suitSkipReason}` : ''),
+      );
     } catch (e: any) {
       const m = String((e && e.message) || e);
       if (m.startsWith('AC5')) {
@@ -561,9 +527,19 @@ export default function ToolIdPhoto() {
     <View className='page'>
       <Text className='page__title'>一键证件照</Text>
 
-      {/* 授权（默认不勾选，未集齐不启动处理） */}
-      <View className='consent'>
+      {/* 授权（默认不勾选，未集齐不启动处理；F3：未勾选则选图入口不可点） */}
+      <View
+        className='consent'
+        style={gate.hinted
+          ? { border: '2px solid #e07b00', borderRadius: '8px', padding: '10px', background: '#fff8ec' }
+          : undefined}
+      >
         <Text className='consent__h'>需授权（{granted.length}/{consentItems.length}）</Text>
+        {gate.hinted ? (
+          <Text style={{ display: 'block', fontSize: '12px', color: '#e07b00', margin: '4px 0 6px' }}>
+            请先勾选下列全部授权，才能选择照片或拍照（先同意、后收集）
+          </Text>
+        ) : null}
         {consentItems.map((c: any) => {
           const on = granted.includes(c.id);
           return (
@@ -572,7 +548,7 @@ export default function ToolIdPhoto() {
               className='consent__item'
               onClick={() => toggleConsent(c.id)}
               style={{
-                border: on ? '1px solid #438EDB' : '1px solid #ddd',
+                border: on ? '1px solid #438EDB' : (gate.hinted ? '1px solid #e07b00' : '1px solid #ddd'),
                 background: on ? '#eef5fd' : '#fff',
                 padding: '8px',
                 marginBottom: '6px',
@@ -689,10 +665,20 @@ export default function ToolIdPhoto() {
         ))}
       </View>
 
-      <Button className='btn-primary' loading={busy} onClick={picker.pickAlbum}>
-        {busy ? '处理中…' : '从相册选择'}
+      {/* F3（P1 / 台账 #76）：选图前协议闸门 —— 未集齐授权，选图/拍摄入口不可达 */}
+      <Button
+        className='btn-primary'
+        loading={busy}
+        disabled={gate.blocked}
+        onClick={() => gate.gate(picker.pickAlbum)}
+      >
+        {busy ? '处理中…' : (gate.blocked ? '请先勾选授权' : '从相册选择')}
       </Button>
-      <Button className='btn-camera' onClick={picker.openCamera}>
+      <Button
+        className='btn-camera'
+        disabled={gate.blocked}
+        onClick={() => gate.gate(picker.openCamera)}
+      >
         📷 拍摄（引导框）
       </Button>
 

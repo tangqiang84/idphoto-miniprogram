@@ -6,6 +6,7 @@ import {
   segment, composeAndExportImage,
   buildCloudFnAdapter,
   alphaBBox, tightBBox, estimateHeadByShoulder, suitPlacement, suitCompose,
+  fitSuitV2, checkComposition, SUIT_REASON,
   measureHeadMetrics,
   planOutput,
   BG, getSpec, getPixelSize, listSpecs,
@@ -13,7 +14,10 @@ import {
   backendLabel,
   withTimeout, IMG_LOAD_TIMEOUT_MS,
 } from '../../services';
+import { requestPoseKeypoints, encodeCanvasToJpegB64 } from '../../services/poseService';
+import { prepareWorkCanvas } from '../../services/pipeline';
 import { useImagePicker } from '../../hooks/useImagePicker';
+import { useConsentGate } from '../../hooks/useConsentGate';
 
 // T3 单独 AI 换装：核心功能（PRD D 章），须三项独立授权（I1/J3：faceLocal+faceCloudEnhance+suitSwap）
 // 技术路线（owner 2026-10-23 决策）：端侧贴图合成 MVP —— 自绘透明 PNG 西装模板 + 头肩几何贴合，
@@ -58,6 +62,8 @@ export default function ToolSuit() {
   const consentItems = requiredConsents(TOOL);
   const [granted, setGranted] = useState<string[]>([]);
   const rec = buildConsentRecord(TOOL, granted);
+  // F3（P1）：协议闸门前移到选图入口（run() 内的 rec.ready 保留为兜底第二道）
+  const gate = useConsentGate(rec.ready, 'AI 换装');
   const picker = useImagePicker((img, q) =>
     run(img.path, img.width, img.height, { forceCloud: shouldForceCloud(q) }),
   );
@@ -111,51 +117,60 @@ export default function ToolSuit() {
     setSelfChecked(false);
     setMsg('读取图片…');
     setPlanNote('');
+    // P1：换装被跳过的原因（R1 未选规格 / 非目标构图 / 引擎拒绝）——如实上状态行，不静默
+    let suitSkippedReason = '';
     try {
       const anyTaro: any = Taro;
       if (typeof anyTaro.createOffscreenCanvas !== 'function') {
         throw new Error('当前基础库不支持离屏 canvas，请升级基础库到 2.16.1+');
       }
 
-      // 2. 规划输出构图（选规格时按目标像素动态提升工作图，含 600dpi）
+      // 2. 规划输出构图 + 取工作画布像素
+      //    【F1（P1 / 台账 #75）】选了规格 → 走共享管线**先裁剪到规格再抠图**
+      //    （matting 在最终构图内运行，alpha 噪声不外溢；与 R1「换装锚定规格画布」同向）。
       //    取图已剥离到 useImagePicker（相册 picker.pickAlbum / 拍摄 CameraGuide，PRD A1 引导框）。
       let w: number, h: number;
       let plan: any = null;
+      let canvas: any;
+      let rgba: Uint8ClampedArray;
+      let bgSamples: any = undefined;
       if (specIdx >= 0) {
-        const target = getPixelSize(getSpec(specs[specIdx].id)!, dpiVal)!;
-        plan = planOutput(srcW, srcH, target.width, target.height);
-        if (!plan) throw new Error('图片尺寸读取失败，请换一张照片');
-        w = plan.workW;
-        h = plan.workH;
-        setPlanNote(plan.reason || '');
+        const specObj = getSpec(specs[specIdx].id)!;
+        const target = getPixelSize(specObj, dpiVal)!;
+        const prep = await prepareWorkCanvas({
+          path, srcW, srcH, spec: specObj, dpi: dpiVal, target, onMsg: setMsg,
+        });
+        w = prep.w; h = prep.h; plan = prep.plan; canvas = prep.canvas; rgba = prep.rgba;
+        bgSamples = prep.bgSamples;
+        setPlanNote(prep.reason || '');
       } else {
+        // 未选规格：沿用旧路径（整图等比缩放，输出保持原图尺寸）
+        // —— 是否强制规格仍待 owner 拍板（台账 #81），本版不擅自改变默认值
         const scale = Math.min(1, 800 / Math.max(srcW, srcH));
         w = Math.max(1, Math.round(srcW * scale));
         h = Math.max(1, Math.round(srcH * scale));
+        canvas = anyTaro.createOffscreenCanvas({ type: '2d', width: w, height: h });
+        const ctx = canvas.getContext('2d');
+        const img = canvas.createImage();
+        // #70：主图加载加超时硬闸门（同 loadTemplatePixels，真机双不触发 → 永久转圈）
+        await withTimeout(
+          new Promise<void>((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = (e: any) => reject(e || new Error('图片加载失败'));
+            img.src = path;
+          }),
+          IMG_LOAD_TIMEOUT_MS,
+          '图片加载超时',
+        );
+        ctx.drawImage(img, 0, 0, w, h);
+        rgba = ctx.getImageData(0, 0, w, h).data;
       }
-
-      // 3. 离屏 canvas 取像素
-      const canvas = anyTaro.createOffscreenCanvas({ type: '2d', width: w, height: h });
-      const ctx = canvas.getContext('2d');
-      const img = canvas.createImage();
-      // #70：主图加载加超时硬闸门（同 loadTemplatePixels，真机双不触发 → 永久转圈）
-      await withTimeout(
-        new Promise<void>((resolve, reject) => {
-          img.onload = () => resolve();
-          img.onerror = (e: any) => reject(e || new Error('图片加载失败'));
-          img.src = path;
-        }),
-        IMG_LOAD_TIMEOUT_MS,
-        '图片加载超时',
-      );
-      ctx.drawImage(img, 0, 0, w, h);
-      const imageData = ctx.getImageData(0, 0, w, h);
-      const rgba = imageData.data;
 
       // 4. 抠图（复用共享链路，置信不足且已授权则上云增强）
       setMsg('抠图处理中…');
       const seg: any = await segment({
         rgba, width: w, height: h,
+        bgSamples,
         cloud: { adapter: buildCloudFnAdapter() },
         consents: granted,
         audit: (meta: any) => console.log('[audit]', meta),
@@ -171,39 +186,80 @@ export default function ToolSuit() {
       const bbox = tightBBox(seg.alpha, w, h) || alphaBBox(seg.alpha, w, h);
       if (!bbox) throw new Error('未检测到人像，请换一张正面照片');
       const headRes = await measureHeadMetrics(rgba, w, h, bbox);
-      if (!headRes.ok || !headRes.headLengthPx) {
-        throw new Error('未检测到人脸，请换一张正面照片');
-      }
-      const headH = headRes.headLengthPx;
-      // 用局部变量而非 state：setState 是异步的，同一函数内后续读取 state 拿到的是旧值
-      // （原代码即有此隐患：setOutInfo 里的 headApprox 恒为初始值 null）
       const headIsEstimate = headRes.source === 'estimate';
-      // #69：estimate 路径（无 faceDetect 的环境，如模拟器）的 0.3×bbox.h 口径只在
-      // 标准半身构图成立——胸像特写会低估一半（images(3) 盖眼实锤）→ 肩线法修正
-      let suitHeadH = headH;
-      let suitChinY = headRes.metrics ? headRes.metrics.chinY : null;
-      if (headIsEstimate) {
-        const sh = estimateHeadByShoulder(seg.alpha, w, h, bbox);
-        if (sh) {
-          suitHeadH = sh.headH;
-          suitChinY = sh.shoulderY; // 肩线 ≈ 颈根/下颌线，直接作为西装顶锚点上方基准
-        }
+
+      // ---- 5.1 L1 姿态信号（P1：posekey 云函数实测双肩点）----
+      // 未部署/超时/无人 → 只记原因码，降级到 L2（face）+ 物理标尺，绝不静默造点（#74）。
+      setMsg('识别肩线…');
+      const faceSig = headRes.ok && headRes.metrics ? {
+        chinY: headRes.metrics.chinY,
+        crownY: headRes.metrics.crownY,
+        headH: headRes.headLengthPx,
+        faceCenterX: headRes.metrics.faceCenterX,
+        source: headRes.source === 'landmarks' ? 'landmarks' : 'estimate',
+      } : null;
+      let poseSig: any = null;
+      let poseReason: string | null = null;
+      const jpegB64 = encodeCanvasToJpegB64(canvas);
+      if (jpegB64) {
+        const pr = await requestPoseKeypoints({
+          imageB64: jpegB64, width: w, height: h,
+          region: { x: 0, y: 0, w, h }, canvasW: w, canvasH: h,
+        });
+        if (pr.ok && pr.pose) poseSig = pr.pose;
+        else poseReason = pr.reason;
+      } else {
+        poseReason = 'posekey:encode_failed';
       }
-      // 几何审计（#69）：换装定位三要素落 audit，供批量验收脚本抓取定位
+      console.log('[audit]', {
+        stage: 'pose_signal', ok: !!poseSig, reason: poseReason,
+        model: poseSig ? poseSig.model : null, latencyMs: poseSig ? poseSig.latencyMs : null,
+      });
+
+      // ---- 5.2 非目标构图拒绝（契约 7：全身/多人/横图明确拒绝，不猜着摆）----
+      if (!headRes.ok && !poseSig) {
+        throw new Error('未检测到人脸，请换一张正面标准证件照');
+      }
+      const comp = checkComposition({ face: faceSig, pose: poseSig, bbox });
+      if (!comp.ok) {
+        throw new Error(comp.message + '（' + SUIT_REASON.UNSUPPORTED + '）');
+      }
+
+      // 几何审计（#69 + P1）：换装定位三要素落 audit，供批量验收脚本抓取
       console.log('[audit]', {
         stage: 'suit_geometry', source: headRes.source,
         bbox: { x: bbox.x, y: bbox.y, w: bbox.w, h: bbox.h },
-        headH: suitHeadH, chinY: suitChinY, rawHeadH: headH,
+        headH: headRes.headLengthPx, chinY: headRes.metrics ? headRes.metrics.chinY : null,
         w, h,
       });
 
       // 6. 换装贴图合成（仅覆盖肩颈前景区，不触碰脸部像素 → PRD D2）
+      //    P1：几何改由 suitFitV2 求解（实测信号 + 规格物理标尺）；spec 缺失（未选规格）
+      //    时按 R1 不做换装——明确提示，不猜系数、不静默出图。
       setMsg('合成职业装…');
       const tpl = await loadTemplatePixels(SUIT_TEMPLATES[tplIndex].src as any);
-      // #69：chinY 锚定（西装顶=下巴+0.1 头长，不再用会冲过下巴的 0.85 系数），
-      // 宽度 clamp 到画布（防 bbox 噪声撑宽后 1.5× 爆出画布被拉伸变形）
-      const place = suitPlacement(bbox, suitHeadH, suitChinY, w);
-      const suited = suitCompose(rgba, seg.alpha, w, h, tpl.data, tpl.w, tpl.h, place);
+      let suited = new Uint8ClampedArray(rgba);
+      let fitInfo: any = null;
+      const specForFit = specIdx >= 0 ? getSpec(specs[specIdx].id) : null;
+      const fit = fitSuitV2({
+        spec: specForFit as any,
+        canvasW: w,
+        canvasH: h,
+        face: faceSig,
+        pose: poseSig,
+        bbox,
+      });
+      if (!fit.ok) {
+        // 未选规格 → R1 范围约束：不换装，如实提示（不阻断出图，用户可选规格后重跑）
+        suitSkippedReason = fit.reason === SUIT_REASON.NO_SPEC
+          ? '换装需要选择输出规格（R1：换装只针对标准证件照规格）——本次未换装'
+          : (fit.message + '（' + fit.reason + '）');
+        console.log('[audit]', { stage: 'suit_fit_v2', ok: false, reason: fit.reason, audit: fit.audit });
+      } else {
+        fitInfo = fit;
+        suited = suitCompose(rgba, seg.alpha, w, h, tpl.data, tpl.w, tpl.h, fit.place, fit.rotateDeg);
+        console.log('[audit]', Object.assign({ stage: 'suit_fit_v2', ok: true }, fit.audit));
+      }
 
       // 7. 换底合成 + 导出（共享渲染服务，任务 #50）
       setMsg('合成底色…');
@@ -231,9 +287,14 @@ export default function ToolSuit() {
         `${r.outW}×${r.outH} · ${SUIT_TEMPLATES[tplIndex].name} · 底色 ${bgHex}` +
         (seg.degraded ? ' · 已降级端侧' : '') +
         (specIdx >= 0 ? ` · ${specs[specIdx].name} @${dpiVal}dpi` : ' · 原图尺寸') +
-        ` · ${headIsEstimate ? '比例估算定位' : '关键点定位'}`,
+        ` · ${fitInfo ? `定位 ${fitInfo.source}${fitInfo.basis.shoulder === 'pose' ? '（肩线实测）' : '（物理标尺）'}` : '未换装'}`,
       );
-      setMsg(`换装完成（${backendLabel(seg.backend)}${seg.degraded ? `，云端不可用已降级${seg.cloudError ? '：' + String(seg.cloudError).slice(0, 60) : ''}` : ''}）——请核对五官后导出`);
+      setMsg(
+        (suitSkippedReason ? `${suitSkippedReason}——` : `换装完成（${backendLabel(seg.backend)}`) +
+        (!suitSkippedReason && seg.degraded ? `，云端不可用已降级${seg.cloudError ? '：' + String(seg.cloudError).slice(0, 60) : ''}` : '') +
+        (suitSkippedReason ? '' : '）——请核对五官后导出') +
+        (poseReason && !poseSig ? `（姿态信号：${poseReason}）` : ''),
+      );
     } catch (e: any) {
       const m = String((e && e.message) || e);
       if (m.startsWith('AC5')) {
@@ -324,9 +385,19 @@ export default function ToolSuit() {
         上传正面照片，合成职业装后换底导出。仅换装、不改五官；换装需单独授权。
       </Text>
 
-      {/* 授权（默认不勾选，未集齐不启动处理；含换装单独授权 suitSwap） */}
-      <View className='consent'>
+      {/* 授权（默认不勾选，未集齐不启动处理；含换装单独授权 suitSwap；F3：未勾选则选图入口不可点） */}
+      <View
+        className='consent'
+        style={gate.hinted
+          ? { border: '2px solid #e07b00', borderRadius: '8px', padding: '10px', background: '#fff8ec' }
+          : undefined}
+      >
         <Text className='consent__h'>需授权（{granted.length}/{consentItems.length}）</Text>
+        {gate.hinted ? (
+          <Text style={{ display: 'block', fontSize: '12px', color: '#e07b00', margin: '4px 0 6px' }}>
+            请先勾选下列全部授权（含换装单独授权），才能选择照片或拍照（先同意、后收集）
+          </Text>
+        ) : null}
         {consentItems.map((c: any) => {
           const on = granted.includes(c.id);
           return (
@@ -335,7 +406,7 @@ export default function ToolSuit() {
               className='consent__item'
               onClick={() => toggleConsent(c.id)}
               style={{
-                border: on ? '1px solid #438EDB' : '1px solid #ddd',
+                border: on ? '1px solid #438EDB' : (gate.hinted ? '1px solid #e07b00' : '1px solid #ddd'),
                 background: on ? '#eef5fd' : '#fff',
                 padding: '8px',
                 marginBottom: '6px',
@@ -459,10 +530,20 @@ export default function ToolSuit() {
         ) : null}
       </View>
 
-      <Button className='btn-primary' loading={busy} onClick={picker.pickAlbum}>
-        {busy ? '处理中…' : '从相册选择'}
+      {/* F3（P1 / 台账 #76）：选图前协议闸门 —— 未集齐授权，选图/拍摄入口不可达 */}
+      <Button
+        className='btn-primary'
+        loading={busy}
+        disabled={gate.blocked}
+        onClick={() => gate.gate(picker.pickAlbum)}
+      >
+        {busy ? '处理中…' : (gate.blocked ? '请先勾选授权（含换装单独授权）' : '从相册选择')}
       </Button>
-      <Button className='btn-camera' onClick={picker.openCamera}>
+      <Button
+        className='btn-camera'
+        disabled={gate.blocked}
+        onClick={() => gate.gate(picker.openCamera)}
+      >
         📷 拍摄（引导框）
       </Button>
 

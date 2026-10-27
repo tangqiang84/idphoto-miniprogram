@@ -1,0 +1,9 @@
+# posekey 云函数依赖（部署前请按云函数实际 Python 版本选择，见 README「部署」第 2 步）
+# 首选：tflite-runtime（约 2~3MB，只含推理运行时）
+#   —— 官方 wheel 与 Python 版本强绑定（cp36/cp37/cp38…），必须选与云函数运行时一致的 cp 版本，
+#      否则部署后 import 失败 → 云函数返回 not_deployed（前端按原因码降级 L2，不会崩）。
+tflite-runtime
+# 图像处理（本函数用 Pillow 做解码与 letterbox）
+Pillow
+# numpy：tflite-runtime 的输入输出张量操作依赖
+numpy

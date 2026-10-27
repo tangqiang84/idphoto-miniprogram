@@ -10,6 +10,8 @@ import {
   DPI_STD, DPI_HD, backendLabel,
 } from '../../services';
 import { useImagePicker } from '../../hooks/useImagePicker';
+import { useConsentGate } from '../../hooks/useConsentGate';
+import { prepareWorkCanvas } from '../../services/pipeline';
 
 // T2 单独换底色：已有照片只换底（真实功能，非占位）
 // 选图 → 端侧抠图 →（置信不足且已授权则走 CloudBase 云函数增强）→ 换底
@@ -39,6 +41,8 @@ export default function ToolBg() {
   const consentItems = requiredConsents(TOOL);
   const [granted, setGranted] = useState<string[]>([]);
   const rec = buildConsentRecord(TOOL, granted);
+  // F3（P1）：协议闸门前移到选图入口（run() 内的 rec.ready 保留为兜底第二道）
+  const gate = useConsentGate(rec.ready, '换底色');
   const picker = useImagePicker((img, q) =>
     run(img.path, img.width, img.height, { forceCloud: shouldForceCloud(q) }),
   );
@@ -129,31 +133,36 @@ export default function ToolBg() {
       let w: number, h: number;
       let plan: any = null;
       let target: any = null;
+      let canvas: any;
+      let rgba: Uint8ClampedArray;
+      let bgSamples: any = undefined;
       if (specIdx >= 0) {
-        target = getPixelSize(getSpec(specs[specIdx].id)!, dpiVal)!;
-        plan = planOutput(srcW, srcH, target.width, target.height);
-        if (!plan) throw new Error('图片尺寸读取失败，请换一张照片');
-        w = plan.workW;
-        h = plan.workH;
-        setPlanNote(plan.reason || '');
+        // 【F1（P1 / 台账 #75）】选了规格 → 共享管线**先裁剪到规格再抠图**（与 T1/T3 同一份实现）
+        const specObj = getSpec(specs[specIdx].id)!;
+        target = getPixelSize(specObj, dpiVal)!;
+        const prep = await prepareWorkCanvas({
+          path, srcW, srcH, spec: specObj, dpi: dpiVal, target, onMsg: setMsg,
+        });
+        w = prep.w; h = prep.h; plan = prep.plan; canvas = prep.canvas; rgba = prep.rgba;
+        bgSamples = prep.bgSamples;
+        setPlanNote(prep.reason || '');
       } else {
+        // 未选规格（保持原图尺寸）→ 工作图长边上限 800px（端侧抠图性能保护）
+        // —— 是否强制规格仍待 owner 拍板（台账 #81），本版保留该选项
         const scale = Math.min(1, 800 / Math.max(srcW, srcH));
         w = Math.max(1, Math.round(srcW * scale));
         h = Math.max(1, Math.round(srcH * scale));
+        canvas = anyTaro.createOffscreenCanvas({ type: '2d', width: w, height: h });
+        const ctx = canvas.getContext('2d');
+        const img = canvas.createImage();
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = (e: any) => reject(e || new Error('图片加载失败'));
+          img.src = path;
+        });
+        ctx.drawImage(img, 0, 0, w, h);
+        rgba = ctx.getImageData(0, 0, w, h).data;
       }
-
-      // 3. 离屏 canvas 取像素
-      const canvas = anyTaro.createOffscreenCanvas({ type: '2d', width: w, height: h });
-      const ctx = canvas.getContext('2d');
-      const img = canvas.createImage();
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = (e: any) => reject(e || new Error('图片加载失败'));
-        img.src = path;
-      });
-      ctx.drawImage(img, 0, 0, w, h);
-      const imageData = ctx.getImageData(0, 0, w, h);
-      const rgba = imageData.data;
 
       // 4. 抠图：端侧优先，置信不足自动走 CloudBase 云函数增强（需 faceCloudEnhance 授权）
       setMsg('抠图处理中…');
@@ -161,6 +170,7 @@ export default function ToolBg() {
         rgba,
         width: w,
         height: h,
+        bgSamples,
         cloud: { adapter: buildCloudFnAdapter() },
         consents: granted,
         audit: (meta: any) => console.log('[audit]', meta),
@@ -274,9 +284,19 @@ export default function ToolBg() {
       <Text className='page__title'>单独换底色</Text>
       <Text className='page__hint'>上传一张已有照片，仅替换背景色，不改动五官。不强制规格、不做预审；**只换底不裁剪构图**，要出证件照请用「一键证件照」。</Text>
 
-      {/* 授权（默认不勾选，未集齐不启动处理） */}
-      <View className='consent'>
+      {/* 授权（默认不勾选，未集齐不启动处理；F3：未勾选则选图入口不可点） */}
+      <View
+        className='consent'
+        style={gate.hinted
+          ? { border: '2px solid #e07b00', borderRadius: '8px', padding: '10px', background: '#fff8ec' }
+          : undefined}
+      >
         <Text className='consent__h'>需授权（{granted.length}/{consentItems.length}）</Text>
+        {gate.hinted ? (
+          <Text style={{ display: 'block', fontSize: '12px', color: '#e07b00', margin: '4px 0 6px' }}>
+            请先勾选下列全部授权，才能选择照片或拍照（先同意、后收集）
+          </Text>
+        ) : null}
         {consentItems.map((c: any) => {
           const on = granted.includes(c.id);
           return (
@@ -285,7 +305,7 @@ export default function ToolBg() {
               className='consent__item'
               onClick={() => toggleConsent(c.id)}
               style={{
-                border: on ? '1px solid #438EDB' : '1px solid #ddd',
+                border: on ? '1px solid #438EDB' : (gate.hinted ? '1px solid #e07b00' : '1px solid #ddd'),
                 background: on ? '#eef5fd' : '#fff',
                 padding: '8px',
                 marginBottom: '6px',
@@ -429,10 +449,20 @@ export default function ToolBg() {
         ) : null}
       </View>
 
-      <Button className='btn-primary' loading={busy} onClick={picker.pickAlbum}>
-        {busy ? '处理中…' : '从相册选择'}
+      {/* F3（P1 / 台账 #76）：选图前协议闸门 —— 未集齐授权，选图/拍摄入口不可达 */}
+      <Button
+        className='btn-primary'
+        loading={busy}
+        disabled={gate.blocked}
+        onClick={() => gate.gate(picker.pickAlbum)}
+      >
+        {busy ? '处理中…' : (gate.blocked ? '请先勾选授权' : '从相册选择')}
       </Button>
-      <Button className='btn-camera' onClick={picker.openCamera}>
+      <Button
+        className='btn-camera'
+        disabled={gate.blocked}
+        onClick={() => gate.gate(picker.openCamera)}
+      >
         📷 拍摄（引导框）
       </Button>
 

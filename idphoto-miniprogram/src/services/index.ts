@@ -9,6 +9,11 @@ import { makeCloudFnAdapter } from './cloudFnAdapter';
 import { composeAndExportImage } from './renderService';
 import { requiredConsents, buildConsentRecord, CONSENT_ITEMS, TOOL_CONSENTS } from '../core/privacy';
 import { alphaBBox, tightBBox, estimateHeadByShoulder, suitPlacement, suitCompose } from '../core/suit';
+// P1 换装重构（台账 #73）：实测信号驱动的几何引擎 v2（替代 v1 的猜测信号）
+import { fitSuitV2, checkComposition, TEMPLATE_META, REASON as SUIT_REASON } from '../core/suitFitV2';
+// P1 L1 姿态信号（台账 #72/#74）
+import { parsePoseResult, mapPoseToCanvas, buildPoseRequest, REASON as POSE_REASON } from '../core/poseContract';
+export { requestPoseKeypoints, encodeCanvasToJpegB64, POSE_TIMEOUT_MS } from './poseService';
 import { withTimeout, CLOUD_CALL_TIMEOUT_MS, IMG_LOAD_TIMEOUT_MS, EXPORT_TIMEOUT_MS } from '../core/asyncUtils';
 import { planOutput, planWindowOutput, planDetectImage, MIN_WORK_EDGE, MAX_WORK_EDGE, MAX_WORK_PIXELS, DETECT_EDGE, WIN_MARGIN_RATIO } from '../core/compose';
 import { planHeadCrop, targetHeadRatio, HEAD_TOP_GAP_RATIO, CHIN_BOTTOM_GAP_RATIO } from '../core/headCrop';
@@ -51,6 +56,10 @@ export {
   decideRoute, CONF_THRESHOLD, segment, composite, compositeTransparent, cloudMatting, collectEdgeSamples, backendLabel,
   // 换装（T3 端侧贴图合成）
   alphaBBox, tightBBox, estimateHeadByShoulder, suitPlacement, suitCompose,
+  // 换装几何引擎 v2（P1）：实测信号 + 规格物理标尺
+  fitSuitV2, checkComposition, TEMPLATE_META, SUIT_REASON,
+  // pose 契约（P1 L1 信号）
+  parsePoseResult, mapPoseToCanvas, buildPoseRequest, POSE_REASON,
   // 异步边界超时硬闸门（#70：真机永悬转圈修复）
   withTimeout, CLOUD_CALL_TIMEOUT_MS, IMG_LOAD_TIMEOUT_MS, EXPORT_TIMEOUT_MS,
   // 输出构图规划（600dpi 动态工作图尺寸 + 裁剪窗口，三页共用）
