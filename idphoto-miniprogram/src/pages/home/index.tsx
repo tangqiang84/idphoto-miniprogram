@@ -17,7 +17,8 @@ export default function Home() {
   return (
     <View className='home'>
       <View className='home__hero'>
-        <Text className='home__hero-title'>证件照工具箱</Text>
+        {/* hero 标题 = 注册名称，必须与后台名称一致（官方《常见拒绝情形》1.2.1，任务 #47） */}
+        <Text className='home__hero-title'>标准照裁剪</Text>
         <Text className='home__hero-sub'>本地优先 · 隐私合规 · 即用即走</Text>
         {/* 免费承诺（owner 2026-10-23 决策：MVP 不设付费档，全部功能免费）
             竞品调研显示「透明定价、零套路」正是本产品相对同类的差异化信任信号；

@@ -11,7 +11,8 @@ export default {
     'pages/privacy/index',
   ],
   window: {
-    navigationBarTitleText: '证件照工具箱',
+    // 必须与注册名称一致（官方《常见拒绝情形》1.2.1 一致性要求，任务 #47）
+    navigationBarTitleText: '标准照裁剪',
     navigationBarBackgroundColor: '#ffffff',
     navigationBarTextStyle: 'black',
     backgroundColor: '#f5f6f8',
