@@ -38,6 +38,7 @@
   .colors { display: flex; gap: 10px; margin-top: 12px; justify-content: center; }
   .sw { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #d8dee6; cursor: pointer; }
   .sw.sel { box-shadow: 0 0 0 2px #07c160; }
+  .sw-transparent { background: repeating-conic-gradient(#c9c9c9 0% 25%, #fff 0% 50%) 50% / 12px 12px; }
   .chip { display:inline-block; padding:4px 10px; border-radius:16px; background:#eef6f0; color:#07c160; font-size:12px; margin:4px; cursor:pointer; border:1px solid #d6ecdd; }
   .chip.sel { background:#07c160; color:#fff; }
   .modal { position: absolute; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 20; }
@@ -118,7 +119,7 @@
         <div class="row pickrow" onclick="pickBlocked(this)"><span>📷 拍摄</span><span class="tag">调用相机</span></div>
         <div class="row pickrow" onclick="pickBlocked(this)"><span>🖼 从相册选择</span><span class="tag">JPG/PNG/WebP ≤10MB</span></div>
       </div>
-      <div class="card"><h3>目标规格（先裁剪，后处理）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div><p class="tag" style="margin-top:6px;">选图后先按规格裁剪，再抠图换底（可后改，改后自动重跑）</p></div>
+      <div class="card"><h3>目标规格（先裁剪，后处理）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">小一寸 260×378</span><span class="chip" onclick="selChip(this)">驾驶证 260×378</span><span class="chip" onclick="selChip(this)">大二寸 413×626</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div><p class="tag" style="margin-top:6px;">选图后先按规格裁剪，再抠图换底（可后改，改后自动重跑）</p></div>
       <button class="btn" onclick="startProcess()">下一步：开始处理</button>
     </div>
   </div>
@@ -151,13 +152,17 @@
   <div class="screen" id="s_beauty">
     <div class="nav"><span class="back" onclick="go('s_crop')">‹ 返回</span> 美颜修图（合规模式）</div>
     <div class="body">
-      <div class="card"><h3>美颜修图（裁剪后处理）</h3>
-        <p class="tag">仅做轻度皮肤优化，不改变脸型与五官，保证审核通过</p>
+      <div class="card">
+        <div class="sliderrow" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f0f2f5;">
+          <span>启用美颜修图（默认关闭）</span>
+          <span class="chip" id="beauty-toggle" onclick="beautyToggle(this)">关</span>
+        </div>
+        <p class="tag">仅做轻度皮肤优化，不改变脸型与五官，保证审核通过；默认不开启，开启后在「裁剪后、抠图换底前」对全画布执行。</p>
       </div>
       <div class="card">
-        <div class="sliderrow"><div class="lab"><span>磨皮</span><span class="val" id="beauty-skin-val">30%</span></div><input type="range" id="beauty-skin" min="0" max="100" value="30" oninput="beautySlide('skin',this.value)"></div>
-        <div class="sliderrow"><div class="lab"><span>美白</span><span class="val" id="beauty-whiten-val">20%</span></div><input type="range" id="beauty-whiten" min="0" max="100" value="20" oninput="beautySlide('whiten',this.value)"></div>
-        <div class="sliderrow"><div class="lab"><span>亮眼（轻度锐化）</span><span class="val" id="beauty-eye-val">15%</span></div><input type="range" id="beauty-eye" min="0" max="100" value="15" oninput="beautySlide('eye',this.value)"></div>
+        <div class="sliderrow"><div class="lab"><span>磨皮</span><span class="val" id="beauty-skin-val">35%</span></div><input type="range" id="beauty-skin" min="0" max="100" value="35" oninput="beautySlide('skin',this.value)"></div>
+        <div class="sliderrow"><div class="lab"><span>美白</span><span class="val" id="beauty-whiten-val">30%</span></div><input type="range" id="beauty-whiten" min="0" max="100" value="30" oninput="beautySlide('whiten',this.value)"></div>
+        <div class="sliderrow"><div class="lab"><span>亮眼（轻度锐化）</span><span class="val" id="beauty-eye-val">20%</span></div><input type="range" id="beauty-eye" min="0" max="100" value="20" oninput="beautySlide('eye',this.value)"></div>
         <div class="disabled-note">瘦脸 / 大眼 / 重塑 已禁用 —— 合规模式（COMPLIANCE_MODE）禁止改动五官，否则证件照将被审核驳回。</div>
         <div class="compliance">⚠ 为保证审核通过，本工具仅做磨皮 / 美白 / 轻度亮眼，<b>禁止改动脸型与五官</b>。如需更强美颜请谨慎，可能影响证件照合规性。</div>
       </div>
@@ -171,17 +176,23 @@
     <div class="body">
       <div class="preview">人像预览</div>
       <div class="colors">
-        <div class="sw sel" style="background:#fff" onclick="selColor(this)"></div>
-        <div class="sw" style="background:#ff0000" onclick="selColor(this)"></div>
-        <div class="sw" style="background:#00bfe3" onclick="selColor(this)"></div>
-        <div class="sw" style="background:#c0c0c0" onclick="selColor(this)"></div>
+        <div class="sw sel" style="background:#FFFFFF" onclick="selColor(this,'#FFFFFF')" title="白底"></div>
+        <div class="sw" style="background:#438EDB" onclick="selColor(this,'#438EDB')" title="深蓝（标准蓝底）"></div>
+        <div class="sw" style="background:#00BFF3" onclick="selColor(this,'#00BFF3')" title="浅蓝"></div>
+        <div class="sw" style="background:#FF0000" onclick="selColor(this,'#FF0000')" title="红底"></div>
+        <div class="sw" style="background:#C0C0C0" onclick="selColor(this,'#C0C0C0')" title="灰底"></div>
+        <div class="sw sw-transparent" onclick="selColor(this,'transparent')" title="透明底（导出 PNG）"></div>
       </div>
+      <div class="row" style="margin-top:10px;align-items:center;"><span style="font-size:13px;">自定义底色</span><input id="custom-hex" placeholder="#RRGGBB" style="width:92px;margin:0 8px;padding:5px;border:1px solid #d8dee6;border-radius:6px;font-size:12px;" oninput="selCustomHex(this.value)"><span class="chip" onclick="applyCustomHex()">应用</span></div>
       <div class="card">
-        <div class="row"><span>智能裁切</span><span class="ok">✓ 已按一寸 295×413 裁剪</span></div>
-        <div class="row"><span>美颜修图</span><span class="ok">✓ 已轻度优化（未改五官）</span></div>
+        <div class="row"><span>智能裁切</span><span class="ok" id="crop-status">✓ 已按头部占比 66% 自动构图</span></div>
+        <div class="row" id="beauty-row"><span>美颜修图</span><span>未启用（默认关闭，可在上一步开启）</span></div>
         <div class="row"><span>抠图质量</span><span class="ok">✓ 边缘干净</span></div>
         <div class="row"><span>头部占比</span><span>66%（合规）</span></div>
+        <div class="row"><span>原图质量</span><span class="tag" id="quality-tip">分辨率充足，可输出 300/600dpi</span></div>
+        <div class="row"><button class="btn ghost" style="margin:4px 0 0;padding:8px 12px;" onclick="openPatch()">✏️ 手动修补边缘（低置信区自修，PRD B1）</button></div>
       </div>
+      <div class="check" style="margin-top:12px;"><input type="checkbox" id="mirror-check"> <span>镜像自查（AC1）：已确认照片五官左右与本人一致<span class="tag">未勾选不能导出</span></span></div>
       <span class="link" onclick="go('s_spec')">↺ 改规格（自动重跑裁剪→抠图→换底）</span>
       <button class="btn" id="preview-next" onclick="previewNext()">下一步：换装（可选）</button>
     </div>
@@ -191,7 +202,7 @@
   <div class="screen" id="s_spec">
     <div class="nav"><span class="back" onclick="go('s_preview')">‹ 返回</span> 选择规格</div>
     <div class="body">
-      <div class="card"><h3>常用规格（官方口径）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">大二寸 413×626</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">驾照 260×378</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div><p class="tag" style="margin-top:6px;">改规格后自动重跑「裁剪 → 抠图 → 换底」，不必重新选图</p></div>
+      <div class="card"><h3>常用规格（官方口径）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">小一寸 260×378</span><span class="chip" onclick="selChip(this)">驾驶证 260×378</span><span class="chip" onclick="selChip(this)">大二寸 413×626</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div><p class="tag" style="margin-top:6px;">改规格后自动重跑「裁剪 → 抠图 → 换底」，不必重新选图</p></div>
       <div class="card"><h3>自定义</h3><div class="row"><span>像素</span><span class="tag">手动输入</span></div><div class="row"><span>dpi</span><span>300 / 600</span></div><div class="row"><span>文件大小</span><span>20–200KB</span></div></div>
       <button class="btn" onclick="go('s_preview');renderPreview()">保存规格并重跑</button>
     </div>
@@ -199,11 +210,11 @@
 
   <!-- T1 换装 -->
   <div class="screen" id="s_dress">
-    <div class="nav"><span class="back" onclick="go('s_preview')">‹ 返回</span> AI 换装（可选）</div>
+    <div class="nav"><span class="back" onclick="go('s_preview')">‹ 返回</span> <span id="dress-title">AI 换装（可选）</span></div>
     <div class="body">
       <div class="card"><h3>职业装模板</h3><div><span class="chip" onclick="selChip(this)">西装</span><span class="chip" onclick="selChip(this)">衬衫</span><span class="chip" onclick="selChip(this)">学院风</span><span class="chip" onclick="selChip(this)">职业女装</span></div><p class="tag" style="margin-top:8px;">仅换装，不改五官；只对 9 个标准规格生效（全身/多人/横图将被拒绝）</p></div>
       <button class="btn ghost" onclick="openSelfCheck()">应用换装并自检</button>
-      <button class="btn grey" onclick="go('s_check')">跳过，直接进入预审</button>
+      <button class="btn grey" id="dress-skip" onclick="go('s_check')">跳过，直接进入预审</button>
     </div>
   </div>
 
@@ -258,7 +269,7 @@
       <div class="card">
         <div class="row pickrow" onclick="pickBlocked(this)"><span>🖼 从相册选择</span><span class="tag">JPG/PNG/WebP ≤10MB</span></div>
       </div>
-      <div class="card"><h3>目标规格（先裁剪，后处理）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">驾照 260×378</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div><p class="tag" style="margin-top:6px;">选图后先按规格裁剪，再依次美颜、抠图换底、预审；底色在抠图换底步骤选择。</p></div>
+      <div class="card"><h3>目标规格（先裁剪，后处理）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">小一寸 260×378</span><span class="chip" onclick="selChip(this)">驾驶证 260×378</span><span class="chip" onclick="selChip(this)">大二寸 413×626</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div><p class="tag" style="margin-top:6px;">选图后先按规格裁剪，再依次美颜、抠图换底、预审；底色在抠图换底步骤选择。</p></div>
       <button class="btn" onclick="openCrop('s_t2')">下一步：裁剪并处理</button>
     </div>
   </div>
@@ -274,7 +285,7 @@
       <div class="card">
         <div class="row pickrow" onclick="pickBlocked(this)"><span>🖼 从相册选择</span><span class="tag">JPG/PNG/WebP ≤10MB</span></div>
       </div>
-      <div class="card"><h3>目标规格（先裁剪，后处理）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">驾照 260×378</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div><p class="tag" style="margin-top:6px;">选图后先按规格裁剪，再美颜、抠图换底；换装在后续步骤选择（仅 9 个标准规格生效）。</p></div>
+      <div class="card"><h3>目标规格（先裁剪，后处理）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">小一寸 260×378</span><span class="chip" onclick="selChip(this)">驾驶证 260×378</span><span class="chip" onclick="selChip(this)">大二寸 413×626</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div><p class="tag" style="margin-top:6px;">选图后先按规格裁剪，再美颜、抠图换底；换装在后续步骤选择（仅 9 个标准规格生效）。</p></div>
       <button class="btn ghost" onclick="openCrop('s_t3')">下一步：裁剪并处理</button>
     </div>
   </div>
@@ -298,7 +309,26 @@
     <div class="nav"><span class="back" onclick="go('s_home')">‹ 首页</span> 规格转换</div>
     <div class="body">
       <div class="upload-box"><div class="guide"></div><div style="position:absolute;bottom:14px;">上传已有照片</div></div>
-      <div class="card"><h3>目标规格</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">驾照 260×378</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div></div>
+      <div class="card">
+        <div class="sliderrow" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f0f2f5;">
+          <span>尺寸模式</span>
+          <span><span class="chip sel" id="t5-mode-spec" onclick="t5setMode('spec',this)">内置规格</span> <span class="chip" id="t5-mode-custom" onclick="t5setMode('custom',this)">自定义像素</span></span>
+        </div>
+        <div id="t5-spec-box"><h3 style="margin:10px 0 6px;font-size:13px;">目标规格</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">小一寸 260×378</span><span class="chip" onclick="selChip(this)">驾驶证 260×378</span><span class="chip" onclick="selChip(this)">大二寸 413×626</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div></div>
+        <div id="t5-custom-box" style="display:none;">
+          <div class="row" style="margin-top:10px;"><span>宽度(px)</span><input id="t5-cw" placeholder="1–5000" style="width:96px;padding:5px;border:1px solid #d8dee6;border-radius:6px;font-size:12px;"></div>
+          <div class="row"><span>高度(px)</span><input id="t5-ch" placeholder="1–5000" style="width:96px;padding:5px;border:1px solid #d8dee6;border-radius:6px;font-size:12px;"></div>
+          <div class="tag" style="margin-top:6px;">自定义像素：裁剪后缩放到该尺寸（自由比例，不锁定规格）。</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sliderrow" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f0f2f5;">
+          <span>KB 上限压缩</span>
+          <span class="chip sel" id="t5-kb-on" onclick="t5setKb(this)">开</span>
+        </div>
+        <div class="row" style="margin-top:10px;"><span>上限(KB)</span><input id="t5-kb" value="200" style="width:96px;padding:5px;border:1px solid #d8dee6;border-radius:6px;font-size:12px;"></div>
+        <div class="tag" style="margin-top:6px;">关闭则最高质量导出不压缩；默认 200KB（多数报名系统上限）。</div>
+      </div>
       <button class="btn" onclick="openCrop('s_t5')">下一步：裁剪并转换</button>
     </div>
   </div>
@@ -312,9 +342,13 @@
         <h3>选择规格（复用规格库）</h3>
         <div id="t6-specs">
           <span class="chip sel" data-spec="one-inch" onclick="t6selSpec(this)">一寸</span>
+          <span class="chip" data-spec="small-one-inch" onclick="t6selSpec(this)">小一寸</span>
           <span class="chip" data-spec="two-inch" onclick="t6selSpec(this)">二寸</span>
           <span class="chip" data-spec="small-two-inch" onclick="t6selSpec(this)">小二寸</span>
           <span class="chip" data-spec="big-one-inch" onclick="t6selSpec(this)">大一寸</span>
+          <span class="chip" data-spec="big-two-inch" onclick="t6selSpec(this)">大二寸</span>
+          <span class="chip" data-spec="driver-license" onclick="t6selSpec(this)">驾驶证</span>
+          <span class="chip" data-spec="passport-cn" onclick="t6selSpec(this)">护照</span>
           <span class="chip" data-spec="visa-us" onclick="t6selSpec(this)">美国签证</span>
         </div>
       </div>
@@ -385,12 +419,43 @@
 
 <script>
   function go(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-  function selColor(el){ document.querySelectorAll('.colors .sw').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+  function selColor(el, color){
+    document.querySelectorAll('.colors .sw').forEach(c=>c.classList.remove('sel'));
+    el.classList.add('sel');
+    window.curBg = color;
+    var prev = document.querySelector('#s_preview .preview');
+    if(prev){ prev.style.background = (color==='transparent') ? 'repeating-conic-gradient(#c9c9c9 0% 25%, #fff 0% 50%) 50% / 14px 14px' : color; }
+  }
+  function selCustomHex(v){ window._customHex = v; }
+  function applyCustomHex(){
+    var hex = (window._customHex||'').trim();
+    if(!/^#?[0-9a-fA-F]{6}$/.test(hex)){ alert('色值格式应为 #RRGGBB'); return; }
+    if(hex[0] !== '#') hex = '#'+hex;
+    window.curBg = hex;
+    document.querySelectorAll('.colors .sw').forEach(c=>c.classList.remove('sel'));
+    var prev = document.querySelector('#s_preview .preview');
+    if(prev) prev.style.background = hex;
+  }
+  // ===== T5 规格转换：尺寸模式 + KB 上限（与 tool-spec 对齐） =====
+  window.t5mode = 'spec';
+  window.t5kbOn = true;
+  function t5setMode(mode, el){
+    window.t5mode = mode;
+    document.getElementById('t5-mode-spec').classList.toggle('sel', mode==='spec');
+    document.getElementById('t5-mode-custom').classList.toggle('sel', mode==='custom');
+    document.getElementById('t5-spec-box').style.display = (mode==='spec') ? '' : 'none';
+    document.getElementById('t5-custom-box').style.display = (mode==='custom') ? '' : 'none';
+  }
+  function t5setKb(el){
+    window.t5kbOn = !window.t5kbOn;
+    el.textContent = window.t5kbOn ? '开' : '关';
+    el.classList.toggle('sel', window.t5kbOn);
+  }
   function selChip(el){ var box = el.closest('.card'); box.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); captureSpec(el); }
   // 规格库（与原型各页 chip 文案一致；用于裁剪框比例锁定）
   const CROP_SPECS = {
-    '一寸':{w:295,h:413}, '二寸':{w:413,h:579}, '小二寸':{w:413,h:531}, '大一寸':{w:390,h:567},
-    '小一寸':{w:260,h:378}, '驾驶证':{w:260,h:378}, '大二寸':{w:413,h:626}, '护照':{w:390,h:567}, '美国签证':{w:600,h:600}
+    '一寸':{mmw:25,mmh:35,w:295,h:413}, '二寸':{mmw:35,mmh:49,w:413,h:579}, '小二寸':{mmw:35,mmh:45,w:413,h:531}, '大一寸':{mmw:33,mmh:48,w:390,h:567},
+    '小一寸':{mmw:22,mmh:32,w:260,h:378}, '驾驶证':{mmw:22,mmh:32,w:260,h:378}, '大二寸':{mmw:35,mmh:53,w:413,h:626}, '护照':{mmw:33,mmh:48,w:390,h:567}, '美国签证':{mmw:50.8,mmh:50.8,w:600,h:600}
   };
   function captureSpec(el){
     var m = (el.textContent||'').trim().match(/^(\S+?)\s*[\d×xX]/);
@@ -417,7 +482,7 @@
     }
   }
   // 当前规格 / 档位（供裁剪框比例、dpi 提示复用）
-  window.curSpec = { name:'一寸', w:295, h:413 };
+  window.curSpec = { name:'一寸', mmw:25, mmh:35, w:295, h:413 };
   window.curDpi = 300;
   function toolOf(from){
     if(from === 's_t2') return 't2';
@@ -440,8 +505,14 @@
   }
 
   // ===== 美颜步骤（s_beauty，2026-10-27 v0.4 新增：裁剪后、抠图换底前） =====
+  window.beautyOn = false;   // 与代码默认 enabled:false 一致
   function beautySlide(kind, v){
     document.getElementById('beauty-'+kind+'-val').textContent = v + '%';
+  }
+  function beautyToggle(el){
+    window.beautyOn = !window.beautyOn;
+    el.textContent = window.beautyOn ? '开' : '关';
+    el.classList.toggle('sel', window.beautyOn);
   }
   function beautyConfirm(){ go('s_preview'); renderPreview(); }
 
@@ -451,11 +522,27 @@
     var btn = document.getElementById('preview-next');
     if(!btn) return;
     if(tool === 't2'){ btn.textContent = '下一步：合规预审'; }
-    else { btn.textContent = '下一步：换装（可选）'; }
+    else { btn.textContent = tool === 't3' ? '下一步：换装（必选）' : '下一步：换装（可选）'; }
+    var brow = document.getElementById('beauty-row');
+    if(brow){
+      brow.innerHTML = window.beautyOn
+        ? '<span>美颜修图</span><span class="ok">✓ 已轻度优化（未改五官）</span>'
+        : '<span>美颜修图</span><span>未启用（默认关闭，可在上一步开启）</span>';
+    }
   }
   function previewNext(){
+    var mc = document.getElementById('mirror-check');
+    if(mc && !mc.checked){ alert('请先完成镜像自查（AC1）：确认照片五官左右与本人一致，否则不能导出。'); return; }
     var tool = toolOf(cropFrom);
+    // T3 单独换装：换装必选，无跳过；T1 内嵌换装：可选（可跳过）
+    var skip = document.getElementById('dress-skip');
+    var title = document.getElementById('dress-title');
+    if(tool === 't3'){ if(skip) skip.style.display = 'none'; if(title) title.textContent = 'AI 换装（必选）'; }
+    else { if(skip) skip.style.display = ''; if(title) title.textContent = 'AI 换装（可选）'; }
     if(tool === 't2'){ go('s_check'); } else { go('s_dress'); }
+  }
+  function openPatch(){
+    alert('手动修补面板：对低置信的抠图边缘用画笔涂抹修正，修正后自动重合成并刷新预览（PRD B1 / T1-17）。');
   }
 
   // ===== dpi 选择步骤（s_dpi，2026-10-27 v0.4 新增） =====
@@ -465,11 +552,12 @@
     window.curDpi = parseInt(el.dataset.dpi, 10);
     renderDpi();
   }
+  function mmToPx(mm,dpi){ return Math.round((mm/25.4)*dpi); }
   function renderDpi(){
     var sp = window.curSpec || CROP_SPECS['一寸'];
     var dpi = window.curDpi || 300;
-    var req300 = sp.w + '×' + sp.h;
-    var req600 = (sp.w * 2) + '×' + (sp.h * 2);
+    var req300 = mmToPx(sp.mmw,300) + '×' + mmToPx(sp.mmh,300);
+    var req600 = mmToPx(sp.mmw,600) + '×' + mmToPx(sp.mmh,600);
     document.getElementById('dpi-req').textContent =
       '目标规格：' + (sp.name || '一寸') + ' ｜ 300dpi 需 ' + req300 + ' px ｜ 600dpi 需 ' + req600 + ' px';
     var note = document.getElementById('dpi-note');
@@ -483,7 +571,8 @@
   }
   function dpiConfirm(){
     var dpi = window.curDpi || 300;
-    document.getElementById('export-dpi').textContent = dpi + 'dpi JPG · 无水印 · 免费';
+    var fmt = (window.curBg === 'transparent' || (window.curBg||'').indexOf('#') === 0) ? 'PNG' : 'JPG';
+    document.getElementById('export-dpi').textContent = dpi + 'dpi ' + fmt + ' · 无水印 · 免费';
     document.getElementById('export-dpi-row').textContent = dpi + 'dpi 标准（免费 · 无水印）';
     go('s_export');
   }
