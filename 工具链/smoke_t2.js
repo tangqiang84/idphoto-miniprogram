@@ -37,6 +37,7 @@ try {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const { readStatus, waitForStatus } = require('./smoke_kit');
 
 async function readPageText(page) {
   try {
@@ -132,22 +133,46 @@ async function readPageText(page) {
     console.log('4) 已点击「选择照片并换底」，等待处理…');
 
     // 5. 轮询结果
-    let msg = '';
-    let finished = false;
-    for (let i = 0; i < 45; i++) {
-      await sleep(1000);
-      const txt = await readPageText(page);
-      if (txt) msg = txt;
-      if (txt.includes('完成') || txt.includes('失败')) { finished = true; break; }
-    }
+    // 轮询：只认状态行（.status-line），避免展示文案污染判定（2026-10-27 修正）
+    const st = await waitForStatus(page, ['完成', '失败'], 45);
+    const msg = st.pageText;
+    const status = st.status || msg;
+    const finished = st.hit;
     await shot('03-t2.png');
 
+    // 5.5 回归护栏（任务 #50，2026-10-27 真机反馈）：换底色后必须**立即重新合成**，
+    //      成品信息里的底色要跟着变（旧实现只改 state → 成品仍是白底 #FFFFFF）
+    let bgOk = true;
+    try {
+      const texts = await page.$$('text');
+      let chip = null;
+      for (const t of texts) {
+        let s = '';
+        try { s = (await t.text()) || ''; } catch (_) {}
+        if (s.indexOf('标准深蓝') >= 0) { chip = t; break; }
+      }
+      if (!chip) {
+        console.log('5.5) 未找到「标准深蓝」底色 chip（跳过该断言）');
+      } else {
+        await chip.tap();
+        await sleep(5000);
+        const txt2 = await readPageText(page);
+        bgOk = txt2.indexOf('底色 #438EDB') >= 0;
+        console.log(`5.5) 换底色后重新合成 = ${bgOk ? 'OK(底色已更新为 #438EDB)' : 'FAIL(底色未更新)'}`);
+        await shot('03-t2-recolor.png');
+      }
+    } catch (e) {
+      console.log('5.5) 换底色回归检查异常:', e.message);
+    }
+
     const auditLogs = logs.filter((l) => l.includes('[audit]'));
-    const pass = finished && msg.includes('完成') && errors.length === 0;
+    const pass = finished && status.includes('完成') && errors.length === 0 && bgOk;
 
     console.log('\n===== T2 冒烟结果 =====');
-    console.log('处理完成:', finished ? (msg.includes('完成') ? 'OK' : 'FAIL(失败文案)') : 'FAIL(超时45s)');
+    console.log('状态行:', status.replace(/\s+/g, ' ').slice(0, 120));
+    console.log('处理完成:', finished ? (status.includes('完成') ? 'OK' : 'FAIL(失败文案)') : 'FAIL(超时45s)');
     console.log('运行时错误数:', errors.length);
+    console.log('换底色重新合成:', bgOk ? 'OK' : 'FAIL');
     console.log('audit 日志:', auditLogs.length ? auditLogs.join(' | ') : '（无 → 说明未触发上云增强）');
     if (msg) console.log('页面文本:', msg.replace(/\s+/g, ' ').slice(0, 400));
     if (errors.length) console.log('错误:\n' + errors.join('\n'));

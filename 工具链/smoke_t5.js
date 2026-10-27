@@ -39,6 +39,7 @@ try {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const { readStatus, waitForStatus } = require('./smoke_kit');
 
 async function readPageText(page) {
   try {
@@ -131,21 +132,19 @@ async function readPageText(page) {
     await btn.tap();
     console.log('4) 已点击「选择照片并转换」，等待处理…');
 
-    // 5. 轮询结果（"完成"= 压缩达标；"注意"= 压不到上限但已导出，也算链路通）
-    let msg = '';
-    let finished = false;
-    for (let i = 0; i < 45; i++) {
-      await sleep(1000);
-      const txt = await readPageText(page);
-      if (txt) msg = txt;
-      if (txt.includes('完成') || txt.includes('注意') || txt.includes('失败')) { finished = true; break; }
-    }
+    // 5. 轮询结果（**只认状态行 .status-line**，不再用整页文本判失败——
+    //    镜像自查的静态文案里含「会导致审核失败」，会把成功误判为失败，2026-10-27 修正）
+    const st = await waitForStatus(page, ['完成', '注意', '失败'], 45);
+    const msg = st.pageText;
+    const status = st.status || msg;
+    const finished = st.hit;
     await shot('04-t5.png');
 
-    const pass = finished && !msg.includes('失败') && (msg.includes('完成') || msg.includes('注意')) && errors.length === 0;
+    const pass = finished && !status.includes('失败') && (status.includes('完成') || status.includes('注意')) && errors.length === 0;
 
     console.log('\n===== T5 冒烟结果 =====');
-    console.log('处理完成:', finished ? (msg.includes('失败') ? 'FAIL(失败文案)' : 'OK') : 'FAIL(超时45s)');
+    console.log('状态行:', status.replace(/\s+/g, ' ').slice(0, 120));
+    console.log('处理完成:', finished ? (status.includes('失败') ? 'FAIL(失败文案)' : 'OK') : 'FAIL(超时45s)');
     console.log('运行时错误数:', errors.length);
     if (msg) console.log('页面文本:', msg.replace(/\s+/g, ' ').slice(0, 400));
     if (errors.length) console.log('错误:\n' + errors.join('\n'));

@@ -1,6 +1,6 @@
 import { View, Text, Button, Image, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   requiredConsents, buildConsentRecord,
   segment, composite, check, applyPatches,
@@ -83,6 +83,12 @@ export default function ToolIdPhoto() {
   });
   // 最近一次取图（用于美颜「重新生成」时复用，无需重新选图）
   const [lastPick, setLastPick] = useState<{ path: string; width: number; height: number } | null>(null);
+  // 已处理结果缓存（任务 #50）：换底色时据此**只重跑合成**，不重跑抠图/裁剪/换装
+  const lastProc = useRef<{
+    exportRgba: Uint8ClampedArray; alpha: any; w: number; h: number;
+    plan: any; target: { width: number; height: number };
+    specIndex: number; dpi: number; headRatio: number | null;
+  } | null>(null);
   // 头部占比测量结果（PRD B3 / T1-16，任务 #4）：null = 未检测到人脸
   const [headInfo, setHeadInfo] = useState<any>(null);
   // 输出构图提示（如「原图分辨率不足」/「已达处理分辨率上限」）
@@ -111,13 +117,16 @@ export default function ToolIdPhoto() {
   // 放宽 Taro 类型（微信 canvas 2d API 在部分基础库类型不全，统一用 any 访问）
   const anyTaro: any = Taro;
 
-  async function run(path: string, srcW: number, srcH: number, opts?: { suitOn?: boolean }) {
+  async function run(path: string, srcW: number, srcH: number, opts?: { suitOn?: boolean; specIndex?: number; dpi?: number }) {
     if (!rec.ready) {
       Taro.showToast({ title: '请先勾选所需授权', icon: 'none' });
       return;
     }
     // 换装意图：显式传参优先（避免 setState 异步 → 同一函数内读到旧值，见下方第 136 行同类注释）
     const wantSuit = opts && typeof opts.suitOn === 'boolean' ? opts.suitOn : suitOn;
+    // 参数覆盖（任务 #50）：state 更新是异步的，链式操作必须显式传值，否则用到旧值（问题台账 #31 同根）
+    const specIdx = opts?.specIndex ?? specIndex;
+    const dpiVal = opts?.dpi ?? dpi;
     setBusy(true);
     setMsg('读取图片…');
     setResult(null);
@@ -131,8 +140,8 @@ export default function ToolIdPhoto() {
       }
 
       // 取图已剥离到 useImagePicker（相册 picker.pickAlbum / 拍摄 CameraGuide，PRD A1 引导框）。
-      const spec = getSpec(specs[specIndex].id);
-      const target = getPixelSize(spec!, dpi)!;
+      const spec = getSpec(specs[specIdx].id);
+      const target = getPixelSize(spec!, dpiVal)!;
 
       // 把一张图片画进离屏 canvas 并取回 RGBA 像素（微信 canvas 通用取像素姿势）
       const loadRgba = async (cw: number, ch: number, draw: (ctx: any, img: any) => void) => {
@@ -265,7 +274,11 @@ export default function ToolIdPhoto() {
       // 6. 换底合成：暂存工作画布的 RGBA 与 alpha，供「手动修补」重合成（PRD B1 / T1-17）
       setMsg('合成底色…');
       const workRgbaCopy = new Uint8ClampedArray(rgba);
-      const baseAlphaCopy = new Uint8ClampedArray(seg.alpha);
+      // 克隆 alpha **必须按类型保留**：seg.alpha 是 Float32Array(0..1)，
+      // 用 Uint8ClampedArray 构造会按字节视图重建 → 浮点 alpha 被二值化（问题台账 #58 同根）
+      const baseAlphaCopy = seg.alpha instanceof Float32Array
+        ? Float32Array.from(seg.alpha)
+        : Uint8ClampedArray.from(seg.alpha as any);
 
       // 6.1 AI 换装（可选，PRD D 章 / T1-11，任务 #43）：端侧贴图合成（复用 core/suit.js）。
       //   D2：仅覆盖肩颈前景区（alpha>0.5 且模板不透明），不触碰脸部像素；D3/AC6 强制自检在页面层。
@@ -316,6 +329,11 @@ export default function ToolIdPhoto() {
       // 8.1 生成工作画布修补底图（合成底色后的整图），供手动修补面板显示边缘
       const wp = await saveWorkPreview(exportRgba, seg.alpha, w, h, BG[bg]);
       setPatchBase({ rgba: exportRgba, alpha: baseAlphaCopy, w, h, plan, target, bg, workPreviewPath: wp });
+      // 缓存处理结果（任务 #50）：换底色时据此**只重跑合成**，不重跑抠图/裁剪
+      lastProc.current = {
+        exportRgba, alpha: seg.alpha, w, h, plan, target,
+        specIndex: specIdx, dpi: dpiVal, headRatio,
+      };
 
       // 9. 合规预审
       const fs = Taro.getFileSystemManager();
@@ -323,10 +341,10 @@ export default function ToolIdPhoto() {
         fs.getFileInfo({ filePath: exp.preview, success: resolve, fail: reject });
       });
       const fileKb = Math.round(fileInfo.size / 1024);
-      const cr = check(specs[specIndex].id, {
+      const cr = check(specs[specIdx].id, {
         widthPx: target.width,
         heightPx: target.height,
-        dpi,
+        dpi: dpiVal,
         fileKb,
         bg,
         // 头部占比：仅在成功测量时传入（未检测则跳过该项，其余 4 项照常判定）
@@ -448,6 +466,47 @@ export default function ToolIdPhoto() {
     }
   }
 
+  // 换底色 → 只重跑「合成 + 导出 + 预审」，不重跑抠图/裁剪/换装（任务 #50）
+  async function recomposeBg(bgHex: string) {
+    const p = lastProc.current;
+    if (!p) {
+      Taro.showToast({ title: '请先选择照片并处理', icon: 'none' });
+      return;
+    }
+    setBusy(true);
+    setMsg('重新合成…');
+    try {
+      const exp = await composeAndExport(p.exportRgba, p.alpha, p.w, p.h, p.plan, bgHex, p.target);
+      setPreview(exp.preview);
+      const wp = await saveWorkPreview(p.exportRgba, p.alpha, p.w, p.h, bgHex);
+      setPatchBase({ rgba: p.exportRgba, alpha: p.alpha, w: p.w, h: p.h, plan: p.plan, target: p.target, bg: bgHex, workPreviewPath: wp });
+      // 预审随底色变化（底色是 5 项预审之一），必须重算
+      const cr = check(specs[p.specIndex].id, {
+        widthPx: p.target.width,
+        heightPx: p.target.height,
+        dpi: p.dpi,
+        fileKb: exp.fileKb,
+        bg: bgHex,
+        headHeightRatio: p.headRatio != null ? p.headRatio : undefined,
+      });
+      setResult(cr);
+      setMsg('完成（底色已更新）');
+    } catch (e: any) {
+      setMsg('换底色失败：' + String((e && e.message) || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // 换规格 / 换 dpi → 工作画布与裁剪窗都会变，必须整条链路重跑（保留已应用的换装）
+  function reprocess(opts: { specIndex?: number; dpi?: number }) {
+    if (!lastPick) {
+      Taro.showToast({ title: '请先选择照片', icon: 'none' });
+      return;
+    }
+    run(lastPick.path, lastPick.width, lastPick.height, { suitOn: suitApplied, ...opts });
+  }
+
   // PRD K1 入口①：从 T1 导出页「另存为排版版」进入 T6 冲印排版（承接已做好的证件照）
   // 说明：只传导出图路径（临时文件），T6 侧读不到时自动降级为「手动从相册选择」，不阻断。
   async function goPrintLayout() {
@@ -507,7 +566,11 @@ export default function ToolIdPhoto() {
           mode='selector'
           range={specs.map((s: any) => specLabel(s.id, dpi))}
           value={specIndex}
-          onChange={(e: any) => setSpecIndex(Number(e.detail.value))}
+          onChange={(e: any) => {
+            const nextIdx = Number(e.detail.value);
+            setSpecIndex(nextIdx);
+            reprocess({ specIndex: nextIdx }); // 任务 #50：换规格自动重跑（不需重新选图）
+          }}
         >
           <View style={{ color: '#438EDB', padding: '4px 0' }}>{specs[specIndex].name} ▾</View>
         </Picker>
@@ -526,7 +589,10 @@ export default function ToolIdPhoto() {
               <View
                 key={o.dpi}
                 className={on ? 'dpi-opt dpi-opt--on' : 'dpi-opt'}
-                onClick={() => setDpi(o.dpi)}
+                onClick={() => {
+                  setDpi(o.dpi);
+                  reprocess({ dpi: o.dpi }); // 任务 #50：换 dpi 自动重跑
+                }}
                 style={{
                   padding: '6px 12px',
                   marginRight: '8px',
@@ -575,7 +641,10 @@ export default function ToolIdPhoto() {
         {bgOptions.map((o) => (
           <View
             key={o.key}
-            onClick={() => setBg(o.key)}
+            onClick={() => {
+              setBg(o.key);
+              recomposeBg(BG[o.key]); // 任务 #50：换底色即刻重新合成（不重跑抠图）
+            }}
             style={{
               padding: '8px 14px',
               marginRight: '8px',
@@ -597,7 +666,7 @@ export default function ToolIdPhoto() {
         📷 拍摄（引导框）
       </Button>
 
-      {msg ? <Text style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
+      {msg ? <Text className='status-line' style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
 
       {/* 智能裁切状态（任务 #24 / PRD B2）：按规格头占比自动定位裁剪框 */}
       {cropInfo ? (

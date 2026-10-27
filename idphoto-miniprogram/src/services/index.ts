@@ -6,6 +6,7 @@ import { check } from '../core/compliance';
 import { decideRoute, CONF_THRESHOLD, segment, composite, compositeTransparent, cloudMatting, collectEdgeSamples } from '../core/matting';
 import { makeHttpAdapter, makeLocalBiRefStub, assertDomestic, cropForeground, encodeAlphaB64, decodeAlphaB64 } from '../core/mattingCloud';
 import { makeCloudFnAdapter } from './cloudFnAdapter';
+import { composeAndExportImage } from './renderService';
 import { requiredConsents, buildConsentRecord, CONSENT_ITEMS, TOOL_CONSENTS } from '../core/privacy';
 import { alphaBBox, suitPlacement, suitCompose } from '../core/suit';
 import { planOutput, planWindowOutput, planDetectImage, MIN_WORK_EDGE, MAX_WORK_EDGE, MAX_WORK_PIXELS, DETECT_EDGE, WIN_MARGIN_RATIO } from '../core/compose';
@@ -71,4 +72,6 @@ export {
   applyPatches, newStroke, addPoint, boundsOfStrokes,
   // T6 上游成品图承接（任务 #49 / PRD K1 入口①）：参数解码 + 承接结论 + 降级提示
   decodeSrcParam, handoffMessage, resolveHandoff,
+  // 共享渲染：合成换底 + 裁剪 + 导出（任务 #50，换底色只重跑合成不重跑抠图）
+  composeAndExportImage,
 };

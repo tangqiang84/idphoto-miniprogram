@@ -40,6 +40,7 @@ try {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const { readStatus, waitForStatus } = require('./smoke_kit');
 
 async function readPageText(page) {
   try {
@@ -141,13 +142,12 @@ async function readPageText(page) {
     btn = await page.$('.btn-primary');
     await btn.tap();
     console.log('5) 已点击「选择照片并换装」，等待处理…');
-    let finished = false;
-    for (let i = 0; i < 60; i++) {
-      await sleep(1000);
-      const t = await readPageText(page);
-      if (t.includes('换装完成') || t.includes('处理失败')) { txt = t; finished = true; break; }
-    }
-    const processed = finished && txt.includes('换装完成');
+    // 轮询：只认状态行（.status-line），避免展示文案污染判定（2026-10-27 修正）
+    const st3 = await waitForStatus(page, ['换装完成', '处理失败', '失败'], 60);
+    txt = st3.pageText;
+    const status3 = st3.status || txt;
+    const finished = st3.hit;
+    const processed = finished && status3.includes('换装完成');
     console.log('5) 换装处理:', processed ? 'OK' : `FAIL(超时60s或失败文案: ${txt.replace(/\s+/g, ' ').slice(0, 120)})`);
 
     // 6. 自检区块渲染（D3/AC6）
@@ -175,13 +175,24 @@ async function readPageText(page) {
     }
     await sleep(500);
 
+    // 8.5 勾镜像自查（AC1，任务 #35 加入的第二道闸门）
+    //     注意：#35 之后导出按钮有 3 种文案变体（自检未完成 / 镜像未确认 / 可导出），
+    //     旧脚本只认前两种 → step9 找不到按钮而误报 FAIL（2026-10-27 修正）
+    const mirrorBox = await page.$('.mirror-check__box');
+    if (mirrorBox) {
+      try { await mirrorBox.tap(); } catch (e) { console.log('8.5) 点镜像自查失败:', e.message); }
+      await sleep(400);
+    } else {
+      console.log('8.5) 找不到 .mirror-check__box');
+    }
+
     // 9. 点导出（mock 保存）
     await miniProgram.mockWxMethod('saveImageToPhotosAlbum', { errMsg: 'saveImageToPhotosAlbum:ok' });
     const btns2 = await page.$$('button');
     let finalBtn = null;
     for (const b of btns2) {
       const t = (await b.text().catch(() => '')) || '';
-      if (t.includes('导出并保存') || t.includes('请先完成五官自检')) { finalBtn = b; break; }
+      if (t.includes('导出并保存') || t.includes('请先完成五官自检') || t.includes('请先确认照片非镜像照')) { finalBtn = b; break; }
     }
     let exported = false;
     if (finalBtn) {

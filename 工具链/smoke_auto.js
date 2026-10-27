@@ -44,6 +44,7 @@ try {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const { readStatus, waitForStatus } = require('./smoke_kit');
 
 (async () => {
   if (!fs.existsSync(IMG)) {
@@ -146,24 +147,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     console.log('5) 已点击「选择照片并制作」，等待处理…');
 
     // 6. 轮询结果
-    let msg = '';
-    let finished = false;
-    for (let i = 0; i < 45; i++) {
-      await sleep(1000);
-      try {
-        const el = await page.$('.page');
-        let txt = '';
-        try { txt = (await el.text()) || ''; } catch (_) {}
-        if (!txt) {
-          const vs = await page.$$('text');
-          const parts = [];
-          for (const v of vs) { try { parts.push((await v.text()) || ''); } catch (_) {} }
-          txt = parts.join(' ');
-        }
-        if (txt) msg = txt;
-        if (txt.includes('完成') || txt.includes('失败')) { finished = true; break; }
-      } catch (e) { /* 页面切换中 */ }
-    }
+    // 轮询：只认状态行（.status-line），避免展示文案（如镜像自查里的「会导致审核失败」）污染判定
+    const st = await waitForStatus(page, ['完成', '失败'], 45);
+    const msg = st.pageText;
+    const status = st.status || msg;
+    const finished = st.hit;
     await shot('02-t1.png');
 
     // 6.5 可选：PRD K1 入口① —— T1 出图后「另存为冲印排版」应能带图进入 T6
@@ -223,12 +211,13 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
     const pass =
       finished &&
-      msg.includes('完成') &&
+      status.includes('完成') &&
       errors.length === 0 &&
       (printHandoff === 'skipped' || printHandoff.indexOf('OK') === 0);
 
     console.log('\n===== 冒烟结果 =====');
-    console.log('处理完成:', finished ? (msg.includes('完成') ? 'OK' : 'FAIL(失败文案)') : 'FAIL(超时45s)');
+    console.log('状态行:', status.replace(/\s+/g, ' ').slice(0, 120));
+    console.log('处理完成:', finished ? (status.includes('完成') ? 'OK' : 'FAIL(失败文案)') : 'FAIL(超时45s)');
     console.log('运行时错误数:', errors.length);
     console.log('audit 日志:', auditLogs.length ? auditLogs.join(' | ') : '（无 → 说明未触发上云增强）');
     if (msg) console.log('页面文本:', msg.replace(/\s+/g, ' ').slice(0, 300));

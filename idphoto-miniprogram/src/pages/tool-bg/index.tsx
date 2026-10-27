@@ -1,9 +1,9 @@
 import { View, Text, Button, Image, Picker, Input } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   requiredConsents, buildConsentRecord,
-  segment, composite, compositeTransparent,
+  segment, composeAndExportImage,
   buildCloudFnAdapter,
   planOutput,
   BG, getSpec, getPixelSize, listSpecs,
@@ -20,6 +20,10 @@ import { useImagePicker } from '../../hooks/useImagePicker';
 // 隐私合规：授权默认【不勾选】，未集齐授权不启动处理（对应 PRD AC5）。
 //
 // 【2026-10-23 owner 决策】MVP 不设付费档，300/600dpi 两档全部免费（T2 亦开放 600dpi）。
+//
+// 【任务 #50，2026-10-27 真机反馈修正】此前「底色/规格/dpi」只改 state，**成品不跟着变**：
+//   选完照片再点「标准深蓝」，导出的仍是白底（#FFFFFF），用户必须重新选一次图才生效。
+// 现在：换底色 → 只重跑「合成 + 导出」（秒级，不重跑抠图）；换规格/dpi → 自动重跑整条链路。
 const TOOL = 'T2';
 
 type BgKey = 'white' | 'blue' | 'blueLight' | 'red' | 'gray';
@@ -50,6 +54,14 @@ export default function ToolBg() {
   const [outInfo, setOutInfo] = useState('');
   const [planNote, setPlanNote] = useState('');
 
+  // 已处理结果缓存（任务 #50）：换底色时据此**只重跑合成**，不重跑抠图
+  const lastProc = useRef<{
+    rgba: Uint8ClampedArray; alpha: any; w: number; h: number;
+    srcW: number; srcH: number; specIndex: number; dpi: number;
+  } | null>(null);
+  // 源图信息：换规格/dpi 时据此自动重跑整条链路（用户不必重新选图）
+  const lastSrc = useRef<{ path: string; w: number; h: number } | null>(null);
+
   const toggleConsent = (id: string) => {
     setGranted((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
@@ -66,14 +78,28 @@ export default function ToolBg() {
     setCustomApplied(hex);
     setUseTransparent(false);
     Taro.showToast({ title: `已应用 ${hex}`, icon: 'none' });
+    recompose(hex, false); // 任务 #50：应用即刻重新合成，不需重新选图
   }
 
-  async function run(path: string, srcW: number, srcH: number) {
+  async function run(
+    path: string,
+    srcW: number,
+    srcH: number,
+    opts?: { bgHex?: string | null; transparent?: boolean; specIndex?: number; dpi?: number },
+  ) {
     if (!rec.ready) {
       Taro.showToast({ title: '请先勾选所需授权', icon: 'none' });
       return;
     }
-    if (!activeBg) {
+    // 参数覆盖：state 更新是异步的，链式操作（改底色/规格后自动重跑）必须显式传值，
+    // 否则会用到旧值（问题台账 #31 同根）
+    const specIdx = opts?.specIndex ?? specIndex;
+    const dpiVal = opts?.dpi ?? dpi;
+    const transparent = opts?.transparent ?? useTransparent;
+    const bgHex = opts?.bgHex !== undefined
+      ? opts.bgHex
+      : (transparent ? null : (customApplied || BG[bg]));
+    if (!transparent && !bgHex) {
       Taro.showToast({ title: '请先选择底色', icon: 'none' });
       return;
     }
@@ -93,8 +119,9 @@ export default function ToolBg() {
       //    本函数只接收 path + 尺寸（PRD A1 引导框在拍摄路径叠加）。
       let w: number, h: number;
       let plan: any = null;
-      if (specIndex >= 0) {
-        const target = getPixelSize(getSpec(specs[specIndex].id)!, dpi)!;
+      let target: any = null;
+      if (specIdx >= 0) {
+        target = getPixelSize(getSpec(specs[specIdx].id)!, dpiVal)!;
         plan = planOutput(srcW, srcH, target.width, target.height);
         if (!plan) throw new Error('图片尺寸读取失败，请换一张照片');
         w = plan.workW;
@@ -131,48 +158,30 @@ export default function ToolBg() {
         tool: TOOL,
       });
 
-      // 5. 换底合成（透明底保留 alpha 通道，纯色混合）
-      setMsg(useTransparent ? '合成透明底…' : '合成底色…');
-      const composed = useTransparent
-        ? compositeTransparent(rgba, seg.alpha, w, h)
-        : composite(rgba, seg.alpha, w, h, activeBg!);
-
-      // 注：不使用 createImageData —— 微信部分基础库对它报
-      // "Value is not of type 'long'"。改为复用第 3 步 getImageData 返回的
-      // ImageData 直接写回工作 canvas（台账 #10）。
-      imageData.data.set(composed);
-      ctx.putImageData(imageData, 0, 0);
-
-      // 6. 导出：默认保持原图尺寸；用户选了规格则裁剪到该规格（含 600dpi）
-      const isTransparent = useTransparent;
-      const fileType: 'jpg' | 'png' = isTransparent ? 'png' : 'jpg';
-      let outW = w, outH = h;
-      let outCanvas = canvas;
-      if (specIndex >= 0 && plan) {
-        const target = getPixelSize(getSpec(specs[specIndex].id)!, dpi)!;
-        outCanvas = anyTaro.createOffscreenCanvas({ type: '2d', width: target.width, height: target.height });
-        const octx = outCanvas.getContext('2d');
-        octx.drawImage(canvas, plan.sx, plan.sy, plan.sw, plan.sh, 0, 0, target.width, target.height);
-        outW = target.width;
-        outH = target.height;
-      }
-
-      const exported: any = await Taro.canvasToTempFilePath({
-        canvas: outCanvas,
-        x: 0,
-        y: 0,
-        width: outW,
-        height: outH,
-        destWidth: outW,
-        destHeight: outH,
-        fileType,
-        quality: 0.95,
+      // 5. 换底合成 + 导出（共享渲染服务，任务 #50）
+      setMsg(transparent ? '合成透明底…' : '合成底色…');
+      const r = await composeAndExportImage({
+        rgba,
+        alpha: seg.alpha,
+        w,
+        h,
+        bgHex: transparent ? null : bgHex,
+        plan: specIdx >= 0 ? plan : null,
+        target: specIdx >= 0 ? target : null,
       });
-      setPreview(exported.tempFilePath);
+
+      // 缓存处理结果：换底色时据此**只重跑合成**（不重跑抠图）
+      lastProc.current = {
+        rgba, alpha: seg.alpha, w, h, plan, target,
+        specIndex: specIdx, dpi: dpiVal, srcW, srcH,
+      };
+      lastSrc.current = { path, w: srcW, h: srcH };
+
+      setPreview(r.preview);
       setOutInfo(
-        `${outW}×${outH} · ${isTransparent ? '透明底 PNG' : `底色 ${activeBg} JPG`}` +
+        `${r.outW}×${r.outH} · ${transparent ? '透明底 PNG' : `底色 ${bgHex} JPG`}` +
         (seg.degraded ? ' · 已降级端侧' : '') +
-        (specIndex >= 0 ? ` · ${specs[specIndex].name} @${dpi}dpi` : ' · 原图尺寸'),
+        (specIdx >= 0 ? ` · ${specs[specIdx].name} @${dpiVal}dpi` : ' · 原图尺寸'),
       );
       setMsg(`完成（${seg.backend}）`);
     } catch (e: any) {
@@ -187,6 +196,49 @@ export default function ToolBg() {
     } finally {
       setBusy(false);
     }
+  }
+
+  // 换底色 → 只重跑「合成 + 导出」，不重跑抠图（任务 #50）
+  // 规格/dpi 变更 → 工作画布尺寸会变（alpha 坐标系随之改变），必须整条链路重跑
+  async function recompose(nextBgHex: string | null, nextTransparent: boolean) {
+    const p = lastProc.current;
+    if (!p) {
+      Taro.showToast({ title: '请先选择照片', icon: 'none' });
+      return;
+    }
+    setBusy(true);
+    setMsg('重新合成…');
+    try {
+      const r = await composeAndExportImage({
+        rgba: p.rgba,
+        alpha: p.alpha,
+        w: p.w,
+        h: p.h,
+        bgHex: nextTransparent ? null : nextBgHex,
+        plan: p.specIndex >= 0 ? p.plan : null,
+        target: p.specIndex >= 0 ? p.target : null,
+      });
+      setPreview(r.preview);
+      setOutInfo(
+        `${r.outW}×${r.outH} · ${nextTransparent ? '透明底 PNG' : `底色 ${nextBgHex} JPG`}` +
+        (p.specIndex >= 0 ? ` · ${specs[p.specIndex].name} @${p.dpi}dpi` : ' · 原图尺寸'),
+      );
+      setMsg('完成（底色已更新）');
+    } catch (e: any) {
+      setMsg('换底色失败：' + String((e && e.message) || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // 换规格 / 换 dpi → 自动重跑整条链路（用户不必重新选图）
+  function reprocess(opts: { specIndex?: number; dpi?: number }) {
+    const src = lastSrc.current;
+    if (!src) {
+      Taro.showToast({ title: '请先选择照片', icon: 'none' });
+      return;
+    }
+    run(src.path, src.w, src.h, opts);
   }
 
   async function save() {
@@ -247,7 +299,12 @@ export default function ToolBg() {
           {bgOptions.map((o) => (
             <View
               key={o.key}
-              onClick={() => { setBg(o.key); setUseTransparent(false); setCustomApplied(null); }}
+              onClick={() => {
+                setBg(o.key);
+                setUseTransparent(false);
+                setCustomApplied(null);
+                recompose(BG[o.key], false); // 任务 #50：换底色即刻重新合成
+              }}
               style={{
                 padding: '8px 14px',
                 marginRight: '8px',
@@ -263,7 +320,11 @@ export default function ToolBg() {
           ))}
           {/* 透明底（C3：PNG 保留 alpha 通道） */}
           <View
-            onClick={() => setUseTransparent(true)}
+            onClick={() => {
+              setUseTransparent(true);
+              setCustomApplied(null);
+              recompose(null, true); // 任务 #50：透明底即刻重新合成
+            }}
             style={{
               padding: '8px 14px',
               borderRadius: '6px',
@@ -311,7 +372,9 @@ export default function ToolBg() {
           value={specIndex < 0 ? 0 : specIndex + 1}
           onChange={(e: any) => {
             const v = Number(e.detail.value);
-            setSpecIndex(v === 0 ? -1 : v - 1);
+            const nextIdx = v === 0 ? -1 : v - 1;
+            setSpecIndex(nextIdx);
+            reprocess({ specIndex: nextIdx }); // 任务 #50：换规格自动重跑（不需重新选图）
           }}
         >
           <View style={{ color: '#438EDB', padding: '4px 0' }}>
@@ -332,7 +395,10 @@ export default function ToolBg() {
                   <View
                     key={o.dpi}
                     className={on ? 'dpi-opt dpi-opt--on' : 'dpi-opt'}
-                    onClick={() => setDpi(o.dpi)}
+                    onClick={() => {
+                      setDpi(o.dpi);
+                      reprocess({ dpi: o.dpi }); // 任务 #50：换 dpi 自动重跑
+                    }}
                     style={{
                       padding: '6px 12px',
                       marginRight: '8px',
@@ -360,7 +426,7 @@ export default function ToolBg() {
         📷 拍摄（引导框）
       </Button>
 
-      {msg ? <Text style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
+      {msg ? <Text className='status-line' style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
 
       {/* 输出构图提示（分辨率不足 / 达到处理上限 → 如实告知） */}
       {planNote ? (

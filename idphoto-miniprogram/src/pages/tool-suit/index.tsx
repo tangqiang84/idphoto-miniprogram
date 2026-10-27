@@ -1,9 +1,9 @@
 import { View, Text, Button, Image, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   requiredConsents, buildConsentRecord,
-  segment, composite,
+  segment, composeAndExportImage,
   buildCloudFnAdapter,
   alphaBBox, suitPlacement, suitCompose,
   measureHeadMetrics,
@@ -64,12 +64,29 @@ export default function ToolSuit() {
   const [outInfo, setOutInfo] = useState('');
   const [planNote, setPlanNote] = useState('');
   const [selfChecked, setSelfChecked] = useState(false); // AC6/D3：五官自检确认
+  // 已处理结果缓存（任务 #50）：换底色时据此**只重跑合成**
+  const lastProc = useRef<{
+    suited: Uint8ClampedArray; alpha: any; w: number; h: number;
+    plan: any; target: any; specIndex: number; dpi: number;
+    tplIndex: number; headIsEstimate: boolean;
+  } | null>(null);
+  // 源图信息：换规格/dpi 时据此自动重跑（用户不必重新选图）
+  const lastSrc = useRef<{ path: string; w: number; h: number } | null>(null);
 
   const toggleConsent = (id: string) => {
     setGranted((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
-  async function run(path: string, srcW: number, srcH: number) {
+  async function run(
+    path: string,
+    srcW: number,
+    srcH: number,
+    opts?: { bgHex?: string | null; specIndex?: number; dpi?: number },
+  ) {
+    // 参数覆盖（任务 #50）：state 异步，链式操作必须显式传值（问题台账 #31 同根）
+    const specIdx = opts?.specIndex ?? specIndex;
+    const dpiVal = opts?.dpi ?? dpi;
+    const bgHex = opts?.bgHex !== undefined ? opts.bgHex : BG[bg];
     if (!rec.ready) {
       Taro.showToast({ title: '请先勾选所需授权（含换装单独授权）', icon: 'none' });
       return;
@@ -88,8 +105,8 @@ export default function ToolSuit() {
       //    取图已剥离到 useImagePicker（相册 picker.pickAlbum / 拍摄 CameraGuide，PRD A1 引导框）。
       let w: number, h: number;
       let plan: any = null;
-      if (specIndex >= 0) {
-        const target = getPixelSize(getSpec(specs[specIndex].id)!, dpi)!;
+      if (specIdx >= 0) {
+        const target = getPixelSize(getSpec(specs[specIdx].id)!, dpiVal)!;
         plan = planOutput(srcW, srcH, target.width, target.height);
         if (!plan) throw new Error('图片尺寸读取失败，请换一张照片');
         w = plan.workW;
@@ -143,32 +160,32 @@ export default function ToolSuit() {
       const place = suitPlacement(bbox, headH);
       const suited = suitCompose(rgba, seg.alpha, w, h, tpl.data, tpl.w, tpl.h, place);
 
-      // 7. 换底合成 + 写回工作 canvas
+      // 7. 换底合成 + 导出（共享渲染服务，任务 #50）
       setMsg('合成底色…');
-      const composed = composite(suited, seg.alpha, w, h, BG[bg]);
-      imageData.data.set(composed);
-      ctx.putImageData(imageData, 0, 0);
-
-      // 8. 导出（原图尺寸；选了规格则裁剪到该规格，含 600dpi）
-      let outW = w, outH = h;
-      let outCanvas = canvas;
-      if (specIndex >= 0 && plan) {
-        const target = getPixelSize(getSpec(specs[specIndex].id)!, dpi)!;
-        outCanvas = anyTaro.createOffscreenCanvas({ type: '2d', width: target.width, height: target.height });
-        const octx = outCanvas.getContext('2d');
-        octx.drawImage(canvas, plan.sx, plan.sy, plan.sw, plan.sh, 0, 0, target.width, target.height);
-        outW = target.width;
-        outH = target.height;
-      }
-      const exported: any = await Taro.canvasToTempFilePath({
-        canvas: outCanvas, x: 0, y: 0, width: outW, height: outH,
-        destWidth: outW, destHeight: outH, fileType: 'jpg', quality: 0.95,
+      let target: any = null;
+      if (specIdx >= 0) target = getPixelSize(getSpec(specs[specIdx].id)!, dpiVal)!;
+      const r = await composeAndExportImage({
+        rgba: suited,
+        alpha: seg.alpha,
+        w,
+        h,
+        bgHex,
+        plan: specIdx >= 0 ? plan : null,
+        target,
       });
-      setPreview(exported.tempFilePath);
+
+      // 缓存处理结果：换底色时据此**只重跑合成**（不重跑抠图/换装）
+      lastProc.current = {
+        suited, alpha: seg.alpha, w, h, plan, target,
+        specIndex: specIdx, dpi: dpiVal, tplIndex, headIsEstimate,
+      };
+      lastSrc.current = { path, w: srcW, h: srcH };
+
+      setPreview(r.preview);
       setOutInfo(
-        `${outW}×${outH} · ${SUIT_TEMPLATES[tplIndex].name} · 底色 ${BG[bg]}` +
+        `${r.outW}×${r.outH} · ${SUIT_TEMPLATES[tplIndex].name} · 底色 ${bgHex}` +
         (seg.degraded ? ' · 已降级端侧' : '') +
-        (specIndex >= 0 ? ` · ${specs[specIndex].name} @${dpi}dpi` : ' · 原图尺寸') +
+        (specIdx >= 0 ? ` · ${specs[specIdx].name} @${dpiVal}dpi` : ' · 原图尺寸') +
         ` · ${headIsEstimate ? '比例估算定位' : '关键点定位'}`,
       );
       setMsg(`换装完成（${seg.backend}）——请核对五官后导出`);
@@ -186,6 +203,49 @@ export default function ToolSuit() {
   }
 
   // AC6/D3：未通过五官自检不得导出；AC1：未确认非镜像照不得导出
+  // 换底色 → 只重跑「合成 + 导出」，不重跑抠图/换装（任务 #50）
+  async function recompose(nextBgHex: string) {
+    const p = lastProc.current;
+    if (!p) {
+      Taro.showToast({ title: '请先选择照片并处理', icon: 'none' });
+      return;
+    }
+    setBusy(true);
+    setMsg('重新合成…');
+    try {
+      const r = await composeAndExportImage({
+        rgba: p.suited,
+        alpha: p.alpha,
+        w: p.w,
+        h: p.h,
+        bgHex: nextBgHex,
+        plan: p.specIndex >= 0 ? p.plan : null,
+        target: p.specIndex >= 0 ? p.target : null,
+      });
+      setPreview(r.preview);
+      setOutInfo(
+        `${r.outW}×${r.outH} · ${SUIT_TEMPLATES[p.tplIndex].name} · 底色 ${nextBgHex}` +
+        (p.specIndex >= 0 ? ` · ${specs[p.specIndex].name} @${p.dpi}dpi` : ' · 原图尺寸') +
+        ` · ${p.headIsEstimate ? '比例估算定位' : '关键点定位'}`,
+      );
+      setMsg('换装完成（底色已更新）——请核对五官后导出');
+    } catch (e: any) {
+      setMsg('换底色失败：' + String((e && e.message) || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // 换规格 / 换 dpi → 工作画布与裁剪窗都变，必须整条链路重跑
+  function reprocess(opts: { specIndex?: number; dpi?: number }) {
+    const src = lastSrc.current;
+    if (!src) {
+      Taro.showToast({ title: '请先选择照片', icon: 'none' });
+      return;
+    }
+    run(src.path, src.w, src.h, opts);
+  }
+
   async function exportSave() {
     if (!preview) return;
     if (!selfChecked) {
@@ -279,7 +339,10 @@ export default function ToolSuit() {
           {bgOptions.map((o) => (
             <View
               key={o.key}
-              onClick={() => setBg(o.key)}
+              onClick={() => {
+                setBg(o.key);
+                recompose(BG[o.key]); // 任务 #50：换底色即刻重新合成
+              }}
               style={{
                 padding: '8px 14px',
                 marginRight: '8px',
@@ -304,7 +367,9 @@ export default function ToolSuit() {
           value={specIndex < 0 ? 0 : specIndex + 1}
           onChange={(e: any) => {
             const v = Number(e.detail.value);
-            setSpecIndex(v === 0 ? -1 : v - 1);
+            const nextIdx = v === 0 ? -1 : v - 1;
+            setSpecIndex(nextIdx);
+            reprocess({ specIndex: nextIdx }); // 任务 #50：换规格自动重跑
           }}
         >
           <View style={{ color: '#438EDB', padding: '4px 0' }}>
@@ -325,7 +390,10 @@ export default function ToolSuit() {
                   <View
                     key={o.dpi}
                     className={on ? 'dpi-opt dpi-opt--on' : 'dpi-opt'}
-                    onClick={() => setDpi(o.dpi)}
+                    onClick={() => {
+                      setDpi(o.dpi);
+                      reprocess({ dpi: o.dpi }); // 任务 #50：换 dpi 自动重跑
+                    }}
                     style={{
                       padding: '6px 12px',
                       marginRight: '8px',
@@ -353,7 +421,7 @@ export default function ToolSuit() {
         📷 拍摄（引导框）
       </Button>
 
-      {msg ? <Text style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
+      {msg ? <Text className='status-line' style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
 
       {/* 输出构图提示（分辨率不足 / 达到处理上限 → 如实告知） */}
       {planNote ? (

@@ -1,6 +1,6 @@
 import { View, Text, Button, Image, Picker, Input, Switch } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { getSpec, getPixelSize, listSpecs, DPI_STD, DPI_HD, specLabel } from '../../services';
 import { useImagePicker } from '../../hooks/useImagePicker';
 
@@ -33,6 +33,8 @@ export default function ToolSpec() {
   const [preview, setPreview] = useState('');
   const [outInfo, setOutInfo] = useState('');
   const picker = useImagePicker((img) => run(img.path, img.width, img.height));
+  // 源图信息（任务 #50）：改规格/dpi 后据此自动重跑，用户不必重新选图
+  const lastSrc = useRef<{ path: string; w: number; h: number } | null>(null);
 
   const spec = mode === 'spec' ? getSpec(specs[specIndex].id) : null;
   const targetPx = mode === 'spec'
@@ -44,6 +46,16 @@ export default function ToolSpec() {
     };
   const limitKb = kbLimitOn ? Math.max(0, parseInt(kbLimit, 10) || 0) : 0;
 
+  // 改参数后自动重跑（任务 #50）：用户不必重新选图
+  function reprocess(target: { width: number; height: number; dpi: number }) {
+    const src = lastSrc.current;
+    if (!src) {
+      Taro.showToast({ title: '请先选择照片', icon: 'none' });
+      return;
+    }
+    run(src.path, src.w, src.h, { targetPx: target });
+  }
+
   function validate(): string | null {
     if (mode === 'custom' && (!targetPx.width || !targetPx.height)) {
       return '请输入有效的自定义像素（1–5000）';
@@ -52,7 +64,14 @@ export default function ToolSpec() {
     return null;
   }
 
-  async function run(path: string, srcW: number, srcH: number) {
+  async function run(
+    path: string,
+    srcW: number,
+    srcH: number,
+    opts?: { targetPx?: { width: number; height: number; dpi: number } },
+  ) {
+    // 参数覆盖（任务 #50）：state 更新异步，链式操作必须显式传目标像素
+    const tp = opts?.targetPx ?? targetPx;
     const err = validate();
     if (err) {
       Taro.showToast({ title: err, icon: 'none' });
@@ -72,8 +91,8 @@ export default function ToolSpec() {
 
       // 2. 目标画布：居中裁剪到目标宽高比，再缩放到目标像素
       setMsg('裁剪缩放中…');
-      const tw = targetPx.width;
-      const th = targetPx.height;
+      const tw = tp.width;
+      const th = tp.height;
       const outCanvas = anyTaro.createOffscreenCanvas({ type: '2d', width: tw, height: th });
       const octx = outCanvas.getContext('2d');
       const img = outCanvas.createImage();
@@ -124,10 +143,11 @@ export default function ToolSpec() {
         kbWarn = true;
       }
 
+      lastSrc.current = { path, w: srcW, h: srcH }; // 任务 #50：改参数后可自动重跑
       setPreview(exported!.tempFilePath);
       setOutInfo(
         `${tw}×${th}px` +
-        (mode === 'spec' ? ` · ${specs[specIndex].name} @${dpi}dpi` : ' · 自定义尺寸') +
+        (mode === 'spec' ? ` · ${specs[specIndex].name} @${tp.dpi}dpi` : ' · 自定义尺寸') +
         ` · ${fileKb}KB` +
         (limitKb && fileKb <= limitKb ? `（≤${limitKb}KB）` : '') +
         ` · 质量 ${Math.round(usedQuality * 100)}%`,
@@ -192,7 +212,12 @@ export default function ToolSpec() {
             mode='selector'
             range={specs.map((s: any) => specLabel(s.id, dpi))}
             value={specIndex}
-            onChange={(e: any) => setSpecIndex(Number(e.detail.value))}
+            onChange={(e: any) => {
+              const i = Number(e.detail.value);
+              setSpecIndex(i);
+              const px = getPixelSize(specs[i].id, dpi)!; // 任务 #50：换规格自动重跑
+              reprocess({ width: px.width, height: px.height, dpi });
+            }}
           >
             <View style={{ color: '#438EDB', padding: '4px 0' }}>{specs[specIndex].name} ▾</View>
           </Picker>
@@ -205,7 +230,11 @@ export default function ToolSpec() {
                 <View
                   key={s.id}
                   className='spec-chip'
-                  onClick={() => setSpecIndex(i)}
+                  onClick={() => {
+                    setSpecIndex(i);
+                    const p2 = getPixelSize(s.id, dpi)!; // 任务 #50：换规格自动重跑
+                    reprocess({ width: p2.width, height: p2.height, dpi });
+                  }}
                   style={{
                     padding: '5px 10px',
                     marginRight: '6px',
@@ -232,7 +261,12 @@ export default function ToolSpec() {
             mode='selector'
             range={['300dpi（标准 · 像素少）', '600dpi（高清 · 像素翻倍）']}
             value={dpi === DPI_STD ? 0 : 1}
-            onChange={(e: any) => setDpi(Number(e.detail.value) === 0 ? DPI_STD : DPI_HD)}
+            onChange={(e: any) => {
+              const d = Number(e.detail.value) === 0 ? DPI_STD : DPI_HD;
+              setDpi(d);
+              const px = getPixelSize(specs[specIndex].id, d)!; // 任务 #50：换 dpi 自动重跑
+              reprocess({ width: px.width, height: px.height, dpi: d });
+            }}
           >
             <View style={{ color: '#438EDB', padding: '4px 0' }}>
               {dpi}dpi ▾
@@ -246,6 +280,11 @@ export default function ToolSpec() {
             type='number'
             value={customW}
             onInput={(e: any) => setCustomW(e.detail.value)}
+            onBlur={() => {
+              const w2 = Math.max(1, Math.min(5000, parseInt(customW, 10) || 0));
+              const h2 = Math.max(1, Math.min(5000, parseInt(customH, 10) || 0));
+              if (w2 && h2) reprocess({ width: w2, height: h2, dpi }); // 任务 #50：自定义尺寸失焦后自动重跑
+            }}
             placeholder='如 295'
             style={{ width: '80px', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 8px', marginLeft: '6px' }}
           />
@@ -254,6 +293,11 @@ export default function ToolSpec() {
             type='number'
             value={customH}
             onInput={(e: any) => setCustomH(e.detail.value)}
+            onBlur={() => {
+              const w2 = Math.max(1, Math.min(5000, parseInt(customW, 10) || 0));
+              const h2 = Math.max(1, Math.min(5000, parseInt(customH, 10) || 0));
+              if (w2 && h2) reprocess({ width: w2, height: h2, dpi }); // 任务 #50：自定义尺寸失焦后自动重跑
+            }}
             placeholder='如 413'
             style={{ width: '80px', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 8px', marginLeft: '6px' }}
           />
@@ -274,6 +318,12 @@ export default function ToolSpec() {
           type='number'
           value={kbLimit}
           onInput={(e: any) => setKbLimit(e.detail.value)}
+          onBlur={() => {
+            // 任务 #50：KB 上限影响压缩结果 → 失焦后自动重跑
+            const w2 = mode === 'spec' ? getPixelSize(specs[specIndex].id, dpi)!.width : Math.max(1, Math.min(5000, parseInt(customW, 10) || 0));
+            const h2 = mode === 'spec' ? getPixelSize(specs[specIndex].id, dpi)!.height : Math.max(1, Math.min(5000, parseInt(customH, 10) || 0));
+            if (w2 && h2) reprocess({ width: w2, height: h2, dpi });
+          }}
           placeholder={mode === 'spec' ? `规格默认 ${spec!.maxKb}` : '如 200'}
           style={{ width: '80px', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 8px', marginLeft: '6px' }}
         />
@@ -286,7 +336,7 @@ export default function ToolSpec() {
         📷 拍摄（引导框）
       </Button>
 
-      {msg ? <Text style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
+      {msg ? <Text className='status-line' style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
 
       {preview ? (
         <View style={{ marginTop: '14px' }}>
