@@ -360,7 +360,7 @@ export default function ToolIdPhoto() {
         headHeightRatio: headRatio != null ? headRatio : undefined,
       });
       setResult(cr);
-      setMsg(`完成（${backendLabel(seg.backend)}${seg.degraded ? '，云端不可用已降级' : ''}）`);
+      setMsg(`完成（${backendLabel(seg.backend)}${seg.degraded ? `，云端不可用已降级${seg.cloudError ? '：' + String(seg.cloudError).slice(0, 60) : ''}` : ''}）`);
     } catch (e: any) {
       const m = String((e && e.message) || e);
       if (m.startsWith('AC5')) {

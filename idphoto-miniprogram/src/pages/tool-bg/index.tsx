@@ -193,7 +193,7 @@ export default function ToolBg() {
         (seg.degraded ? ' · 已降级端侧' : '') +
         (specIdx >= 0 ? ` · ${specs[specIdx].name} @${dpiVal}dpi` : ' · 原图尺寸'),
       );
-      setMsg(`完成（${backendLabel(seg.backend)}${seg.degraded ? '，云端不可用已降级' : ''}）`);
+      setMsg(`完成（${backendLabel(seg.backend)}${seg.degraded ? `，云端不可用已降级${seg.cloudError ? '：' + String(seg.cloudError).slice(0, 60) : ''}` : ''}）`);
     } catch (e: any) {
       const m = String((e && e.message) || e);
       if (m.startsWith('AC5')) {

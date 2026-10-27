@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="utf-8"><title>真实头像批量验收报告</title>
+<style>
+body{font-family:-apple-system,"PingFang SC",sans-serif;margin:24px;background:#f6f8fa;color:#1f2328}
+h1{font-size:20px} h3{font-size:15px;margin:0 0 8px}
+.card{background:#fff;border:1px solid #d0d7de;border-radius:8px;padding:16px;margin-bottom:16px}
+.imgs{display:flex;gap:16px;margin-bottom:8px}
+.imgs img{max-height:320px;max-width:280px;border:1px solid #d0d7de}
+.cap{font-size:12px;color:#57606a;margin-bottom:4px}
+.verdict{color:#fff;font-size:12px;padding:2px 8px;border-radius:10px;vertical-align:middle}
+.row{font-size:13px;margin:2px 0}
+.fact{font-size:12px;color:#57606a;font-family:monospace;word-break:break-all}
+.err{font-size:12px;color:#cf222e}
+.noimg{color:#cf222e}
+.meta{font-size:13px;color:#57606a;margin-bottom:16px}
+</style></head><body>
+<h1>真实头像批量验收报告（T2 单独换底色 · 真实云函数链路）</h1>
+<div class="meta">生成时间: 2026-10-27 14:59:38 ｜ 判定口径见《问题台账》#67：本报告只陈述事实，PASS/WARN/FAIL 规则见 report_acceptance.py 头注释。<br><b>PASS: 7 ｜ WARN: 3 ｜ EXPECTED-DEGRADE: 1</b></div>
+
+        <div class="card">
+          <h3>111.jpg <span class="verdict" style="background:#bf8700">WARN</span></h3>
+          <div class="imgs">
+            <div><div class="cap">原图</div><img src="../../%E7%9C%9F%E5%AE%9E%E5%A4%B4%E5%83%8F/111.jpg"></div>
+            <div><div class="cap">成品（白底）</div><img src="acceptance/111_result.jpg"></div>
+          </div>
+          <div class="row">状态行：完成（云端精修）</div>
+          <div class="row">判定：边框带残留率 2.7% &gt; 2%</div>
+          <div class="row">尺寸 600×798 ｜ 背景色 #FFFFFF ｜ 边框带残留 &lt;b&gt;2.74%&lt;/b&gt; ｜ 残留bbox (0, 648, 596, 796)</div>
+          <div class="fact"><b>upload_region</b>: &quot;mode&quot;:&quot;center_region&quot;,&quot;fgRatio&quot;:0.432,&quot;rect&quot;:{&quot;x&quot;:60,&quot;y&quot;:16,&quot;w&quot;:480,&quot;h&quot;:782},&quot;t &quot;rect&quot;:{&quot;x&quot;:60,&quot;y&quot;:16,&quot;w&quot;:480,&quot;h&quot;:782},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:false} &quot;fgRatio&quot;:0.432,&quot;rect&quot;:{&quot;x&quot;:60,&quot;y&quot;:16,&quot;w&quot;:480,&quot;h&quot;:782},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:fa </div><div class="fact"><b>cloud_ok</b>: cloud_ok&quot;,&quot;latencyMs&quot;:4135,&quot;region&quot;:&quot;CN&quot;,&quot;confidence&quot;:0.9866687979539642,&quot;retained&quot;:false,&quot;provider&quot;:&quot;baidu&quot;,&quot;hasPixel&quot;:false}</div>
+          
+        </div>
+
+        <div class="card">
+          <h3>123.png <span class="verdict" style="background:#1a7f37">PASS</span></h3>
+          <div class="imgs">
+            <div><div class="cap">原图</div><img src="../../%E7%9C%9F%E5%AE%9E%E5%A4%B4%E5%83%8F/123.png"></div>
+            <div><div class="cap">成品（白底）</div><img src="acceptance/123_result.jpg"></div>
+          </div>
+          <div class="row">状态行：完成（云端精修）</div>
+          <div class="row">判定：云端精修 + 边框带残留率 0.58%</div>
+          <div class="row">尺寸 295×413 ｜ 背景色 #FFFFFF ｜ 边框带残留 &lt;b&gt;0.58%&lt;/b&gt; ｜ 残留bbox (0, 168, 8, 200)</div>
+          <div class="fact"><b>upload_region</b>: &quot;mode&quot;:&quot;center_region&quot;,&quot;fgRatio&quot;:0.475,&quot;rect&quot;:{&quot;x&quot;:30,&quot;y&quot;:8,&quot;w&quot;:236,&quot;h&quot;:405},&quot;to &quot;rect&quot;:{&quot;x&quot;:30,&quot;y&quot;:8,&quot;w&quot;:236,&quot;h&quot;:405},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:false} &quot;fgRatio&quot;:0.475,&quot;rect&quot;:{&quot;x&quot;:30,&quot;y&quot;:8,&quot;w&quot;:236,&quot;h&quot;:405},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:fal </div><div class="fact"><b>cloud_ok</b>: cloud_ok&quot;,&quot;latencyMs&quot;:1802,&quot;region&quot;:&quot;CN&quot;,&quot;confidence&quot;:0.5951349654739485,&quot;retained&quot;:false,&quot;provider&quot;:&quot;baidu&quot;,&quot;hasPixel&quot;:false}</div>
+          
+        </div>
+
+        <div class="card">
+          <h3>3652.jpg <span class="verdict" style="background:#1a7f37">PASS</span></h3>
+          <div class="imgs">
+            <div><div class="cap">原图</div><img src="../../%E7%9C%9F%E5%AE%9E%E5%A4%B4%E5%83%8F/3652.jpg"></div>
+            <div><div class="cap">成品（白底）</div><img src="acceptance/3652_result.jpg"></div>
+          </div>
+          <div class="row">状态行：完成（云端精修）</div>
+          <div class="row">判定：云端精修 + 边框带残留率 0.00%</div>
+          <div class="row">尺寸 200×300 ｜ 背景色 #FFFFFF ｜ 边框带残留 &lt;b&gt;0.00%&lt;/b&gt; ｜ 残留bbox </div>
+          <div class="fact"><b>upload_region</b>: &quot;mode&quot;:&quot;center_region&quot;,&quot;fgRatio&quot;:0.382,&quot;rect&quot;:{&quot;x&quot;:20,&quot;y&quot;:6,&quot;w&quot;:160,&quot;h&quot;:294},&quot;to &quot;rect&quot;:{&quot;x&quot;:20,&quot;y&quot;:6,&quot;w&quot;:160,&quot;h&quot;:294},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:false} &quot;fgRatio&quot;:0.382,&quot;rect&quot;:{&quot;x&quot;:20,&quot;y&quot;:6,&quot;w&quot;:160,&quot;h&quot;:294},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:fal </div><div class="fact"><b>cloud_ok</b>: cloud_ok&quot;,&quot;latencyMs&quot;:1212,&quot;region&quot;:&quot;CN&quot;,&quot;confidence&quot;:0.9799319727891156,&quot;retained&quot;:false,&quot;provider&quot;:&quot;baidu&quot;,&quot;hasPixel&quot;:false}</div>
+          
+        </div>
+
+        <div class="card">
+          <h3>3f5c67b03f7f.jpg <span class="verdict" style="background:#1a7f37">PASS</span></h3>
+          <div class="imgs">
+            <div><div class="cap">原图</div><img src="../../%E7%9C%9F%E5%AE%9E%E5%A4%B4%E5%83%8F/3f5c67b03f7f.jpg"></div>
+            <div><div class="cap">成品（白底）</div><img src="acceptance/3f5c67b03f7f_result.jpg"></div>
+          </div>
+          <div class="row">状态行：完成（云端精修）</div>
+          <div class="row">判定：云端精修 + 边框带残留率 0.09%</div>
+          <div class="row">尺寸 400×400 ｜ 背景色 #FFFFFF ｜ 边框带残留 &lt;b&gt;0.09%&lt;/b&gt; ｜ 残留bbox (248, 20, 252, 28)</div>
+          <div class="fact"><b>upload_region</b>: &quot;mode&quot;:&quot;center_region&quot;,&quot;fgRatio&quot;:0.524,&quot;rect&quot;:{&quot;x&quot;:40,&quot;y&quot;:8,&quot;w&quot;:320,&quot;h&quot;:392},&quot;to &quot;rect&quot;:{&quot;x&quot;:40,&quot;y&quot;:8,&quot;w&quot;:320,&quot;h&quot;:392},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:false} &quot;fgRatio&quot;:0.524,&quot;rect&quot;:{&quot;x&quot;:40,&quot;y&quot;:8,&quot;w&quot;:320,&quot;h&quot;:392},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:fal </div><div class="fact"><b>cloud_ok</b>: cloud_ok&quot;,&quot;latencyMs&quot;:1941,&quot;region&quot;:&quot;CN&quot;,&quot;confidence&quot;:0.9567841198979592,&quot;retained&quot;:false,&quot;provider&quot;:&quot;baidu&quot;,&quot;hasPixel&quot;:false}</div>
+          
+        </div>
+
+        <div class="card">
+          <h3>91f990d7fa414d3d92a9377957b9be0f.jpg <span class="verdict" style="background:#bf8700">WARN</span></h3>
+          <div class="imgs">
+            <div><div class="cap">原图</div><img src="../../%E7%9C%9F%E5%AE%9E%E5%A4%B4%E5%83%8F/91f990d7fa414d3d92a9377957b9be0f.jpg"></div>
+            <div><div class="cap">成品（白底）</div><img src="acceptance/91f990d7fa414d3d92a9377957b9be0f_result.jpg"></div>
+          </div>
+          <div class="row">状态行：完成（云端精修）</div>
+          <div class="row">判定：边框带残留率 6.2% &gt; 2%</div>
+          <div class="row">尺寸 480×480 ｜ 背景色 #FFFFFF ｜ 边框带残留 &lt;b&gt;6.24%&lt;/b&gt; ｜ 残留bbox (444, 212, 476, 476)</div>
+          <div class="fact"><b>upload_region</b>: &quot;mode&quot;:&quot;center_region&quot;,&quot;fgRatio&quot;:0.607,&quot;rect&quot;:{&quot;x&quot;:48,&quot;y&quot;:10,&quot;w&quot;:384,&quot;h&quot;:470},&quot;t &quot;rect&quot;:{&quot;x&quot;:48,&quot;y&quot;:10,&quot;w&quot;:384,&quot;h&quot;:470},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:false} &quot;fgRatio&quot;:0.607,&quot;rect&quot;:{&quot;x&quot;:48,&quot;y&quot;:10,&quot;w&quot;:384,&quot;h&quot;:470},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:fa </div><div class="fact"><b>cloud_ok</b>: cloud_ok&quot;,&quot;latencyMs&quot;:2212,&quot;region&quot;:&quot;CN&quot;,&quot;confidence&quot;:0.9918273492907801,&quot;retained&quot;:false,&quot;provider&quot;:&quot;baidu&quot;,&quot;hasPixel&quot;:false}</div>
+          
+        </div>
+
+        <div class="card">
+          <h3>FaceQ1411209084675.png <span class="verdict" style="background:#6e7781">EXPECTED-DEGRADE</span></h3>
+          <div class="imgs">
+            <div><div class="cap">原图</div><img src="../../%E7%9C%9F%E5%AE%9E%E5%A4%B4%E5%83%8F/FaceQ1411209084675.png"></div>
+            <div><div class="cap">成品（白底）</div><img src="acceptance/FaceQ1411209084675_result.jpg"></div>
+          </div>
+          <div class="row">状态行：完成（cloud-&gt;edge，云端不可用已降级：cloud_foreground_shift）</div>
+          <div class="row">判定：卡通负例，按 #49 预期降级</div>
+          <div class="row">尺寸 590×590 ｜ 背景色 #FFFFFF ｜ 边框带残留 &lt;b&gt;0.00%&lt;/b&gt; ｜ 残留bbox </div>
+          <div class="fact"><b>upload_region</b>: &quot;mode&quot;:&quot;center_region&quot;,&quot;fgRatio&quot;:0.491,&quot;rect&quot;:{&quot;x&quot;:59,&quot;y&quot;:12,&quot;w&quot;:472,&quot;h&quot;:578},&quot;t &quot;rect&quot;:{&quot;x&quot;:59,&quot;y&quot;:12,&quot;w&quot;:472,&quot;h&quot;:578},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:false} &quot;fgRatio&quot;:0.491,&quot;rect&quot;:{&quot;x&quot;:59,&quot;y&quot;:12,&quot;w&quot;:472,&quot;h&quot;:578},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:fa </div><div class="fact"><b>cloud_degraded_quality</b>: cloud_degraded_quality&quot;,&quot;reason&quot;:&quot;cloud_foreground_shift&quot;,&quot;provider&quot;:&quot;baidu&quot;,&quot;cloudConf&quot;:0.9812804234355756,&quot;localConf&quot;:0.9533091900768283,&quot;cloudFg&quot;:0.14693419740777666,&quot;localFg&quot;:0.5795297929740191,&quot;providerMeta&quot;:{&quot;source&quot;:&quot;scoremap&quot;,&quot;personNum&quot;:1,&quot;u</div>
+          
+        </div>
+
+        <div class="card">
+          <h3>images (1).jpeg <span class="verdict" style="background:#1a7f37">PASS</span></h3>
+          <div class="imgs">
+            <div><div class="cap">原图</div><img src="../../%E7%9C%9F%E5%AE%9E%E5%A4%B4%E5%83%8F/images%20%281%29.jpeg"></div>
+            <div><div class="cap">成品（白底）</div><img src="acceptance/images__1__result.jpg"></div>
+          </div>
+          <div class="row">状态行：完成（云端精修）</div>
+          <div class="row">判定：云端精修 + 边框带残留率 0.78%</div>
+          <div class="row">尺寸 447×447 ｜ 背景色 #FFFFFF ｜ 边框带残留 &lt;b&gt;0.78%&lt;/b&gt; ｜ 残留bbox (416, 224, 444, 416)</div>
+          <div class="fact"><b>upload_region</b>: &quot;mode&quot;:&quot;center_region&quot;,&quot;fgRatio&quot;:0.241,&quot;rect&quot;:{&quot;x&quot;:45,&quot;y&quot;:9,&quot;w&quot;:358,&quot;h&quot;:438},&quot;to &quot;rect&quot;:{&quot;x&quot;:45,&quot;y&quot;:9,&quot;w&quot;:358,&quot;h&quot;:438},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:false} &quot;fgRatio&quot;:0.241,&quot;rect&quot;:{&quot;x&quot;:45,&quot;y&quot;:9,&quot;w&quot;:358,&quot;h&quot;:438},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:fal </div><div class="fact"><b>cloud_ok</b>: cloud_ok&quot;,&quot;latencyMs&quot;:2157,&quot;region&quot;:&quot;CN&quot;,&quot;confidence&quot;:0.9784508048264074,&quot;retained&quot;:false,&quot;provider&quot;:&quot;baidu&quot;,&quot;hasPixel&quot;:false}</div>
+          
+        </div>
+
+        <div class="card">
+          <h3>images (2).jpeg <span class="verdict" style="background:#1a7f37">PASS</span></h3>
+          <div class="imgs">
+            <div><div class="cap">原图</div><img src="../../%E7%9C%9F%E5%AE%9E%E5%A4%B4%E5%83%8F/images%20%282%29.jpeg"></div>
+            <div><div class="cap">成品（白底）</div><img src="acceptance/images__2__result.jpg"></div>
+          </div>
+          <div class="row">状态行：完成（云端精修）</div>
+          <div class="row">判定：云端精修 + 边框带残留率 1.91%</div>
+          <div class="row">尺寸 447×447 ｜ 背景色 #FFFFFF ｜ 边框带残留 &lt;b&gt;1.91%&lt;/b&gt; ｜ 残留bbox (0, 276, 24, 380)</div>
+          <div class="fact"><b>upload_region</b>: &quot;mode&quot;:&quot;center_region&quot;,&quot;fgRatio&quot;:0.498,&quot;rect&quot;:{&quot;x&quot;:45,&quot;y&quot;:9,&quot;w&quot;:358,&quot;h&quot;:438},&quot;to &quot;rect&quot;:{&quot;x&quot;:45,&quot;y&quot;:9,&quot;w&quot;:358,&quot;h&quot;:438},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:false} &quot;fgRatio&quot;:0.498,&quot;rect&quot;:{&quot;x&quot;:45,&quot;y&quot;:9,&quot;w&quot;:358,&quot;h&quot;:438},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:fal </div><div class="fact"><b>cloud_ok</b>: cloud_ok&quot;,&quot;latencyMs&quot;:2225,&quot;region&quot;:&quot;CN&quot;,&quot;confidence&quot;:0.9766970230351266,&quot;retained&quot;:false,&quot;provider&quot;:&quot;baidu&quot;,&quot;hasPixel&quot;:false}</div>
+          
+        </div>
+
+        <div class="card">
+          <h3>images (3).jpeg <span class="verdict" style="background:#1a7f37">PASS</span></h3>
+          <div class="imgs">
+            <div><div class="cap">原图</div><img src="../../%E7%9C%9F%E5%AE%9E%E5%A4%B4%E5%83%8F/images%20%283%29.jpeg"></div>
+            <div><div class="cap">成品（白底）</div><img src="acceptance/images__3__result.jpg"></div>
+          </div>
+          <div class="row">状态行：完成（云端精修）</div>
+          <div class="row">判定：云端精修 + 边框带残留率 0.00%</div>
+          <div class="row">尺寸 500×333 ｜ 背景色 #FFFFFF ｜ 边框带残留 &lt;b&gt;0.00%&lt;/b&gt; ｜ 残留bbox </div>
+          <div class="fact"><b>upload_region</b>: &quot;mode&quot;:&quot;center_region&quot;,&quot;fgRatio&quot;:0.237,&quot;rect&quot;:{&quot;x&quot;:50,&quot;y&quot;:7,&quot;w&quot;:400,&quot;h&quot;:326},&quot;to &quot;rect&quot;:{&quot;x&quot;:50,&quot;y&quot;:7,&quot;w&quot;:400,&quot;h&quot;:326},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:false} &quot;fgRatio&quot;:0.237,&quot;rect&quot;:{&quot;x&quot;:50,&quot;y&quot;:7,&quot;w&quot;:400,&quot;h&quot;:326},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:fal </div><div class="fact"><b>cloud_ok</b>: cloud_ok&quot;,&quot;latencyMs&quot;:2421,&quot;region&quot;:&quot;CN&quot;,&quot;confidence&quot;:0.9868711656441718,&quot;retained&quot;:false,&quot;provider&quot;:&quot;baidu&quot;,&quot;hasPixel&quot;:false}</div>
+          
+        </div>
+
+        <div class="card">
+          <h3>images (4).jpeg <span class="verdict" style="background:#1a7f37">PASS</span></h3>
+          <div class="imgs">
+            <div><div class="cap">原图</div><img src="../../%E7%9C%9F%E5%AE%9E%E5%A4%B4%E5%83%8F/images%20%284%29.jpeg"></div>
+            <div><div class="cap">成品（白底）</div><img src="acceptance/images__4__result.jpg"></div>
+          </div>
+          <div class="row">状态行：完成（云端精修）</div>
+          <div class="row">判定：云端精修 + 边框带残留率 0.00%</div>
+          <div class="row">尺寸 447×447 ｜ 背景色 #FFFFFF ｜ 边框带残留 &lt;b&gt;0.00%&lt;/b&gt; ｜ 残留bbox </div>
+          <div class="fact"><b>upload_region</b>: &quot;mode&quot;:&quot;center_region&quot;,&quot;fgRatio&quot;:0.693,&quot;rect&quot;:{&quot;x&quot;:45,&quot;y&quot;:9,&quot;w&quot;:358,&quot;h&quot;:438},&quot;to &quot;rect&quot;:{&quot;x&quot;:45,&quot;y&quot;:9,&quot;w&quot;:358,&quot;h&quot;:438},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:false} &quot;fgRatio&quot;:0.693,&quot;rect&quot;:{&quot;x&quot;:45,&quot;y&quot;:9,&quot;w&quot;:358,&quot;h&quot;:438},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:fal </div><div class="fact"><b>cloud_ok</b>: cloud_ok&quot;,&quot;latencyMs&quot;:2153,&quot;region&quot;:&quot;CN&quot;,&quot;confidence&quot;:0.9871368077344965,&quot;retained&quot;:false,&quot;provider&quot;:&quot;baidu&quot;,&quot;hasPixel&quot;:false}</div>
+          
+        </div>
+
+        <div class="card">
+          <h3>images.jpeg <span class="verdict" style="background:#bf8700">WARN</span></h3>
+          <div class="imgs">
+            <div><div class="cap">原图</div><img src="../../%E7%9C%9F%E5%AE%9E%E5%A4%B4%E5%83%8F/images.jpeg"></div>
+            <div><div class="cap">成品（白底）</div><img src="acceptance/images_result.jpg"></div>
+          </div>
+          <div class="row">状态行：完成（云端精修）</div>
+          <div class="row">判定：边框带残留率 8.2% &gt; 2%</div>
+          <div class="row">尺寸 452×679 ｜ 背景色 #FFFFFF ｜ 边框带残留 &lt;b&gt;8.20%&lt;/b&gt; ｜ 残留bbox (0, 412, 448, 676)</div>
+          <div class="fact"><b>upload_region</b>: &quot;mode&quot;:&quot;center_region&quot;,&quot;fgRatio&quot;:0.566,&quot;rect&quot;:{&quot;x&quot;:45,&quot;y&quot;:14,&quot;w&quot;:362,&quot;h&quot;:665},&quot;t &quot;rect&quot;:{&quot;x&quot;:45,&quot;y&quot;:14,&quot;w&quot;:362,&quot;h&quot;:665},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:false} &quot;fgRatio&quot;:0.566,&quot;rect&quot;:{&quot;x&quot;:45,&quot;y&quot;:14,&quot;w&quot;:362,&quot;h&quot;:665},&quot;tool&quot;:&quot;T2&quot;,&quot;hasPixel&quot;:fa </div><div class="fact"><b>cloud_ok</b>: cloud_ok&quot;,&quot;latencyMs&quot;:2686,&quot;region&quot;:&quot;CN&quot;,&quot;confidence&quot;:0.9902587961616749,&quot;retained&quot;:false,&quot;provider&quot;:&quot;baidu&quot;,&quot;hasPixel&quot;:false}</div>
+          
+        </div>
+</body></html>

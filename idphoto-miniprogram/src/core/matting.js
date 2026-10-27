@@ -68,7 +68,8 @@ async function segment({ rgba, width, height, session, cloud, consents, audit, t
     return { ...base, degraded: true, cloudError: msg };
   }
   if (cloudRes.degraded) {
-    return { ...base, backend: cloudRes.backend, degraded: true, cloudMeta: cloudRes.cloudMeta };
+    // #67：降级原因码必须透传到 UI，禁止一句「云端不可用」合并所有分支
+    return { ...base, backend: cloudRes.backend, degraded: true, cloudMeta: cloudRes.cloudMeta, cloudError: cloudRes.reason || null };
   }
   return { ...base, backend: 'cloud', alpha: cloudRes.alpha, confidence: cloudRes.confidence, degraded: false, cloudMeta: cloudRes.cloudMeta };
 }

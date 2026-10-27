@@ -405,9 +405,16 @@ function assertDomestic(endpoint, trustedHosts) {
 //
 // 新判据（真实模型走前景占比合理性，不再比 confidence）：
 //   ① 退化检测：云端前景占比 <0.5% 或 >99.5% → 模型没分割出人/整图当人，判失败
-//   ② 偏移检测：与本地前景占比差 >0.25 → 两者分歧过大，判失败（保守起见退回本地）
+//   ② 偏移检测：**仅当端侧 alpha 可信时**（confidence ≥ CONF_THRESHOLD=0.85）才比对——
+//      与本地前景占比差 >0.25 → 两者分歧过大，判失败（保守起见退回本地）。
+//      ⚠️ 台账 #68（2026-10-27 批量真实头像验收发现）：端侧不可信时**禁止**拿它当参照系——
+//      端侧置信低正是上云的原因，此时它的前景占比是泥浆值（实测 images(4)：端侧 0.748 vs
+//      云端 0.304，云端才是对的；123.png：端侧 0.58 vs 云端 0.95，人占满小图，云端也是对的），
+//      拿不可信参照系做偏移门 = 把云端正确答案误杀（同 #64「用不可信信号做关键决策」）。
+//      端侧不可信时只保留退化检测 + providerMeta 元数据记录。
 //   ③ 其余情况接受真模型结果（软 alpha 的「歧义多」是优点不是缺点）
 // 非真模型（local-stub 离线验证用）维持原豁免；未知 provider 维持原 confidence 比较。
+const LOCAL_TRUST_CONF = 0.85; // 与 matting.js 的 CONF_THRESHOLD 同值：端侧路由阈值即端侧可信度阈值
 function shouldAcceptCloudAlpha({ cloudAlpha, localAlpha, provider } = {}) {
   const qc = estimateQuality(cloudAlpha);
   const ql = estimateQuality(localAlpha);
@@ -417,10 +424,10 @@ function shouldAcceptCloudAlpha({ cloudAlpha, localAlpha, provider } = {}) {
     return { accept: false, reason: 'cloud_foreground_degenerate', ...meta };
   }
   if (provider === 'baidu' || provider === 'birefnet') {
-    if (Math.abs(qc.foregroundRatio - ql.foregroundRatio) > 0.25) {
+    if (ql.confidence >= LOCAL_TRUST_CONF && Math.abs(qc.foregroundRatio - ql.foregroundRatio) > 0.25) {
       return { accept: false, reason: 'cloud_foreground_shift', ...meta };
     }
-    return { accept: true, reason: 'real_model_soft_alpha', ...meta };
+    return { accept: true, reason: ql.confidence >= LOCAL_TRUST_CONF ? 'real_model_soft_alpha' : 'real_model_local_untrusted', ...meta };
   }
   if (qc.confidence < ql.confidence - 1e-3) return { accept: false, reason: 'cloud_confidence_lower', ...meta };
   return { accept: true, reason: 'confidence_ok', ...meta };

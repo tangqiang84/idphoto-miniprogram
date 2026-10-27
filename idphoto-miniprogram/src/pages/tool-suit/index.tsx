@@ -199,7 +199,7 @@ export default function ToolSuit() {
         (specIdx >= 0 ? ` · ${specs[specIdx].name} @${dpiVal}dpi` : ' · 原图尺寸') +
         ` · ${headIsEstimate ? '比例估算定位' : '关键点定位'}`,
       );
-      setMsg(`换装完成（${backendLabel(seg.backend)}${seg.degraded ? '，云端不可用已降级' : ''}）——请核对五官后导出`);
+      setMsg(`换装完成（${backendLabel(seg.backend)}${seg.degraded ? `，云端不可用已降级${seg.cloudError ? '：' + String(seg.cloudError).slice(0, 60) : ''}` : ''}）——请核对五官后导出`);
     } catch (e: any) {
       const m = String((e && e.message) || e);
       if (m.startsWith('AC5')) {

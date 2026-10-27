@@ -386,12 +386,47 @@ test('判据：退化结果（全 0 / 全 1）与前景大幅偏移都要拒绝'
   assert.strictEqual(shouldAcceptCloudAlpha({ cloudAlpha: allZero, localAlpha: local, provider: 'baidu' }).reason, 'cloud_foreground_degenerate');
   const allOne = new Float32Array(400).fill(1); // 整张图都判成前景 = 退化（>99.5%）
   assert.strictEqual(shouldAcceptCloudAlpha({ cloudAlpha: allOne, localAlpha: local, provider: 'baidu' }).reason, 'cloud_foreground_degenerate');
-  // 前景占比 90% vs 本地 40% → 分歧过大
+  // 前景占比 90% vs 本地 40%（本地二值 → confidence=1 可信）→ 分歧过大
   const shifted = new Float32Array(400);
   for (let i = 0; i < 360; i++) shifted[i] = 1;
   const v2 = shouldAcceptCloudAlpha({ cloudAlpha: shifted, localAlpha: local, provider: 'baidu' });
   assert.strictEqual(v2.accept, false);
   assert.strictEqual(v2.reason, 'cloud_foreground_shift');
+});
+
+// 台账 #68：端侧不可信时禁止拿它当偏移门参照系（批量真实头像验收实测：
+// images(4) 端侧 0.748 vs 云端 0.304、123.png 端侧 0.58 vs 云端 0.95，云端才是对的，
+// 旧门把云端正确答案误杀降级 → 用户拿到烂端侧图）
+test('判据：端侧 alpha 不可信（confidence<0.85）时，前景偏移门跳过、接受云端', () => {
+  // 端侧泥浆图：28% 像素 0.9（前景）+ 40% 像素 0.45（歧义泥浆）→ conf = 1-0.4 = 0.6 < 0.85，fg=0.28
+  const local = new Float32Array(400);
+  for (let i = 0; i < 400; i++) {
+    if (i < 112) local[i] = 0.9;
+    else if (i < 272) local[i] = 0.45;
+  }
+  const ql = estimateQuality(local);
+  assert.ok(ql.confidence < 0.85, `前提：端侧不可信（conf=${ql.confidence.toFixed(2)}）`);
+  // 云端前景占比 0.647，与端侧 0.28 偏移 >0.25 —— 旧判据会误杀
+  const cloud = new Float32Array(400);
+  for (let i = 0; i < 259; i++) cloud[i] = 1;
+  const v = shouldAcceptCloudAlpha({ cloudAlpha: cloud, localAlpha: local, provider: 'baidu' });
+  assert.strictEqual(v.accept, true, '端侧不可信时不得用偏移门误杀云端');
+  assert.strictEqual(v.reason, 'real_model_local_untrusted');
+  // 但退化检测不豁免：云端全 0 依然拒绝
+  const bad = shouldAcceptCloudAlpha({ cloudAlpha: new Float32Array(400), localAlpha: local, provider: 'baidu' });
+  assert.strictEqual(bad.accept, false);
+  assert.strictEqual(bad.reason, 'cloud_foreground_degenerate');
+});
+
+test('判据：端侧可信（confidence≥0.85）时偏移门仍然生效（卡通负例防护）', () => {
+  // 端侧二值 58% 前景 → conf=1.0 可信；云端只认出 14.7%（如 FaceQ 卡通只认出脸）→ 拒绝
+  const local = new Float32Array(400);
+  for (let i = 0; i < 232; i++) local[i] = 1;
+  const cloud = new Float32Array(400);
+  for (let i = 0; i < 59; i++) cloud[i] = 1;
+  const v = shouldAcceptCloudAlpha({ cloudAlpha: cloud, localAlpha: local, provider: 'baidu' });
+  assert.strictEqual(v.accept, false);
+  assert.strictEqual(v.reason, 'cloud_foreground_shift');
 });
 
 test('判据：local-stub 豁免；未知 provider 沿用 confidence 比较', () => {

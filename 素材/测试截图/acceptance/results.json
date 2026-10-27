@@ -1,0 +1,145 @@
+[
+  {
+    "file": "111.jpg",
+    "idx": 0,
+    "status": "完成（云端精修）",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.432,\"rect\":{\"x\":60,\"y\":16,\"w\":480,\"h\":782},\"tool\":\"T2\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":4135,\"region\":\"CN\",\"confidence\":0.9866687979539642,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance/111_result.jpg",
+    "pageShot": "acceptance/111_page.png"
+  },
+  {
+    "file": "123.png",
+    "idx": 1,
+    "status": "完成（云端精修）",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.475,\"rect\":{\"x\":30,\"y\":8,\"w\":236,\"h\":405},\"tool\":\"T2\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":1802,\"region\":\"CN\",\"confidence\":0.5951349654739485,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance/123_result.jpg",
+    "pageShot": "acceptance/123_page.png"
+  },
+  {
+    "file": "3652.jpg",
+    "idx": 2,
+    "status": "完成（云端精修）",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.382,\"rect\":{\"x\":20,\"y\":6,\"w\":160,\"h\":294},\"tool\":\"T2\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":1212,\"region\":\"CN\",\"confidence\":0.9799319727891156,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance/3652_result.jpg",
+    "pageShot": "acceptance/3652_page.png"
+  },
+  {
+    "file": "3f5c67b03f7f.jpg",
+    "idx": 3,
+    "status": "完成（云端精修）",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.524,\"rect\":{\"x\":40,\"y\":8,\"w\":320,\"h\":392},\"tool\":\"T2\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":1941,\"region\":\"CN\",\"confidence\":0.9567841198979592,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance/3f5c67b03f7f_result.jpg",
+    "pageShot": "acceptance/3f5c67b03f7f_page.png"
+  },
+  {
+    "file": "91f990d7fa414d3d92a9377957b9be0f.jpg",
+    "idx": 4,
+    "status": "完成（云端精修）",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.607,\"rect\":{\"x\":48,\"y\":10,\"w\":384,\"h\":470},\"tool\":\"T2\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":2212,\"region\":\"CN\",\"confidence\":0.9918273492907801,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance/91f990d7fa414d3d92a9377957b9be0f_result.jpg",
+    "pageShot": "acceptance/91f990d7fa414d3d92a9377957b9be0f_page.png"
+  },
+  {
+    "file": "FaceQ1411209084675.png",
+    "idx": 5,
+    "status": "完成（cloud->edge，云端不可用已降级：cloud_foreground_shift）",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.491,\"rect\":{\"x\":59,\"y\":12,\"w\":472,\"h\":578},\"tool\":\"T2\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_degraded_quality\",\"reason\":\"cloud_foreground_shift\",\"provider\":\"baidu\",\"cloudConf\":0.9812804234355756,\"localConf\":0.9533091900768283,\"cloudFg\":0.14693419740777666,\"localFg\":0.5795297929740191,\"providerMeta\":{\"source\":\"scoremap\",\"personNum\":1,\"uploadPixels\":262521,\"uploadBytes\":60526,\"downscaled\":true,\"retryShrink\":0,\"latencyMs\":306,\"host\":\"aip.baidubce.com\"},\"uploadPx\":272816,\"cloudAlphaBytes\":272816,\"expectedAlphaBytes\":272816,\"degraded\":true,\"hasPixel\":false}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance/FaceQ1411209084675_result.jpg",
+    "pageShot": "acceptance/FaceQ1411209084675_page.png"
+  },
+  {
+    "file": "images (1).jpeg",
+    "idx": 6,
+    "status": "完成（云端精修）",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.241,\"rect\":{\"x\":45,\"y\":9,\"w\":358,\"h\":438},\"tool\":\"T2\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":2157,\"region\":\"CN\",\"confidence\":0.9784508048264074,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance/images__1__result.jpg",
+    "pageShot": "acceptance/images__1__page.png"
+  },
+  {
+    "file": "images (2).jpeg",
+    "idx": 7,
+    "status": "完成（云端精修）",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.498,\"rect\":{\"x\":45,\"y\":9,\"w\":358,\"h\":438},\"tool\":\"T2\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":2225,\"region\":\"CN\",\"confidence\":0.9766970230351266,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance/images__2__result.jpg",
+    "pageShot": "acceptance/images__2__page.png"
+  },
+  {
+    "file": "images (3).jpeg",
+    "idx": 8,
+    "status": "完成（云端精修）",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.237,\"rect\":{\"x\":50,\"y\":7,\"w\":400,\"h\":326},\"tool\":\"T2\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":2421,\"region\":\"CN\",\"confidence\":0.9868711656441718,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance/images__3__result.jpg",
+    "pageShot": "acceptance/images__3__page.png"
+  },
+  {
+    "file": "images (4).jpeg",
+    "idx": 9,
+    "status": "完成（云端精修）",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.693,\"rect\":{\"x\":45,\"y\":9,\"w\":358,\"h\":438},\"tool\":\"T2\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":2153,\"region\":\"CN\",\"confidence\":0.9871368077344965,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance/images__4__result.jpg",
+    "pageShot": "acceptance/images__4__page.png"
+  },
+  {
+    "file": "images.jpeg",
+    "idx": 10,
+    "status": "完成（云端精修）",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.566,\"rect\":{\"x\":45,\"y\":14,\"w\":362,\"h\":665},\"tool\":\"T2\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":2686,\"region\":\"CN\",\"confidence\":0.9902587961616749,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance/images_result.jpg",
+    "pageShot": "acceptance/images_page.png"
+  }
+]
