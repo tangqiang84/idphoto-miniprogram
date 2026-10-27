@@ -52,6 +52,37 @@ try {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * 从 automator console 日志里解析 [audit] JSON 对象。
+ * 【P1 #78】批量验收需要结构化的换装几何数据（source / rotateDeg / shoulderSpan），
+ * 而 console 事件已被 JSON 字符串化 → 这里做括号配平截取 + JSON.parse。
+ */
+function parseAuditObjects(lines) {
+  const out = [];
+  for (const l of lines || []) {
+    // 注意：console 事件的 args 数组里 '[audit]' 是**字符串参数**（不带引号），
+    // 后面跟 JSON.stringify 后的对象 → 标记要按不带引号的形式找（带引号会漏掉整条）
+    const idx = l.indexOf('[audit]');
+    if (idx < 0) continue;
+    const start = l.indexOf('{', idx);
+    if (start < 0) continue;
+    let depth = 0, end = -1;
+    for (let i = start; i < l.length; i++) {
+      const c = l[i];
+      if (c === '{') depth++;
+      else if (c === '}') { depth--; if (depth === 0) { end = i; break; } }
+    }
+    if (end > 0) {
+      try { out.push(JSON.parse(l.slice(start, end + 1))); } catch (e) { /* 忽略坏行 */ }
+    }
+  }
+  return out;
+}
+
+/** 肩线贴合度指标：模板旋转角 = 实测肩线夹角（限位 ±15°，达标线 ≤8°） */
+const SHOULDER_ANGLE_LIMIT_DEG = 8;
+
 const { waitForStatus } = require('./smoke_kit');
 
 // 文件名净化：真实头像里有 "images\ (1).jpeg" 这类含反斜杠/空格/括号的文件名
@@ -77,7 +108,11 @@ const safeName = (f) => f.replace(/[\\\/\s()（）]/g, '_').replace(/[^\w.\-一-
     // 优先 launch（拉起/复用项目窗口）；若用户已在开发者工具里开着本项目，launch 会超时 ——
     // 此时该窗口的自动化端口已在 LISTEN，直接 connect 复用（2026-10-27 实测）
     try {
-      miniProgram = await automator.launch({ projectPath: APP, port: PORT, timeout: 60000 });
+      // 【2026-10-28】launch 必须显式传 IDE 的 HTTP 服务端口，否则 cli 连不上 IDE（9420 被占）
+      miniProgram = await automator.launch({
+        projectPath: APP, port: PORT, timeout: 60000,
+        args: ['--port', String(process.env.IDE_HTTP_PORT || 16780)],
+      });
     } catch (e1) {
       console.log('launch 失败（%s），改 connect ws://localhost:%d …', String(e1 && e1.message || e1).slice(0, 60), PORT);
       miniProgram = await automator.connect({ wsEndpoint: `ws://localhost:${PORT}` });
@@ -96,7 +131,24 @@ const safeName = (f) => f.replace(/[\\\/\s()（）]/g, '_').replace(/[^\w.\-一-
       if ((st[st.length - 1] || {}).path) break;
     }
     let page = await miniProgram.currentPage();
-    const cards = await page.$$('.tool-card');
+    // 【2026-10-28】connect 复用会话时可能停在别的页面 → 先退回首页再点卡片
+    let st0 = await miniProgram.pageStack().catch(() => []);
+    let guard = 0;
+    while (((st0[st0.length - 1] || {}).path || '') !== 'pages/home/index' && guard < 5) {
+      try { await miniProgram.navigateBack(); } catch (e) { break; }
+      await sleep(1500);
+      st0 = await miniProgram.pageStack().catch(() => []);
+      guard++;
+    }
+    page = await miniProgram.currentPage();
+    let cards = await page.$$('.tool-card');
+    if (!cards.length) {
+      // 兜底：首页未渲染出卡片 → 等待后重取一次
+      await sleep(3000);
+      page = await miniProgram.currentPage();
+      cards = await page.$$('.tool-card');
+    }
+    if (!cards.length) throw new Error('首页工具卡片未渲染（当前页 ' + ((st0[st0.length - 1] || {}).path) + '）');
     await cards[CARD_INDEX].tap();
     await sleep(3000);
     page = await miniProgram.currentPage();
@@ -148,6 +200,27 @@ const safeName = (f) => f.replace(/[\\\/\s()（）]/g, '_').replace(/[^\w.\-一-
         // ③ audit 增量日志
         rec.audit = logs.slice(logCursor).filter((l) => l.indexOf('[audit]') >= 0);
         rec.errors = logs.slice(logCursor).filter((l) => l.indexOf('[error]') >= 0);
+
+        // ③b 【P1 #78】换装几何指标：source 分层 + 肩线贴合度（模板旋转角 vs 8° 达标线）
+        const auditObjs = parseAuditObjects(rec.audit);
+        const fitObj = auditObjs.find((o) => o && o.stage === 'suit_fit_v2' && o.ok !== false);
+        const poseObj = auditObjs.find((o) => o && o.stage === 'pose_signal');
+        if (poseObj) {
+          rec.poseOk = !!poseObj.ok;
+          rec.poseReason = poseObj.reason || null;
+          rec.poseModel = poseObj.model || null;
+        }
+        if (fitObj) {
+          rec.suitSource = fitObj.source || null;
+          rec.shoulderSpan = typeof fitObj.shoulderSpan === 'number' ? Math.round(fitObj.shoulderSpan) : null;
+          rec.shoulderAngleDeg = typeof fitObj.rotateDeg === 'number' ? Math.abs(fitObj.rotateDeg) : null;
+          rec.shoulderOk = rec.shoulderAngleDeg === null ? null : (rec.shoulderAngleDeg <= SHOULDER_ANGLE_LIMIT_DEG);
+          rec.suitWarnings = fitObj.warnings || [];
+          rec.suitSpec = fitObj.spec || null;
+        } else {
+          rec.suitSource = rec.suitSource || null;
+          rec.shoulderOk = null;
+        }
 
         // ④ 成品落盘
         const imgs = await page.$$('image');
@@ -207,6 +280,37 @@ const safeName = (f) => f.replace(/[\\\/\s()（）]/g, '_').replace(/[^\w.\-一-
     }
 
     fs.writeFileSync(RESULTS_FILE, JSON.stringify(results, null, 2));
+
+    // 【P1 #78】分层统计：信号来源分布 + 肩线贴合度达标率
+    const bySource = {};
+    for (const r of results) {
+      const k = r.suitSource || 'none';
+      bySource[k] = (bySource[k] || 0) + 1;
+    }
+    const shoulderTotal = results.filter((r) => r.shoulderOk !== null && r.shoulderOk !== undefined).length;
+    const shoulderPass = results.filter((r) => r.shoulderOk === true).length;
+    const shoulderFail = results.filter((r) => r.shoulderOk === false).length;
+    const summary = {
+      total: results.length,
+      bySource,
+      shoulder: {
+        limitDeg: SHOULDER_ANGLE_LIMIT_DEG,
+        evaluated: shoulderTotal,
+        pass: shoulderPass,
+        fail: shoulderFail,
+        angles: results.map((r) => ({
+          file: r.file,
+          source: r.suitSource || null,
+          deg: r.shoulderAngleDeg,
+          ok: r.shoulderOk,
+        })),
+      },
+    };
+    fs.writeFileSync(RESULTS_FILE, JSON.stringify({ results, summary }, null, 2));
+    console.log('\n===== 分层统计（#78）=====');
+    console.log('信号来源分布:', JSON.stringify(bySource));
+    console.log('肩线贴合度（≤%d°）: 评估 %d / 达标 %d / 超标 %d',
+      SHOULDER_ANGLE_LIMIT_DEG, shoulderTotal, shoulderPass, shoulderFail);
     console.log('\n✅ 批量验收数据已写入', RESULTS_FILE);
     console.log('下一步: python3 工具链/report_acceptance.py');
 

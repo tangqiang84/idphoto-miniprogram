@@ -41,6 +41,7 @@ try {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const { readStatus, waitForStatus } = require('./smoke_kit');
+const { connectAutomator } = require('./automator_connect');
 
 async function readPageText(page) {
   try {
@@ -69,7 +70,8 @@ async function readPageText(page) {
   let miniProgram;
 
   try {
-    miniProgram = await automator.launch({ projectPath: APP, port: PORT, timeout: 60000 });
+    // 统一走连接助手（launch → connect 回退 → 重试），失败给可操作提示
+    miniProgram = await connectAutomator({ projectPath: APP, port: PORT, timeout: 60000 });
     miniProgram.on('console', (msg) => {
       const t = `[${msg.type}] ${msg.text || msg.message || ''}`;
       logs.push(t);

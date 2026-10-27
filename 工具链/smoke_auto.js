@@ -45,6 +45,7 @@ try {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const { readStatus, waitForStatus } = require('./smoke_kit');
+const { connectAutomator } = require('./automator_connect');
 
 (async () => {
   if (!fs.existsSync(IMG)) {
@@ -58,7 +59,7 @@ const { readStatus, waitForStatus } = require('./smoke_kit');
   let miniProgram;
 
   try {
-    miniProgram = await automator.launch({ projectPath: APP, port: PORT, timeout: 60000 });
+    miniProgram = await connectAutomator({ projectPath: APP, port: PORT, timeout: 60000 });
     miniProgram.on('console', (msg) => {
       // automator 0.13 的 console 事件字段不稳定（text/message 可能是 undefined），
       // 兜底用 JSON 序列化，保证诊断信息不丢（2026-10-27 云端排障用）

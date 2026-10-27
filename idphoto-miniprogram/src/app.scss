@@ -191,3 +191,83 @@ page {
   border-left: 3px solid #438edb;
   border-radius: 6px;
 }
+
+/* ===== 【P1 #77】管线级步骤屏（RC-1/RC-3/RC-4/RC-5/RC-6/RC-8/RC-9）=====
+   步骤指示器 + 三个步骤区块（裁剪 / 美颜 / 输出档位）。
+   目的：把「裁剪→美颜→抠图换底→(换装)→预审→dpi→导出」的固定顺序显式呈现给用户，
+   并给冒烟脚本提供可断言的锚点（.step-flow__item[data-step] / .step-crop / .step-beauty / .step-dpi）。 */
+
+.step-flow {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 8px 0 12px;
+  padding: 8px;
+  background: #f7f9fc;
+  border-radius: 8px;
+}
+.step-flow__item {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: #999;
+}
+.step-flow__idx {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  margin-right: 4px;
+  text-align: center;
+  border-radius: 50%;
+  background: #e6e6e6;
+  color: #fff;
+  font-size: 10px;
+}
+.step-flow__item.is-done .step-flow__idx { background: #2ba471; }
+.step-flow__item.is-done .step-flow__label { color: #2ba471; }
+.step-flow__item.is-current .step-flow__idx { background: #438edb; }
+.step-flow__item.is-current .step-flow__label { color: #2b6cb0; font-weight: bold; }
+
+.step-crop,
+.step-beauty,
+.step-dpi {
+  margin: 10px 0;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+}
+.step-crop__head,
+.step-beauty__head,
+.step-dpi__head { margin-bottom: 6px; }
+.step-crop__title,
+.step-beauty__title,
+.step-dpi__title { font-size: 14px; font-weight: bold; color: #333; }
+.step-crop__sub,
+.step-beauty__sub,
+.step-dpi__sub { display: block; font-size: 11px; color: #999; margin-top: 2px; }
+.step-crop__row { display: block; font-size: 12px; color: #555; margin-top: 4px; line-height: 1.5; }
+.step-crop__row--muted { color: #999; }
+
+.step-dpi__row { display: flex; margin-top: 6px; }
+.step-dpi__chip {
+  flex: 1;
+  margin-right: 8px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  text-align: center;
+}
+.step-dpi__chip.is-on { border: 2px solid #438edb; background: #eef5fd; }
+.step-dpi__chip-main { display: block; font-size: 13px; color: #333; }
+.step-dpi__chip-sub { display: block; font-size: 11px; color: #999; margin-top: 2px; }
+.step-dpi__info { margin-top: 8px; }
+.step-dpi__spec,
+.step-dpi__req { display: block; font-size: 12px; color: #555; line-height: 1.5; }
+.step-dpi__verdict { display: block; font-size: 12px; margin-top: 4px; }
+.step-dpi__verdict.is-ok { color: #2ba471; }
+.step-dpi__verdict.is-warn { color: #b26a00; }
+.step-dpi__advice { display: block; font-size: 11px; color: #b26a00; margin-top: 4px; line-height: 1.5; }

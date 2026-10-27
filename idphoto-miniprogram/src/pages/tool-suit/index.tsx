@@ -17,6 +17,12 @@ import {
 import { requestPoseKeypoints, encodeCanvasToJpegB64 } from '../../services/poseService';
 import { prepareWorkCanvas } from '../../services/pipeline';
 import { useImagePicker } from '../../hooks/useImagePicker';
+import StepFlow from '../../components/StepFlow';
+import CropStep from '../../components/CropStep';
+import BeautyStep from '../../components/BeautyStep';
+import DpiStep from '../../components/DpiStep';
+import { applyBeauty } from '../../core/beauty';
+import type { BeautyState } from '../../components/BeautyControl';
 import { useConsentGate } from '../../hooks/useConsentGate';
 
 // T3 单独 AI 换装：核心功能（PRD D 章），须三项独立授权（I1/J3：faceLocal+faceCloudEnhance+suitSwap）
@@ -27,6 +33,17 @@ import { useConsentGate } from '../../hooks/useConsentGate';
 //
 // 【2026-10-23 owner 决策】MVP 不设付费档，300/600dpi 两档全部免费（T3 亦开放 600dpi）。
 const TOOL = 'T3';
+
+// 【P1 #77】管线步骤定义（与 T1 同序，T3 换装为必选步骤；RC-6/RC-9）
+const T3_STEPS = [
+  { key: 'crop', label: '裁剪' },
+  { key: 'beauty', label: '美颜' },
+  { key: 'matting', label: '抠图换底' },
+  { key: 'suit', label: '换装' },
+  { key: 'precheck', label: '合规预审' },
+  { key: 'dpi', label: '输出档位' },
+  { key: 'export', label: '导出' },
+];
 
 // 自绘模板（AI 自绘，自有版权，PRD Q3 合规）：透明 PNG，领口居中于顶部
 const SUIT_TEMPLATES = [
@@ -87,6 +104,11 @@ export default function ToolSuit() {
   const [preview, setPreview] = useState('');
   const [outInfo, setOutInfo] = useState('');
   const [planNote, setPlanNote] = useState('');
+  // 【P1 #77】美颜状态（P2.6 步骤，裁剪后、抠图换底前）
+  const [beauty, setBeauty] = useState<BeautyState>({ enabled: false, smooth: 0.3, whiten: 0.2, brighten: 0.15 });
+  // 【P1 #77】当前管线步骤 / 智能裁切结果
+  const [stepIndex, setStepIndex] = useState(-1);
+  const [cropInfo, setCropInfo] = useState<any>(null);
   const [selfChecked, setSelfChecked] = useState(false); // AC6/D3：五官自检确认
   // 已处理结果缓存（任务 #50）：换底色时据此**只重跑合成**
   const lastProc = useRef<{
@@ -118,6 +140,7 @@ export default function ToolSuit() {
     setBusy(true);
     setSelfChecked(false);
     setMsg('读取图片…');
+    setStepIndex(0); // ① 裁剪
     setPlanNote('');
     // P1：换装被跳过的原因（R1 未选规格 / 非目标构图 / 引擎拒绝）——如实上状态行，不静默
     let suitSkippedReason = '';
@@ -145,6 +168,16 @@ export default function ToolSuit() {
         w = prep.w; h = prep.h; plan = prep.plan; canvas = prep.canvas; rgba = prep.rgba;
         bgSamples = prep.bgSamples;
         setPlanNote(prep.reason || '');
+        setCropInfo(prep.crop
+          ? {
+            auto: true,
+            ratioTarget: prep.crop.ratioTarget,
+            ratioAchieved: prep.crop.ratioAchieved,
+            degraded: prep.crop.degraded,
+            degradeReason: prep.crop.degradeReason,
+            notes: prep.crop.notes || [],
+          }
+          : { auto: false, notes: ['未检出人脸，已按画面居中裁剪；建议正对镜头、面部清晰的照片'] });
       } else {
         // 未选规格：沿用旧路径（整图等比缩放，输出保持原图尺寸）
         // —— 是否强制规格仍待 owner 拍板（台账 #81），本版不擅自改变默认值
@@ -168,7 +201,22 @@ export default function ToolSuit() {
         rgba = ctx.getImageData(0, 0, w, h).data;
       }
 
+      // 3.5 【P1 #77 / P2.6】受限美颜：裁剪之后、抠图换底之前（RC-1）
+      if (beauty.enabled) {
+        setStepIndex(1); // ② 美颜
+        try {
+          applyBeauty(rgba, w, h, {
+            smooth: beauty.smooth,
+            whiten: beauty.whiten,
+            brighten: beauty.brighten,
+          });
+        } catch (e) {
+          console.warn('[T3] 美颜跳过（合规拦截或异常）:', (e && e.message) || e);
+        }
+      }
+
       // 4. 抠图（复用共享链路，置信不足且已授权则上云增强）
+      setStepIndex(2); // ③ 抠图换底
       setMsg('抠图处理中…');
       const seg: any = await segment({
         rgba, width: w, height: h,
@@ -383,6 +431,9 @@ export default function ToolSuit() {
   return (
     <View className='page'>
       <Text className='page__title'>AI 换装</Text>
+
+      {/* 【P1 #77】管线步骤指示器（RC-6/RC-9：与 T1 同序） */}
+      <StepFlow steps={T3_STEPS} current={stepIndex} />
       <Text className='page__hint'>
         上传正面照片，合成职业装后换底导出。仅换装、不改五官；换装需单独授权。
       </Text>
@@ -493,43 +544,38 @@ export default function ToolSuit() {
             {specIndex < 0 ? '一寸' : `${specs[specIndex].name} ▾`}
           </View>
         </Picker>
-        {/* 输出档位（dpi）：300/600 两档全部免费（owner 2026-10-23 决策，不设付费档） */}
-        {true ? (
-          <View style={{ marginTop: '8px' }}>
-            <Text>输出档位：</Text>
-            <View style={{ display: 'flex', flexDirection: 'row', marginTop: '4px' }}>
-              {[
-                { dpi: DPI_STD, label: '标准 300dpi' },
-                { dpi: DPI_HD, label: '印刷 600dpi' },
-              ].map((o) => {
-                const on = dpi === o.dpi;
-                return (
-                  <View
-                    key={o.dpi}
-                    className={on ? 'dpi-opt dpi-opt--on' : 'dpi-opt'}
-                    onClick={() => {
-                      setDpi(o.dpi);
-                      reprocess({ dpi: o.dpi }); // 任务 #50：换 dpi 自动重跑
-                    }}
-                    style={{
-                      padding: '6px 12px',
-                      marginRight: '8px',
-                      borderRadius: '6px',
-                      border: on ? '2px solid #438EDB' : '1px solid #ccc',
-                      background: on ? '#eef5fd' : '#fff',
-                    }}
-                  >
-                    <Text style={{ fontSize: '13px', color: on ? '#2b6cb0' : '#666' }}>{o.label}</Text>
-                  </View>
-                );
-              })}
-            </View>
-            <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
-              两档均免费无水印。600dpi 像素翻倍、体积约为 300dpi 的 2~4 倍，报名系统通常只收 300dpi。
-            </Text>
-          </View>
-        ) : null}
+        {/* 【P1 #77 / P2.7】输出档位提升为独立步骤屏（含像素不足提示；RC-3/RC-4） */}
+        <DpiStep
+          specId={specs[specIndex].id}
+          specName={specs[specIndex].name}
+          dpi={dpi}
+          onChange={(d) => {
+            setDpi(d);
+            reprocess({ dpi: d }); // 任务 #50：换 dpi 自动重跑
+          }}
+          srcW={lastSrc.current ? lastSrc.current.w : undefined}
+          srcH={lastSrc.current ? lastSrc.current.h : undefined}
+          workW={lastProc.current ? lastProc.current.w : undefined}
+          workH={lastProc.current ? lastProc.current.h : undefined}
+        />
       </View>
+
+      {/* 【P1 #77 / P2.5】裁剪步骤屏（比例锁定 + 智能构图结果） */}
+      <CropStep
+        specName={specs[specIndex].name}
+        target={getPixelSize(specs[specIndex].id, dpi)!}
+        crop={cropInfo && cropInfo.auto ? cropInfo : null}
+      />
+
+      {/* 【P1 #77 / P2.6】美颜步骤屏（裁剪后、抠图换底前；RC-1） */}
+      <BeautyStep
+        value={beauty}
+        onChange={setBeauty}
+        onApply={() => {
+          const src = lastSrc.current;
+          if (src) run(src.path, src.w, src.h);
+        }}
+      />
 
       {/* F3（P1 / 台账 #76）：选图前协议闸门 —— 未集齐授权，选图/拍摄入口不可达 */}
       <Button

@@ -20,6 +20,10 @@ import { applyBeauty } from '../../services';
 import { requestPoseKeypoints, encodeCanvasToJpegB64 } from '../../services/poseService';
 import { prepareWorkCanvas } from '../../services/pipeline';
 import BeautyControl, { type BeautyState } from '../../components/BeautyControl';
+import StepFlow from '../../components/StepFlow';
+import CropStep from '../../components/CropStep';
+import BeautyStep from '../../components/BeautyStep';
+import DpiStep from '../../components/DpiStep';
 import AlphaPatch from '../../components/AlphaPatch';
 
 // T1 一键证件照：完整链路（真实功能，非占位）
@@ -33,6 +37,17 @@ import AlphaPatch from '../../components/AlphaPatch';
 //   - 600dpi 印刷级同样免费开放，不再作为「付费才给」的能力
 //   - 官方报名系统只校验像素+KB+格式，从不校验 dpi 元数据；600dpi 的用途是印刷/冲印
 const TOOL = 'T1';
+
+// 【P1 #77】管线步骤定义（顺序固定，全工具一致；RC-9）
+export const T1_STEPS = [
+  { key: 'crop', label: '裁剪' },
+  { key: 'beauty', label: '美颜' },
+  { key: 'matting', label: '抠图换底' },
+  { key: 'suit', label: '换装(可选)' },
+  { key: 'precheck', label: '合规预审' },
+  { key: 'dpi', label: '输出档位' },
+  { key: 'export', label: '导出' },
+];
 
 type BgKey = 'white' | 'blue' | 'blueLight' | 'red';
 
@@ -127,6 +142,8 @@ export default function ToolIdPhoto() {
   const [suitOn, setSuitOn] = useState(false);
   const [suitApplied, setSuitApplied] = useState(false);
   const [selfChecked, setSelfChecked] = useState(false);
+  // 【P1 #77】当前管线步骤（-1=未开始，steps.length=全部完成）
+  const [stepIndex, setStepIndex] = useState(-1);
 
   const toggleConsent = (id: string) => {
     setGranted((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -147,6 +164,7 @@ export default function ToolIdPhoto() {
     const dpiVal = opts?.dpi ?? dpi;
     setBusy(true);
     setMsg('读取图片…');
+    setStepIndex(0); // ① 裁剪（识别人脸 + 反解裁剪框 + 取工作画布）
     setResult(null);
     setHeadInfo(null);
     setPlanNote('');
@@ -195,6 +213,7 @@ export default function ToolIdPhoto() {
       //     仅当用户开启美颜时执行；合规模式由 core/beauty.js 内的 assertCompliance 兜底硬拦截禁止项。
       //     异常（理论上不会触发，因 UI 仅传允许项）静默跳过，绝不阻断主流程。
       if (beauty.enabled) {
+        setStepIndex(1); // ② 美颜（裁剪后、抠图前）
         try {
           applyBeauty(rgba, w, h, {
             smooth: beauty.smooth,
@@ -211,6 +230,7 @@ export default function ToolIdPhoto() {
       //     行为与整图抠图一致（任务 #24 口径，搬到 services/pipeline.ts 后逻辑不变）。
 
       // 5. 抠图：端侧优先，置信不足自动走 CloudBase 云函数增强（需 faceCloudEnhance 授权）
+      setStepIndex(2); // ③ 抠图换底
       setMsg('抠图处理中…');
       const seg: any = await segment({
         rgba,
@@ -241,6 +261,7 @@ export default function ToolIdPhoto() {
       // P1：换装被跳过的原因（非目标构图 / 引擎拒绝）——如实上状态行，不静默
       let suitSkipReason = '';
       if (wantSuit && granted.includes('suitSwap')) {
+        setStepIndex(3); // ④ 换装（T1 可选）
         setMsg('合成职业装…');
         // #69：tightBBox 收紧（alphaBBox 的 min/max 会被云端 alpha 噪声前景撑爆，
         // 撑爆的 bbox 把换装定位带偏 → 盖脸/变形）
@@ -296,6 +317,7 @@ export default function ToolIdPhoto() {
       // 口径：在【裁剪窗口】坐标系中测量 —— 头长 ÷ 成品图高，与审核员在成品图上量的口径一致。
       // 坐标换算：检测用图坐标 → 原图坐标（÷det.scale）→ 工作图坐标（×plan.scale）。
       const sx = plan.sx, sy = plan.sy, sw = plan.sw, sh = plan.sh;
+      setStepIndex(4); // ⑤ 合规预审
       setMsg('测量头部占比…');
       let headRatio: number | null = null;
       let headExtra: any = null;
@@ -316,6 +338,7 @@ export default function ToolIdPhoto() {
       setHeadInfo(headRatio != null ? { ratio: headRatio, ...headExtra } : null);
 
       // 8. 合成 + 裁剪导出（提取为 composeAndExport，手动修补重合成复用同一套）
+      setStepIndex(6); // ⑦ 导出
       setMsg('合成与导出…');
       const exp = await composeAndExport(exportRgba, seg.alpha, w, h, plan, BG[bg], target);
       setPreview(exp.preview);
@@ -527,6 +550,9 @@ export default function ToolIdPhoto() {
     <View className='page'>
       <Text className='page__title'>一键证件照</Text>
 
+      {/* 【P1 #77】管线步骤指示器：顺序固定为 裁剪→美颜→抠图换底→(换装)→预审→dpi→导出（RC-9） */}
+      <StepFlow steps={T1_STEPS} current={stepIndex} />
+
       {/* 授权（默认不勾选，未集齐不启动处理；F3：未勾选则选图入口不可点） */}
       <View
         className='consent'
@@ -583,38 +609,20 @@ export default function ToolIdPhoto() {
         <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
           {specs[specIndex].source}
         </Text>
-        {/* 输出档位（dpi）：300/600 两档全部免费（owner 2026-10-23 决策，不设付费档） */}
-        <Text style={{ display: 'block', marginTop: '8px' }}>输出档位：</Text>
-        <View style={{ display: 'flex', flexDirection: 'row', marginTop: '4px' }}>
-          {[
-            { dpi: DPI_STD, label: '标准 300dpi', hint: '网上报名通用' },
-            { dpi: DPI_HD, label: '印刷 600dpi', hint: '冲印/大幅面' },
-          ].map((o) => {
-            const on = dpi === o.dpi;
-            return (
-              <View
-                key={o.dpi}
-                className={on ? 'dpi-opt dpi-opt--on' : 'dpi-opt'}
-                onClick={() => {
-                  setDpi(o.dpi);
-                  reprocess({ dpi: o.dpi }); // 任务 #50：换 dpi 自动重跑
-                }}
-                style={{
-                  padding: '6px 12px',
-                  marginRight: '8px',
-                  borderRadius: '6px',
-                  border: on ? '2px solid #438EDB' : '1px solid #ccc',
-                  background: on ? '#eef5fd' : '#fff',
-                }}
-              >
-                <Text style={{ fontSize: '13px', color: on ? '#2b6cb0' : '#666' }}>{o.label}</Text>
-              </View>
-            );
-          })}
-        </View>
-        <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
-          两档均免费无水印。600dpi 像素翻倍、体积约为 300dpi 的 2~4 倍，报名系统通常只收 300dpi。
-        </Text>
+        {/* 【P1 #77 / P2.7】输出档位提升为独立步骤屏（含像素不足提示，RC-3/RC-4） */}
+        <DpiStep
+          specId={specs[specIndex].id}
+          specName={specs[specIndex].name}
+          dpi={dpi}
+          onChange={(d) => {
+            setDpi(d);
+            reprocess({ dpi: d }); // 任务 #50：换 dpi 自动重跑
+          }}
+          srcW={lastPick ? lastPick.width : undefined}
+          srcH={lastPick ? lastPick.height : undefined}
+          workW={lastProc.current ? lastProc.current.w : undefined}
+          workH={lastProc.current ? lastProc.current.h : undefined}
+        />
         {/* 规格速览芯片：直接点选 + 展示官方像素（2026-10-23 规格数值裁决后新增） */}
         <View className='spec-chips'>
           {specs.map((s: any, i: number) => {
@@ -704,6 +712,23 @@ export default function ToolIdPhoto() {
         </View>
       ) : null}
 
+      {/* 【P1 #77 / P2.5】裁剪步骤屏（比例锁定 + 智能构图结果透明化，RC-1） */}
+      <CropStep
+        specName={specs[specIndex].name}
+        target={getPixelSize(specs[specIndex].id, dpi)!}
+        crop={cropInfo && cropInfo.auto ? cropInfo : null}
+      />
+
+      {/* 【P1 #77 / P2.6】美颜提升为管线级步骤屏（裁剪后、抠图换底前，RC-1）
+          放在参数区（出图前即可调节），与 T2/T3 的位置一致 */}
+      <BeautyStep
+        value={beauty}
+        onChange={setBeauty}
+        onApply={() => {
+          if (lastPick) run(lastPick.path, lastPick.width, lastPick.height);
+        }}
+      />
+
       {/* 输出构图提示（分辨率不足 / 达到处理上限 → 如实告知，不静默输出糊图） */}
       {planNote ? (
         <Text style={{ display: 'block', fontSize: '12px', color: '#e07b00', marginTop: '6px' }}>
@@ -750,14 +775,6 @@ export default function ToolIdPhoto() {
             />
           ) : null}
 
-          {/* 受限美颜（PRD E 章 / AC2，任务 #38）：折叠控制面板，开启后调节并重新生成 */}
-          <BeautyControl
-            value={beauty}
-            onChange={setBeauty}
-            onApply={() => {
-              if (lastPick) run(lastPick.path, lastPick.width, lastPick.height);
-            }}
-          />
 
           {/* AI 换装（可选，PRD D 章 / T1-11/12，任务 #43）：端侧贴图合成 + 强制五官自检 */}
           <View style={{ marginTop: '10px', padding: '10px', borderRadius: '6px', border: '1px solid #e6e6e6', background: '#fafafa' }}>

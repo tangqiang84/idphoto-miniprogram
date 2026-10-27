@@ -31,7 +31,11 @@ import urllib.parse
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUTDIR = os.path.join(ROOT, '素材', '测试截图', 'acceptance')
+# 【2026-10-28】结果目录可切：T2 用 acceptance/、T3 用 acceptance_suit/（batch_acceptance.js 的 SUBDIR）。
+# 踩坑提醒（#69 同类）：报告必须读**与被测工具对应的目录**，否则会拿 T2 的结果判 T3（读错数据）。
+# 用法：python3 工具链/report_acceptance.py [子目录]
+SUBDIR_ARG = sys.argv[1] if len(sys.argv) > 1 else 'acceptance'
+OUTDIR = os.path.join(ROOT, '素材', '测试截图', SUBDIR_ARG)
 IMGDIR_REL = '../../真实头像'  # report.html 相对真实头像目录
 
 
@@ -139,6 +143,9 @@ def parse_audit(audit_lines):
     return facts
 
 
+SHOULDER_LIMIT_DEG = 8  # 【P1 #78】肩线贴合度达标线（模板旋转角 vs 实测肩线夹角）
+
+
 def classify(rec, band_ratio):
     st = rec.get('status') or ''
     if rec.get('error'):
@@ -147,25 +154,45 @@ def classify(rec, band_ratio):
         return 'FAIL', '处理超时'
     if '失败' in st:
         return 'FAIL', '状态行=失败'
+    # 【P1 #78】肩线贴合度：超标即 FAIL（与状态行无关——几何不合格就是不合格）
+    if rec.get('shoulderOk') is False:
+        return 'FAIL', '肩线夹角 %.1f° > %d°（source=%s）' % (
+            rec.get('shoulderAngleDeg') or 0.0, SHOULDER_LIMIT_DEG, rec.get('suitSource') or '-')
     is_cartoon = 'FaceQ' in rec.get('file', '')
     if '降级' in st:
         return ('EXPECTED-DEGRADE', '卡通负例，按 #49 预期降级') if is_cartoon else ('DEGRADED', '云端未交付（见 audit 原因码）')
+    shoulder_txt = ''
+    if rec.get('shoulderOk') is True:
+        shoulder_txt = ' + 肩线 %.1f° ≤ %d°' % (rec.get('shoulderAngleDeg') or 0.0, SHOULDER_LIMIT_DEG)
     if '云端精修' in st and band_ratio is not None:
         if band_ratio > 0.02:
-            return 'WARN', '边框带残留率 %.1f%% > 2%%' % (band_ratio * 100)
-        return 'PASS', '云端精修 + 边框带残留率 %.2f%%' % (band_ratio * 100)
+            return 'WARN', '边框带残留率 %.1f%% > 2%%%s' % (band_ratio * 100, shoulder_txt)
+        return 'PASS', '云端精修 + 边框带残留率 %.2f%%%s' % (band_ratio * 100, shoulder_txt)
     if '端侧' in st and '云端精修' not in st:
         return 'DEGRADED', '走了端侧（未触发云端）'
     return 'WARN', '状态行无法归类: ' + st[:50]
 
 
 def main():
+    # T3 的结果文件名是 results_suit.json（batch_acceptance.js 按 SUBDIR 命名）
     rj = os.path.join(OUTDIR, 'results.json')
+    if not os.path.exists(rj):
+        alt = os.path.join(OUTDIR, 'results_suit.json')
+        if os.path.exists(alt):
+            rj = alt
     if not os.path.exists(rj):
         print('缺 results.json，先跑 batch_acceptance.js')
         sys.exit(2)
     with open(rj, encoding='utf-8') as f:
-        results = json.load(f)
+        data = json.load(f)
+    # 【P1 #78】results.json 结构升级为 {results, summary}（含 source 分层与肩线统计）；
+    # 兼容旧版纯数组结构。
+    if isinstance(data, dict):
+        results = data.get('results') or []
+        stat = data.get('summary') or {}
+    else:
+        results = data
+        stat = {}
 
     rows = []
     counts = {}
@@ -205,6 +232,14 @@ def main():
         for k in ('upload_region', 'cloud_ok', 'cloud_fail', 'cloud_degraded_quality'):
             if k in rec['_facts']:
                 facts_html += '<div class="fact"><b>%s</b>: %s</div>' % (k, esc(rec['_facts'][k]))
+        suit_html = ''
+        if rec.get('suitSource'):
+            deg = rec.get('shoulderAngleDeg')
+            suit_html = ('<div class="fact"><b>换装信号</b>: source=%s ｜ 肩线夹角 %s ｜ 肩宽 %s px ｜ 规格 %s</div>'
+                         % (esc(rec.get('suitSource')),
+                            ('%.1f°' % deg) if deg is not None else '-',
+                            esc(rec.get('shoulderSpan')),
+                            esc(rec.get('suitSpec') or '-')))
         metric = ''
         if rec['_bandRatio'] is not None:
             metric = ('尺寸 %s×%s ｜ 背景色 #%02X%02X%02X ｜ 边框带残留 <b>%.2f%%</b> ｜ 残留bbox %s'
@@ -222,6 +257,7 @@ def main():
           <div class="row">%s</div>
           %s
           %s
+          %s
         </div>''' % (
             esc(rec['file']), color, v,
             orig,
@@ -229,12 +265,22 @@ def main():
             esc(rec.get('status') or '(无)'),
             esc(rec['_reason']),
             esc(metric),
+            suit_html,
             facts_html,
             ('<div class="err">错误: %s</div>' % esc(rec.get('error'))) if rec.get('error') else '',
         ))
 
     summary = ' ｜ '.join('%s: %d' % (k, counts[k]) for k in
                       ['PASS', 'WARN', 'FAIL', 'DEGRADED', 'EXPECTED-DEGRADE'] if k in counts)
+    # 【P1 #78】信号来源分层 + 肩线达标率
+    if stat:
+        by_src = stat.get('bySource') or {}
+        sh = stat.get('shoulder') or {}
+        src_txt = ' ｜ 信号来源: ' + ' / '.join('%s=%d' % (k, v) for k, v in sorted(by_src.items()))
+        sh_txt = (' ｜ 肩线贴合度(≤%s°): 评估 %s / 达标 %s / 超标 %s'
+                  % (sh.get('limitDeg', SHOULDER_LIMIT_DEG), sh.get('evaluated', 0),
+                     sh.get('pass', 0), sh.get('fail', 0)))
+        summary = summary + src_txt + sh_txt
     html_doc = '''<!DOCTYPE html>
 <html lang="zh"><head><meta charset="utf-8"><title>真实头像批量验收报告</title>
 <style>

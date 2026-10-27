@@ -10,6 +10,12 @@ import {
   DPI_STD, DPI_HD, backendLabel,
 } from '../../services';
 import { useImagePicker } from '../../hooks/useImagePicker';
+import StepFlow from '../../components/StepFlow';
+import CropStep from '../../components/CropStep';
+import BeautyStep from '../../components/BeautyStep';
+import DpiStep from '../../components/DpiStep';
+import { applyBeauty } from '../../core/beauty';
+import type { BeautyState } from '../../components/BeautyControl';
 import { useConsentGate } from '../../hooks/useConsentGate';
 import { prepareWorkCanvas } from '../../services/pipeline';
 
@@ -27,6 +33,16 @@ import { prepareWorkCanvas } from '../../services/pipeline';
 //   选完照片再点「标准深蓝」，导出的仍是白底（#FFFFFF），用户必须重新选一次图才生效。
 // 现在：换底色 → 只重跑「合成 + 导出」（秒级，不重跑抠图）；换规格/dpi → 自动重跑整条链路。
 const TOOL = 'T2';
+
+// 【P1 #77】管线步骤定义（与 T1 同序，T2 无换装步骤；RC-5/RC-9）
+const T2_STEPS = [
+  { key: 'crop', label: '裁剪' },
+  { key: 'beauty', label: '美颜' },
+  { key: 'matting', label: '抠图换底' },
+  { key: 'precheck', label: '合规预审' },
+  { key: 'dpi', label: '输出档位' },
+  { key: 'export', label: '导出' },
+];
 
 type BgKey = 'white' | 'blue' | 'blueLight' | 'red' | 'gray';
 
@@ -59,6 +75,12 @@ export default function ToolBg() {
   const [preview, setPreview] = useState('');
   const [outInfo, setOutInfo] = useState('');
   const [planNote, setPlanNote] = useState('');
+  // 【P1 #77】美颜状态（P2.6 步骤，裁剪后、抠图换底前）
+  const [beauty, setBeauty] = useState<BeautyState>({ enabled: false, smooth: 0.3, whiten: 0.2, brighten: 0.15 });
+  // 【P1 #77】当前管线步骤
+  const [stepIndex, setStepIndex] = useState(-1);
+  // 【P1 #77】智能裁切结果（供 P2.5 裁剪步骤屏展示）
+  const [cropInfo, setCropInfo] = useState<any>(null);
 
   // 已处理结果缓存（任务 #50）：换底色时据此**只重跑合成**，不重跑抠图
   const lastProc = useRef<{
@@ -118,6 +140,7 @@ export default function ToolBg() {
     }
     setBusy(true);
     setMsg('读取图片…');
+    setStepIndex(0); // ① 裁剪
     setPlanNote('');
     try {
       const anyTaro: any = Taro;
@@ -146,6 +169,16 @@ export default function ToolBg() {
         w = prep.w; h = prep.h; plan = prep.plan; canvas = prep.canvas; rgba = prep.rgba;
         bgSamples = prep.bgSamples;
         setPlanNote(prep.reason || '');
+        setCropInfo(prep.crop
+          ? {
+            auto: true,
+            ratioTarget: prep.crop.ratioTarget,
+            ratioAchieved: prep.crop.ratioAchieved,
+            degraded: prep.crop.degraded,
+            degradeReason: prep.crop.degradeReason,
+            notes: prep.crop.notes || [],
+          }
+          : { auto: false, notes: ['未检出人脸，已按画面居中裁剪；建议正对镜头、面部清晰的照片'] });
       } else {
         // 未选规格（保持原图尺寸）→ 工作图长边上限 800px（端侧抠图性能保护）
         // —— 是否强制规格仍待 owner 拍板（台账 #81），本版保留该选项
@@ -164,7 +197,23 @@ export default function ToolBg() {
         rgba = ctx.getImageData(0, 0, w, h).data;
       }
 
+      // 3.5 【P1 #77 / P2.6】受限美颜：裁剪之后、抠图换底之前（RC-1）
+      //     合规模式由 core/beauty.js 的 assertCompliance 硬拦截（禁改五官），异常静默跳过不阻断主流程。
+      if (beauty.enabled) {
+        setStepIndex(1); // ② 美颜
+        try {
+          applyBeauty(rgba, w, h, {
+            smooth: beauty.smooth,
+            whiten: beauty.whiten,
+            brighten: beauty.brighten,
+          });
+        } catch (e) {
+          console.warn('[T2] 美颜跳过（合规拦截或异常）:', (e && e.message) || e);
+        }
+      }
+
       // 4. 抠图：端侧优先，置信不足自动走 CloudBase 云函数增强（需 faceCloudEnhance 授权）
+      setStepIndex(2); // ③ 抠图换底
       setMsg('抠图处理中…');
       const seg: any = await segment({
         rgba,
@@ -282,6 +331,9 @@ export default function ToolBg() {
   return (
     <View className='page'>
       <Text className='page__title'>单独换底色</Text>
+
+      {/* 【P1 #77】管线步骤指示器（RC-5/RC-9：与 T1 同序） */}
+      <StepFlow steps={T2_STEPS} current={stepIndex} />
       <Text className='page__hint'>上传一张已有照片，仅替换背景色，不改动五官。不强制规格、不做预审；**只换底不裁剪构图**，要出证件照请用「一键证件照」。</Text>
 
       {/* 授权（默认不勾选，未集齐不启动处理；F3：未勾选则选图入口不可点） */}
@@ -411,42 +463,41 @@ export default function ToolBg() {
             {specIndex < 0 ? '保持原图尺寸' : `${specs[specIndex].name} ▾`}
           </View>
         </Picker>
-        {/* 输出档位（dpi）：300/600 两档全部免费（owner 2026-10-23 决策，不设付费档） */}
+        {/* 【P1 #77 / P2.7】输出档位提升为独立步骤屏（含像素不足提示；RC-3/RC-4）
+            未选规格时仍显示该步骤（noSpec 模式：提示输出为原图尺寸），保证步骤序列完整可见 */}
+        <DpiStep
+          specId={specIndex >= 0 ? specs[specIndex].id : 'one-inch'}
+          specName={specIndex >= 0 ? specs[specIndex].name : '未选择规格'}
+          dpi={dpi}
+          noSpec={specIndex < 0}
+          onChange={(d) => {
+            setDpi(d);
+            reprocess({ dpi: d }); // 任务 #50：换 dpi 自动重跑
+          }}
+          srcW={lastSrc.current ? lastSrc.current.w : undefined}
+          srcH={lastSrc.current ? lastSrc.current.h : undefined}
+          workW={lastProc.current ? lastProc.current.w : undefined}
+          workH={lastProc.current ? lastProc.current.h : undefined}
+        />
+
+        {/* 【P1 #77 / P2.5】裁剪步骤屏 */}
         {specIndex >= 0 ? (
-          <View style={{ marginTop: '8px' }}>
-            <Text>输出档位：</Text>
-            <View style={{ display: 'flex', flexDirection: 'row', marginTop: '4px' }}>
-              {[
-                { dpi: DPI_STD, label: '标准 300dpi' },
-                { dpi: DPI_HD, label: '印刷 600dpi' },
-              ].map((o) => {
-                const on = dpi === o.dpi;
-                return (
-                  <View
-                    key={o.dpi}
-                    className={on ? 'dpi-opt dpi-opt--on' : 'dpi-opt'}
-                    onClick={() => {
-                      setDpi(o.dpi);
-                      reprocess({ dpi: o.dpi }); // 任务 #50：换 dpi 自动重跑
-                    }}
-                    style={{
-                      padding: '6px 12px',
-                      marginRight: '8px',
-                      borderRadius: '6px',
-                      border: on ? '2px solid #438EDB' : '1px solid #ccc',
-                      background: on ? '#eef5fd' : '#fff',
-                    }}
-                  >
-                    <Text style={{ fontSize: '13px', color: on ? '#2b6cb0' : '#666' }}>{o.label}</Text>
-                  </View>
-                );
-              })}
-            </View>
-            <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
-              两档均免费无水印。600dpi 像素翻倍、体积约为 300dpi 的 2~4 倍，报名系统通常只收 300dpi。
-            </Text>
-          </View>
+          <CropStep
+            specName={specs[specIndex].name}
+            target={getPixelSize(specs[specIndex].id, dpi)!}
+            crop={cropInfo && cropInfo.auto ? cropInfo : null}
+          />
         ) : null}
+
+        {/* 【P1 #77 / P2.6】美颜步骤屏（裁剪后、抠图换底前；RC-1） */}
+        <BeautyStep
+          value={beauty}
+          onChange={setBeauty}
+          onApply={() => {
+            const src = lastSrc.current;
+            if (src) run(src.path, src.w, src.h);
+          }}
+        />
       </View>
 
       {/* F3（P1 / 台账 #76）：选图前协议闸门 —— 未集齐授权，选图/拍摄入口不可达 */}

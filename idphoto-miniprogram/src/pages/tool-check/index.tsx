@@ -3,6 +3,7 @@ import Taro from '@tarojs/taro';
 import { useState } from 'react';
 import { requiredConsents, buildConsentRecord, BG, listSpecs, getSpec, check, specLabel, measureHeadRatio } from '../../services';
 import { useImagePicker } from '../../hooks/useImagePicker';
+import { useConsentGate } from '../../hooks/useConsentGate';
 
 // T4 合规检测：只读检测，不生成、不改动原图（PRD J2 / AC10）——无保存相册入口。
 // 检测项与口径（2026-10-23 与 owner 确认）：
@@ -49,6 +50,8 @@ export default function ToolCheck() {
   const consentItems = requiredConsents(TOOL);
   const [granted, setGranted] = useState<string[]>([]);
   const rec = buildConsentRecord(TOOL, granted);
+  // 【P1 #77 / RC-7】T4 补人脸处理协议闸门：未勾选时上传区不可点
+  const gate = useConsentGate(rec.ready, '合规检测');
   const picker = useImagePicker((img) => run(img.path, img.width, img.height));
 
   const specs = listSpecs();
@@ -153,8 +156,18 @@ export default function ToolCheck() {
       <Text className='page__hint'>上传已有证件照，出检测报告。仅读取分析，不生成、不改动原图。</Text>
 
       {/* 授权（默认不勾选，未集齐不启动） */}
-      <View className='consent'>
+      <View
+        className='consent'
+        style={gate.hinted
+          ? { border: '2px solid #e07b00', borderRadius: '8px', padding: '10px', background: '#fff8ec' }
+          : undefined}
+      >
         <Text className='consent__h'>需授权（{granted.length}/{consentItems.length}）</Text>
+        {gate.hinted ? (
+          <Text style={{ display: 'block', fontSize: '12px', color: '#e07b00', margin: '4px 0 6px' }}>
+            请先勾选下方授权，才能选择照片或拍照（先同意、后收集）
+          </Text>
+        ) : null}
         {consentItems.map((c: any) => {
           const on = granted.includes(c.id);
           return (
@@ -199,10 +212,13 @@ export default function ToolCheck() {
         </Text>
       </View>
 
-      <Button className='btn-primary' loading={busy} onClick={picker.pickAlbum}>
+      <Button className='btn-primary' loading={busy}
+        disabled={gate.blocked}
+        onClick={() => gate.gate(picker.pickAlbum)}>
         {busy ? '检测中…' : '从相册选择'}
       </Button>
-      <Button className='btn-camera' onClick={picker.openCamera}>
+      <Button className='btn-camera' disabled={gate.blocked}
+        onClick={() => gate.gate(picker.openCamera)}>
         📷 拍摄（引导框）
       </Button>
 

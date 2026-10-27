@@ -3,6 +3,8 @@ import Taro from '@tarojs/taro';
 import { useRef, useState } from 'react';
 import { getSpec, getPixelSize, listSpecs, DPI_STD, DPI_HD, specLabel } from '../../services';
 import { useImagePicker } from '../../hooks/useImagePicker';
+import StepFlow from '../../components/StepFlow';
+import DpiStep from '../../components/DpiStep';
 
 // T5 规格转换：已有照片按所选规格「裁剪 / 改 dpi / 压 KB」后导出（真实功能，非占位）
 // 选图 → 目标像素计算（内置规格×dpi 或 自定义宽高）→ 居中裁剪缩放 → KB 上限压缩（quality 逐步降）→ 保存相册
@@ -17,11 +19,21 @@ const DPI = 300;
 // KB 压缩：从高 quality 起步，超限则逐步降低，最多 8 轮
 const KB_QUALITY_STEPS = [0.95, 0.9, 0.85, 0.8, 0.7, 0.6, 0.5, 0.4];
 
+// 【P1 #77】T5 纯图像变换：无美颜/换底/换装/预审（RC-8/RC-9）
+const T5_STEPS = [
+  { key: 'spec', label: '选规格' },
+  { key: 'crop', label: '裁剪' },
+  { key: 'dpi', label: '输出档位' },
+  { key: 'export', label: '导出' },
+];
+
 export default function ToolSpec() {
   const specs = listSpecs();
   const [mode, setMode] = useState<'spec' | 'custom'>('spec'); // spec=内置规格 / custom=自定义像素
   const [specIndex, setSpecIndex] = useState(0);
   const [dpi, setDpi] = useState(DPI_STD);
+  // 【P1 #77】当前管线步骤
+  const [stepIndex, setStepIndex] = useState(-1);
   const [customW, setCustomW] = useState('');
   const [customH, setCustomH] = useState('');
   // KB 上限：关闭开关 = 不压缩（最高质量导出）；默认 200KB（多数报名系统上限，PRD 8.1）
@@ -177,6 +189,8 @@ export default function ToolSpec() {
 
   return (
     <View className='page'>
+      {/* 【P1 #77】管线步骤指示器（T5 纯变换；RC-8） */}
+      <StepFlow steps={T5_STEPS} current={stepIndex} />
       <Text className='page__title'>规格转换</Text>
       <Text className='page__hint'>按目标规格裁剪 / 改 dpi / 压 KB 后导出。纯图像变换，不涉及人脸处理，无需人脸授权。</Text>
 
@@ -256,22 +270,19 @@ export default function ToolSpec() {
               {spec.source}
             </Text>
           ) : null}
-          <Text>输出 dpi：</Text>
-          <Picker
-            mode='selector'
-            range={['300dpi（标准 · 像素少）', '600dpi（高清 · 像素翻倍）']}
-            value={dpi === DPI_STD ? 0 : 1}
-            onChange={(e: any) => {
-              const d = Number(e.detail.value) === 0 ? DPI_STD : DPI_HD;
+          {/* 【P1 #77 / P2.7】输出档位提升为独立步骤屏（含像素不足提示；RC-3/RC-4/RC-8） */}
+          <DpiStep
+            specId={specs[specIndex].id}
+            specName={specs[specIndex].name}
+            dpi={dpi}
+            onChange={(d) => {
               setDpi(d);
-              const px = getPixelSize(specs[specIndex].id, d)!; // 任务 #50：换 dpi 自动重跑
+              const px = getPixelSize(specs[specIndex].id, d)!;
               reprocess({ width: px.width, height: px.height, dpi: d });
             }}
-          >
-            <View style={{ color: '#438EDB', padding: '4px 0' }}>
-              {dpi}dpi ▾
-            </View>
-          </Picker>
+            srcW={lastSrc.current ? lastSrc.current.w : undefined}
+            srcH={lastSrc.current ? lastSrc.current.h : undefined}
+          />
         </View>
       ) : (
         <View style={{ margin: '12px 0', display: 'flex', flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
