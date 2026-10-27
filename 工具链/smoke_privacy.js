@@ -96,7 +96,9 @@ async function readPageText(page) {
     const txt = await readPageText(page);
     // 「百度智能云」为 2026-10-23 新增断言：接第三方 API 后必须在政策页点名披露接收方
     // （个保法第 23 条），漏写即视为披露缺失 → 提审风险。
-    const keys = ['隐私政策', '单独同意', '本地', '境内', '不用于任何模型训练', '90 天', 'tangqiang@vip.126.com', 'ICP 备案审核中', '撤回同意', '百度智能云'];
+    // 「苏ICP备」为 2026-10-27 更新：工信部备案已通过（苏ICP备2026082326号-1X），
+    // 页面页脚由占位文案「ICP 备案审核中」改为真实备案号，断言同步切换。
+    const keys = ['隐私政策', '单独同意', '本地', '境内', '不用于任何模型训练', '90 天', 'tangqiang@vip.126.com', '苏ICP备2026082326号', '撤回同意', '百度智能云'];
     const missing = keys.filter((k) => !txt.includes(k));
     console.log(`3) 关键承诺文本 ${keys.length - missing.length}/${keys.length} ${missing.length === 0 ? 'OK' : 'FAIL 缺失: ' + missing.join('、')}`);
     await shot('05-privacy.png');

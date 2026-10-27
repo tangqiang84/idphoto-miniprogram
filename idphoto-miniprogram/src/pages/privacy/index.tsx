@@ -76,7 +76,7 @@ export default function Privacy() {
 
       <View className='privacy-page__foot'>
         <Text className='privacy-page__foot-line'>运营主体：个人开发者</Text>
-        <Text className='privacy-page__foot-line'>备案号：ICP 备案审核中（通过后更新）</Text>
+        <Text className='privacy-page__foot-line'>备案号：苏ICP备2026082326号-1X</Text>
       </View>
     </View>
   );
