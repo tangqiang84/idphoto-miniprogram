@@ -221,6 +221,20 @@ export default function ToolSpec() {
       {/* 内置规格 + dpi */}
       {mode === 'spec' ? (
         <View style={{ margin: '12px 0' }}>
+          {/* 【P1 #77 / P2.7】输出档位提升为独立步骤屏（含像素不足提示；RC-3/RC-4/RC-8） */}
+          <DpiStep
+            specId={specs[specIndex].id}
+            specName={specs[specIndex].name}
+            dpi={dpi}
+            onChange={(d) => {
+              setDpi(d);
+              const px = getPixelSize(specs[specIndex].id, d)!;
+              reprocess({ width: px.width, height: px.height, dpi: d });
+            }}
+            srcW={lastSrc.current ? lastSrc.current.w : undefined}
+            srcH={lastSrc.current ? lastSrc.current.h : undefined}
+          />
+
           <Text>目标规格：</Text>
           <Picker
             mode='selector'
@@ -270,19 +284,6 @@ export default function ToolSpec() {
               {spec.source}
             </Text>
           ) : null}
-          {/* 【P1 #77 / P2.7】输出档位提升为独立步骤屏（含像素不足提示；RC-3/RC-4/RC-8） */}
-          <DpiStep
-            specId={specs[specIndex].id}
-            specName={specs[specIndex].name}
-            dpi={dpi}
-            onChange={(d) => {
-              setDpi(d);
-              const px = getPixelSize(specs[specIndex].id, d)!;
-              reprocess({ width: px.width, height: px.height, dpi: d });
-            }}
-            srcW={lastSrc.current ? lastSrc.current.w : undefined}
-            srcH={lastSrc.current ? lastSrc.current.h : undefined}
-          />
         </View>
       ) : (
         <View style={{ margin: '12px 0', display: 'flex', flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>

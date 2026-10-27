@@ -15,6 +15,7 @@ import { withTimeout, IMG_LOAD_TIMEOUT_MS } from '../core/asyncUtils';
 import { planOutput, planWindowOutput, planDetectImage } from '../core/compose';
 import { planHeadCrop } from '../core/headCrop';
 import { collectEdgeSamples } from '../core/matting';
+import { clampCropWindow } from '../core/cropWindow';
 import { measureHeadMetrics } from './faceService';
 
 export interface PrepareParams {
@@ -30,6 +31,11 @@ export interface PrepareParams {
   target: { width: number; height: number };
   /** 阶段文案回调（页面状态行） */
   onMsg?: (s: string) => void;
+  /**
+   * 【P2.5 交互式裁剪】用户手动选取的裁剪窗 {x,y,w,h}（原图像素坐标）。
+   * 给了就用它（比例锁定 + 校正到图内），**优先于**智能构图；不给则走智能构图（默认建议）。
+   */
+  cropWindow?: { x: number; y: number; w: number; h: number } | null;
 }
 
 export interface Prepared {
@@ -102,10 +108,26 @@ export async function prepareWorkCanvas(p: PrepareParams): Promise<Prepared> {
     }
     : null;
 
-  // 2. 反解裁剪框（按规格头占比区间中值，core/headCrop.js）
+  // 2. 裁剪窗：① 用户手动裁剪（P2.5，优先）② 智能构图（按规格头占比区间中值，默认建议）
   let crop: any = null;
   let plan: any = null;
-  if (srcMetrics) {
+  const userWin = p.cropWindow
+    ? clampCropWindow(p.cropWindow, p.srcW, p.srcH, p.target.width / p.target.height)
+    : null;
+  if (userWin) {
+    // 用户已自选范围 → 不再反解（尊重用户选择），但仍做比例锁定与边界校正
+    crop = {
+      manual: true,
+      sx: userWin.x, sy: userWin.y, sw: userWin.w, sh: userWin.h,
+      ratioTarget: null, ratioAchieved: null,
+      degraded: false,
+      notes: ['已按你手动选取的范围裁剪'],
+    };
+    plan = planWindowOutput(p.srcW, p.srcH, p.target.width, p.target.height, {
+      sx: userWin.x, sy: userWin.y, sw: userWin.w, sh: userWin.h,
+    });
+  }
+  if (!plan && srcMetrics) {
     crop = planHeadCrop({
       workW: p.srcW,
       workH: p.srcH,

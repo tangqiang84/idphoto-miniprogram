@@ -1,0 +1,31 @@
+/* 输出档位步骤屏（P2.7，P1 #77） */
+.step-dpi {
+  margin: 10px 0;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+}
+.step-dpi__head { margin-bottom: 6px; }
+.step-dpi__title { font-size: 14px; font-weight: bold; color: #333; }
+.step-dpi__sub { display: block; font-size: 11px; color: #999; margin-top: 2px; }
+.step-dpi__row { display: flex; margin-top: 6px; }
+.step-dpi__chip {
+  flex: 1;
+  margin-right: 8px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  text-align: center;
+}
+.step-dpi__chip.is-on { border: 2px solid #438edb; background: #eef5fd; }
+.step-dpi__chip-main { display: block; font-size: 13px; color: #333; }
+.step-dpi__chip-sub { display: block; font-size: 11px; color: #999; margin-top: 2px; }
+.step-dpi__info { margin-top: 8px; }
+.step-dpi__spec,
+.step-dpi__req { display: block; font-size: 12px; color: #555; line-height: 1.5; }
+.step-dpi__verdict { display: block; font-size: 12px; margin-top: 4px; }
+.step-dpi__verdict.is-ok { color: #2ba471; }
+.step-dpi__verdict.is-warn { color: #b26a00; }
+.step-dpi__advice { display: block; font-size: 11px; color: #b26a00; margin-top: 4px; line-height: 1.5; }

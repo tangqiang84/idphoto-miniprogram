@@ -1,6 +1,7 @@
 import { View, Text } from '@tarojs/components';
 import { planOutput } from '../../core/compose';
 import { getSpec, getPixelSize, DPI_STD, DPI_HD } from '../../core/specLibrary';
+import './index.scss';
 
 /**
  * 输出档位步骤屏（P2.7 / `s_dpi`，T1/T2/T3/T5 共用）

@@ -109,6 +109,8 @@ export default function ToolSuit() {
   // 【P1 #77】当前管线步骤 / 智能裁切结果
   const [stepIndex, setStepIndex] = useState(-1);
   const [cropInfo, setCropInfo] = useState<any>(null);
+  // 【P2.5 交互式裁剪】用户手动选取的裁剪窗（原图像素坐标）
+  const [cropWindow, setCropWindow] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [selfChecked, setSelfChecked] = useState(false); // AC6/D3：五官自检确认
   // 已处理结果缓存（任务 #50）：换底色时据此**只重跑合成**
   const lastProc = useRef<{
@@ -127,7 +129,8 @@ export default function ToolSuit() {
     path: string,
     srcW: number,
     srcH: number,
-    opts?: { bgHex?: string | null; specIndex?: number; dpi?: number; forceCloud?: boolean },
+    opts?: { bgHex?: string | null; specIndex?: number; dpi?: number; forceCloud?: boolean;
+          cropWindow?: { x: number; y: number; w: number; h: number } | null },
   ) {
     // 参数覆盖（任务 #50）：state 异步，链式操作必须显式传值（问题台账 #31 同根）
     const specIdx = opts?.specIndex ?? specIndex;
@@ -164,6 +167,7 @@ export default function ToolSuit() {
         const target = getPixelSize(specObj, dpiVal)!;
         const prep = await prepareWorkCanvas({
           path, srcW, srcH, spec: specObj, dpi: dpiVal, target, onMsg: setMsg,
+          cropWindow: opts?.cropWindow ?? null,
         });
         w = prep.w; h = prep.h; plan = prep.plan; canvas = prep.canvas; rgba = prep.rgba;
         bgSamples = prep.bgSamples;
@@ -171,6 +175,8 @@ export default function ToolSuit() {
         setCropInfo(prep.crop
           ? {
             auto: true,
+            // 【P2.5】带上裁剪窗坐标：交互裁剪屏要拿它当**系统建议的初始框**
+            sx: prep.crop.sx, sy: prep.crop.sy, sw: prep.crop.sw, sh: prep.crop.sh,
             ratioTarget: prep.crop.ratioTarget,
             ratioAchieved: prep.crop.ratioAchieved,
             degraded: prep.crop.degraded,
@@ -478,6 +484,47 @@ export default function ToolSuit() {
 
       {/* 职业装模板（自绘素材，AI 自绘自有版权，PRD Q3 合规） */}
       <View style={{ margin: '12px 0' }}>
+      {/* 【P1 #77 / P2.5】裁剪步骤屏（比例锁定 + 智能构图结果） */}
+      <CropStep
+        specName={specs[specIndex].name}
+        target={getPixelSize(specs[specIndex].id, dpi)!}
+        crop={cropInfo && cropInfo.auto ? cropInfo : null}
+        imageSrc={lastSrc.current ? lastSrc.current.path : null}
+        srcW={lastSrc.current ? lastSrc.current.w : undefined}
+        srcH={lastSrc.current ? lastSrc.current.h : undefined}
+        cropWindow={cropWindow}
+        onCropWindowChange={setCropWindow}
+        onApplyCrop={() => {
+          const src = lastSrc.current;
+          if (src) run(src.path, src.w, src.h, { cropWindow });
+        }}
+      />
+
+      {/* 【P1 #77 / P2.6】美颜步骤屏（裁剪后、抠图换底前；RC-1） */}
+      <BeautyStep
+        value={beauty}
+        onChange={setBeauty}
+        onApply={() => {
+          const src = lastSrc.current;
+          if (src) run(src.path, src.w, src.h);
+        }}
+      />
+
+        {/* 【P1 #77 / P2.7】输出档位提升为独立步骤屏（含像素不足提示；RC-3/RC-4） */}
+        <DpiStep
+          specId={specs[specIndex].id}
+          specName={specs[specIndex].name}
+          dpi={dpi}
+          onChange={(d) => {
+            setDpi(d);
+            reprocess({ dpi: d }); // 任务 #50：换 dpi 自动重跑
+          }}
+          srcW={lastSrc.current ? lastSrc.current.w : undefined}
+          srcH={lastSrc.current ? lastSrc.current.h : undefined}
+          workW={lastProc.current ? lastProc.current.w : undefined}
+          workH={lastProc.current ? lastProc.current.h : undefined}
+        />
+
         <Text>职业装模板：</Text>
         <View style={{ display: 'flex', flexDirection: 'row', marginTop: '6px' }}>
           {SUIT_TEMPLATES.map((t, i) => (
@@ -544,38 +591,9 @@ export default function ToolSuit() {
             {specIndex < 0 ? '一寸' : `${specs[specIndex].name} ▾`}
           </View>
         </Picker>
-        {/* 【P1 #77 / P2.7】输出档位提升为独立步骤屏（含像素不足提示；RC-3/RC-4） */}
-        <DpiStep
-          specId={specs[specIndex].id}
-          specName={specs[specIndex].name}
-          dpi={dpi}
-          onChange={(d) => {
-            setDpi(d);
-            reprocess({ dpi: d }); // 任务 #50：换 dpi 自动重跑
-          }}
-          srcW={lastSrc.current ? lastSrc.current.w : undefined}
-          srcH={lastSrc.current ? lastSrc.current.h : undefined}
-          workW={lastProc.current ? lastProc.current.w : undefined}
-          workH={lastProc.current ? lastProc.current.h : undefined}
-        />
       </View>
 
-      {/* 【P1 #77 / P2.5】裁剪步骤屏（比例锁定 + 智能构图结果） */}
-      <CropStep
-        specName={specs[specIndex].name}
-        target={getPixelSize(specs[specIndex].id, dpi)!}
-        crop={cropInfo && cropInfo.auto ? cropInfo : null}
-      />
 
-      {/* 【P1 #77 / P2.6】美颜步骤屏（裁剪后、抠图换底前；RC-1） */}
-      <BeautyStep
-        value={beauty}
-        onChange={setBeauty}
-        onApply={() => {
-          const src = lastSrc.current;
-          if (src) run(src.path, src.w, src.h);
-        }}
-      />
 
       {/* F3（P1 / 台账 #76）：选图前协议闸门 —— 未集齐授权，选图/拍摄入口不可达 */}
       <Button

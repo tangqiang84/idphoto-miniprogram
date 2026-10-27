@@ -1,4 +1,5 @@
 import { View, Text } from '@tarojs/components';
+import './index.scss';
 
 /**
  * 管线步骤指示器（P1 任务 #77 / 原型 v0.4 `s_*` 步骤屏）

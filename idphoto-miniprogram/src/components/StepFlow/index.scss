@@ -1,0 +1,35 @@
+/* 管线步骤指示器（P1 #77）
+   ⚠️ 必须放组件级 scss：本项目的 src/app.scss 入口未被 Taro 处理（app-origin.wxss 为 0 字节），
+   全局样式进不了产物 —— 组件级 scss 才会被合并进 common.wxss。 */
+.step-flow {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 8px 0 12px;
+  padding: 8px;
+  background: #f7f9fc;
+  border-radius: 8px;
+}
+.step-flow__item {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: #999;
+}
+.step-flow__idx {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  margin-right: 4px;
+  text-align: center;
+  border-radius: 50%;
+  background: #e6e6e6;
+  color: #fff;
+  font-size: 10px;
+}
+.step-flow__item.is-done .step-flow__idx { background: #2ba471; }
+.step-flow__item.is-done .step-flow__label { color: #2ba471; }
+.step-flow__item.is-current .step-flow__idx { background: #438edb; }
+.step-flow__item.is-current .step-flow__label { color: #2b6cb0; font-weight: bold; }

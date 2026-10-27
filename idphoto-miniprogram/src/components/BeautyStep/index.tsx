@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components';
 import BeautyControl, { type BeautyState } from '../BeautyControl';
+import './index.scss';
 
 /**
  * 美颜步骤屏（P2.6 / `s_beauty`，裁剪后、抠图换底前，T1/T2/T3 共用）

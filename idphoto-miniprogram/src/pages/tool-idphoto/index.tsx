@@ -116,6 +116,8 @@ export default function ToolIdPhoto() {
   });
   // 最近一次取图（用于美颜「重新生成」时复用，无需重新选图）
   const [lastPick, setLastPick] = useState<{ path: string; width: number; height: number } | null>(null);
+  // 【P2.5 交互式裁剪】用户手动选取的裁剪窗（原图像素坐标）；null = 用系统智能构图建议
+  const [cropWindow, setCropWindow] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   // 已处理结果缓存（任务 #50）：换底色时据此**只重跑合成**，不重跑抠图/裁剪/换装
   const lastProc = useRef<{
     exportRgba: Uint8ClampedArray; alpha: any; w: number; h: number;
@@ -152,7 +154,8 @@ export default function ToolIdPhoto() {
   // 放宽 Taro 类型（微信 canvas 2d API 在部分基础库类型不全，统一用 any 访问）
   const anyTaro: any = Taro;
 
-  async function run(path: string, srcW: number, srcH: number, opts?: { suitOn?: boolean; specIndex?: number; dpi?: number; forceCloud?: boolean }) {
+  async function run(path: string, srcW: number, srcH: number, opts?: { suitOn?: boolean; specIndex?: number; dpi?: number; forceCloud?: boolean;
+          cropWindow?: { x: number; y: number; w: number; h: number } | null }) {
     if (!rec.ready) {
       Taro.showToast({ title: '请先勾选所需授权', icon: 'none' });
       return;
@@ -188,6 +191,7 @@ export default function ToolIdPhoto() {
       //      保证三页「先裁剪到规格、再抠图」走**同一份实现**（避免同产品两种流程）。
       const prep = await prepareWorkCanvas({
         path, srcW, srcH, spec: spec!, dpi: dpiVal, target, onMsg: setMsg,
+        cropWindow: opts?.cropWindow ?? null,
       });
       const w = prep.w;
       const h = prep.h;
@@ -201,6 +205,9 @@ export default function ToolIdPhoto() {
       setCropInfo(crop
         ? {
           auto: true,
+          // 【P2.5】带上裁剪窗坐标：交互裁剪屏要拿它当**系统建议的初始框**
+          // （否则只能退回「整图最大窗」→ 框几乎满屏 → 用户看不到裁剪框）
+          sx: crop.sx, sy: crop.sy, sw: crop.sw, sh: crop.sh,
           ratioTarget: crop.ratioTarget,
           ratioAchieved: crop.ratioAchieved,
           degraded: crop.degraded,
@@ -593,6 +600,44 @@ export default function ToolIdPhoto() {
 
       {/* 规格与底色 */}
       <View style={{ margin: '12px 0' }}>
+      {/* 【P1 #77 / P2.5】裁剪步骤屏（比例锁定 + 智能构图结果透明化，RC-1） */}
+      <CropStep
+        specName={specs[specIndex].name}
+        target={getPixelSize(specs[specIndex].id, dpi)!}
+        crop={cropInfo && cropInfo.auto ? cropInfo : null}
+        imageSrc={lastPick ? lastPick.path : null}
+        srcW={lastPick ? lastPick.width : undefined}
+        srcH={lastPick ? lastPick.height : undefined}
+        cropWindow={cropWindow}
+        onCropWindowChange={setCropWindow}
+        onApplyCrop={() => {
+          if (lastPick) run(lastPick.path, lastPick.width, lastPick.height, { cropWindow });
+        }}
+      />
+
+      <BeautyStep
+        value={beauty}
+        onChange={setBeauty}
+        onApply={() => {
+          if (lastPick) run(lastPick.path, lastPick.width, lastPick.height);
+        }}
+      />
+
+        {/* 【P1 #77 / P2.7】输出档位提升为独立步骤屏（含像素不足提示，RC-3/RC-4） */}
+        <DpiStep
+          specId={specs[specIndex].id}
+          specName={specs[specIndex].name}
+          dpi={dpi}
+          onChange={(d) => {
+            setDpi(d);
+            reprocess({ dpi: d }); // 任务 #50：换 dpi 自动重跑
+          }}
+          srcW={lastPick ? lastPick.width : undefined}
+          srcH={lastPick ? lastPick.height : undefined}
+          workW={lastProc.current ? lastProc.current.w : undefined}
+          workH={lastProc.current ? lastProc.current.h : undefined}
+        />
+
         <Text>规格：</Text>
         <Picker
           mode='selector'
@@ -609,20 +654,6 @@ export default function ToolIdPhoto() {
         <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
           {specs[specIndex].source}
         </Text>
-        {/* 【P1 #77 / P2.7】输出档位提升为独立步骤屏（含像素不足提示，RC-3/RC-4） */}
-        <DpiStep
-          specId={specs[specIndex].id}
-          specName={specs[specIndex].name}
-          dpi={dpi}
-          onChange={(d) => {
-            setDpi(d);
-            reprocess({ dpi: d }); // 任务 #50：换 dpi 自动重跑
-          }}
-          srcW={lastPick ? lastPick.width : undefined}
-          srcH={lastPick ? lastPick.height : undefined}
-          workW={lastProc.current ? lastProc.current.w : undefined}
-          workH={lastProc.current ? lastProc.current.h : undefined}
-        />
         {/* 规格速览芯片：直接点选 + 展示官方像素（2026-10-23 规格数值裁决后新增） */}
         <View className='spec-chips'>
           {specs.map((s: any, i: number) => {
@@ -712,22 +743,9 @@ export default function ToolIdPhoto() {
         </View>
       ) : null}
 
-      {/* 【P1 #77 / P2.5】裁剪步骤屏（比例锁定 + 智能构图结果透明化，RC-1） */}
-      <CropStep
-        specName={specs[specIndex].name}
-        target={getPixelSize(specs[specIndex].id, dpi)!}
-        crop={cropInfo && cropInfo.auto ? cropInfo : null}
-      />
 
       {/* 【P1 #77 / P2.6】美颜提升为管线级步骤屏（裁剪后、抠图换底前，RC-1）
           放在参数区（出图前即可调节），与 T2/T3 的位置一致 */}
-      <BeautyStep
-        value={beauty}
-        onChange={setBeauty}
-        onApply={() => {
-          if (lastPick) run(lastPick.path, lastPick.width, lastPick.height);
-        }}
-      />
 
       {/* 输出构图提示（分辨率不足 / 达到处理上限 → 如实告知，不静默输出糊图） */}
       {planNote ? (
