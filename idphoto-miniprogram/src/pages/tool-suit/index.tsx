@@ -11,6 +11,7 @@ import {
   BG, getSpec, getPixelSize, listSpecs,
   DPI_STD, DPI_HD,
   backendLabel,
+  withTimeout, IMG_LOAD_TIMEOUT_MS,
 } from '../../services';
 import { useImagePicker } from '../../hooks/useImagePicker';
 
@@ -38,11 +39,16 @@ async function loadTemplatePixels(src: string): Promise<{ data: Uint8ClampedArra
   const canvas = anyTaro.createOffscreenCanvas({ type: '2d', width: 400, height: 400 });
   const ctx = canvas.getContext('2d');
   const img = canvas.createImage();
-  await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve();
-    img.onerror = (e: any) => reject(e || new Error('模板加载失败'));
-    img.src = src;
-  });
+  // #70：图片加载加超时硬闸门（真机上 onload/onerror 可能双不触发 → 永久转圈）
+  await withTimeout(
+    new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = (e: any) => reject(e || new Error('模板加载失败'));
+      img.src = src;
+    }),
+    IMG_LOAD_TIMEOUT_MS,
+    '模板加载超时',
+  );
   ctx.drawImage(img, 0, 0, 400, 400);
   const d = ctx.getImageData(0, 0, 400, 400);
   return { data: d.data, w: 400, h: 400 };
@@ -132,11 +138,16 @@ export default function ToolSuit() {
       const canvas = anyTaro.createOffscreenCanvas({ type: '2d', width: w, height: h });
       const ctx = canvas.getContext('2d');
       const img = canvas.createImage();
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = (e: any) => reject(e || new Error('图片加载失败'));
-        img.src = path;
-      });
+      // #70：主图加载加超时硬闸门（同 loadTemplatePixels，真机双不触发 → 永久转圈）
+      await withTimeout(
+        new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = (e: any) => reject(e || new Error('图片加载失败'));
+          img.src = path;
+        }),
+        IMG_LOAD_TIMEOUT_MS,
+        '图片加载超时',
+      );
       ctx.drawImage(img, 0, 0, w, h);
       const imageData = ctx.getImageData(0, 0, w, h);
       const rgba = imageData.data;

@@ -13,6 +13,7 @@ import {
   BG, getSpec, getPixelSize, listSpecs, specLabel,
   DPI_STD, DPI_HD,
   backendLabel,
+  withTimeout, IMG_LOAD_TIMEOUT_MS,
 } from '../../services';
 import { useImagePicker } from '../../hooks/useImagePicker';
 import { applyBeauty } from '../../services';
@@ -51,11 +52,16 @@ async function loadTemplatePixels(src: string): Promise<{ data: Uint8ClampedArra
   const canvas = anyTaro.createOffscreenCanvas({ type: '2d', width: 400, height: 400 });
   const ctx = canvas.getContext('2d');
   const img = canvas.createImage();
-  await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve();
-    img.onerror = (e: any) => reject(e || new Error('模板加载失败'));
-    img.src = src;
-  });
+  // #70：图片加载加超时硬闸门（真机上 onload/onerror 可能双不触发 → 永久转圈）
+  await withTimeout(
+    new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = (e: any) => reject(e || new Error('模板加载失败'));
+      img.src = src;
+    }),
+    IMG_LOAD_TIMEOUT_MS,
+    '模板加载超时',
+  );
   ctx.drawImage(img, 0, 0, 400, 400);
   const d = ctx.getImageData(0, 0, 400, 400);
   return { data: d.data, w: 400, h: 400 };
@@ -156,11 +162,16 @@ export default function ToolIdPhoto() {
         const cv = anyTaro.createOffscreenCanvas({ type: '2d', width: cw, height: ch });
         const cx = cv.getContext('2d');
         const im = cv.createImage();
-        await new Promise<void>((resolve, reject) => {
-          im.onload = () => resolve();
-          im.onerror = (e: any) => reject(e || new Error('图片加载失败'));
-          im.src = path;
-        });
+        // #70：主图加载加超时硬闸门（真机双不触发 → 永久转圈，见问题台账 #70）
+        await withTimeout(
+          new Promise<void>((resolve, reject) => {
+            im.onload = () => resolve();
+            im.onerror = (e: any) => reject(e || new Error('图片加载失败'));
+            im.src = path;
+          }),
+          IMG_LOAD_TIMEOUT_MS,
+          '图片加载超时',
+        );
         draw(cx, im);
         const id = cx.getImageData(0, 0, cw, ch);
         return { canvas: cv, ctx: cx, imageData: id, rgba: id.data };

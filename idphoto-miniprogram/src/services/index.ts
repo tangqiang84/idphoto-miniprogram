@@ -9,6 +9,7 @@ import { makeCloudFnAdapter } from './cloudFnAdapter';
 import { composeAndExportImage } from './renderService';
 import { requiredConsents, buildConsentRecord, CONSENT_ITEMS, TOOL_CONSENTS } from '../core/privacy';
 import { alphaBBox, tightBBox, estimateHeadByShoulder, suitPlacement, suitCompose } from '../core/suit';
+import { withTimeout, CLOUD_CALL_TIMEOUT_MS, IMG_LOAD_TIMEOUT_MS, EXPORT_TIMEOUT_MS } from '../core/asyncUtils';
 import { planOutput, planWindowOutput, planDetectImage, MIN_WORK_EDGE, MAX_WORK_EDGE, MAX_WORK_PIXELS, DETECT_EDGE, WIN_MARGIN_RATIO } from '../core/compose';
 import { planHeadCrop, targetHeadRatio, HEAD_TOP_GAP_RATIO, CHIN_BOTTOM_GAP_RATIO } from '../core/headCrop';
 import { detectFace, measureHeadRatio, measureHeadMetrics, ratioWithinWindow } from './faceService';
@@ -50,6 +51,8 @@ export {
   decideRoute, CONF_THRESHOLD, segment, composite, compositeTransparent, cloudMatting, collectEdgeSamples, backendLabel,
   // 换装（T3 端侧贴图合成）
   alphaBBox, tightBBox, estimateHeadByShoulder, suitPlacement, suitCompose,
+  // 异步边界超时硬闸门（#70：真机永悬转圈修复）
+  withTimeout, CLOUD_CALL_TIMEOUT_MS, IMG_LOAD_TIMEOUT_MS, EXPORT_TIMEOUT_MS,
   // 输出构图规划（600dpi 动态工作图尺寸 + 裁剪窗口，三页共用）
   planOutput, MIN_WORK_EDGE, MAX_WORK_EDGE, MAX_WORK_PIXELS,
   // 自动裁剪（任务 #24：按规格头占比反解裁剪框 + 区域化工作画布 + 检测用图）

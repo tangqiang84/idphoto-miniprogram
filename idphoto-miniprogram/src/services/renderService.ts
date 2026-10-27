@@ -1,5 +1,6 @@
 import Taro from '@tarojs/taro';
 import { composite, compositeTransparent } from '../core/matting';
+import { withTimeout, EXPORT_TIMEOUT_MS } from '../core/asyncUtils';
 
 /**
  * 共享渲染服务：合成（换底色）+ 可选裁剪 + 导出临时文件。
@@ -71,18 +72,28 @@ export async function composeAndExportImage(p: RenderParams): Promise<RenderResu
     outH = p.target.height;
   }
 
-  const exported: any = await Taro.canvasToTempFilePath({
-    canvas: outCanvas,
-    x: 0, y: 0, width: outW, height: outH,
-    destWidth: outW, destHeight: outH,
-    fileType: transparent ? 'png' : (p.fileType || 'jpg'),
-    quality: p.quality ?? 0.95,
-  });
+  // #70：导出段同样加超时硬闸门（canvasToTempFilePath / getFileInfo 在真机上
+  // 若永不回调，页面同样会永久转圈）
+  const exported: any = await withTimeout(
+    Taro.canvasToTempFilePath({
+      canvas: outCanvas,
+      x: 0, y: 0, width: outW, height: outH,
+      destWidth: outW, destHeight: outH,
+      fileType: transparent ? 'png' : (p.fileType || 'jpg'),
+      quality: p.quality ?? 0.95,
+    }),
+    EXPORT_TIMEOUT_MS,
+    'export: 画布导出超时',
+  );
 
   const fs = Taro.getFileSystemManager();
-  const fi: any = await new Promise((resolve, reject) => {
-    fs.getFileInfo({ filePath: exported.tempFilePath, success: resolve, fail: reject });
-  });
+  const fi: any = await withTimeout(
+    new Promise((resolve, reject) => {
+      fs.getFileInfo({ filePath: exported.tempFilePath, success: resolve, fail: reject });
+    }),
+    EXPORT_TIMEOUT_MS,
+    'export: 文件信息读取超时',
+  );
 
   return { preview: exported.tempFilePath, fileKb: Math.round(fi.size / 1024), outW, outH };
 }
