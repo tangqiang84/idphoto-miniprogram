@@ -58,6 +58,15 @@
   .sheetbox .ptile { background:linear-gradient(180deg,#5aa0e0,#4a90d9); border-radius:2px; }
   .sheetbox .cropf { outline:1px dashed #07c160; outline-offset:-3px; }
   .sheetbox .x { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#e6a23c; font-size:13px; font-weight:600; background:#fbf6ec; padding:6px; text-align:center; }
+  /* ===== 裁剪过程（s_crop，2026-10-27 v0.3 新增：独立裁剪步骤，比例锁定目标规格） ===== */
+  .cropstage { position:relative; width:100%; height:300px; background:#1f2329; border-radius:12px; overflow:hidden; margin-top:12px; touch-action:none; }
+  .cropimg { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#6b7280; font-size:13px; background:repeating-linear-gradient(45deg,#2a2f36,#2a2f36 10px,#262b31 10px,#262b31 20px); }
+  .cropframe { position:absolute; border:2px solid #07c160; box-shadow:0 0 0 9999px rgba(0,0,0,.5); cursor:move; box-sizing:border-box; }
+  .cropframe .cropgrid { position:absolute; inset:0; background:
+      linear-gradient(rgba(255,255,255,.35) 1px, transparent 1px) 0 0/100% 33.33%,
+      linear-gradient(90deg, rgba(255,255,255,.35) 1px, transparent 1px) 0 0/33.33% 100%; }
+  .cropframe .cropdrag { position:absolute; bottom:6px; left:0; right:0; text-align:center; color:#fff; font-size:11px; text-shadow:0 1px 2px rgba(0,0,0,.6); pointer-events:none; }
+  .cropframe .crophandle { position:absolute; right:-7px; bottom:-7px; width:16px; height:16px; border-radius:50%; background:#07c160; border:2px solid #fff; cursor:nwse-resize; }
 </style>
 </head>
 <body>
@@ -100,9 +109,33 @@
     </div>
   </div>
 
+  <!-- 裁剪过程（所有裁剪工具共用：选好尺寸 + 选图后，在此选定画面裁剪范围） -->
+  <div class="screen" id="s_crop">
+    <div class="nav"><span class="back" onclick="cropBack()">‹ 返回</span> 裁剪 · 选择范围</div>
+    <div class="body">
+      <div class="card"><h3>裁剪（按所选规格选取画面范围）</h3>
+        <p class="tag" id="crop-spec-label">目标规格：一寸 295×413 ｜ 裁剪框比例已锁定 295:413</p>
+      </div>
+      <div class="cropstage" id="cropstage">
+        <div class="cropimg" id="cropimg">已选照片预览</div>
+        <div class="cropframe" id="cropframe">
+          <div class="cropgrid"></div>
+          <div class="cropdrag">拖动调整位置 · 右下角缩放</div>
+          <div class="crophandle" id="crophandle"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row"><span>缩放裁剪框</span><span class="tag" id="cropscale-val">70%</span></div>
+        <input type="range" id="cropscale" min="35" max="100" value="70" oninput="cropScale(this.value)" style="width:100%;">
+        <p class="tag" style="margin-top:8px;">移动裁剪框选取合适的面部与肩部范围；比例锁定为目标规格，避免拉伸变形。确认后进入抠图换底。</p>
+      </div>
+      <button class="btn" onclick="cropConfirm()">确认裁剪</button>
+    </div>
+  </div>
+
   <!-- T1 处理/预览 -->
   <div class="screen" id="s_preview">
-    <div class="nav"><span class="back" onclick="go('s_upload')">‹ 返回</span> 裁剪 · 抠图换底</div>
+    <div class="nav"><span class="back" onclick="go('s_crop')">‹ 返回</span> 抠图换底（已按规格裁剪）</div>
     <div class="body">
       <div class="preview">人像预览</div>
       <div class="colors">
@@ -157,6 +190,7 @@
       <div class="success"><div class="ico">✅</div><h3 style="margin:10px 0;">导出完成</h3><p class="tag">300dpi JPG · 无水印 · 免费</p></div>
       <div class="card"><div class="row"><span>300dpi 标准（基础）</span><span class="ok">免费 · 无水印</span></div><div class="row"><span>600dpi 印刷级</span><span class="ok">免费 · 无水印</span></div></div>
       <div class="pricenote">全部功能免费无水印（MVP 不设付费档）。600dpi 为印刷/冲印用途，像素翻倍、体积约为 300dpi 的 2~4 倍。</div>
+      <button class="btn ghost" onclick="go('s_t6');t6update()">🖨 去冲印排版（拼版打印）</button>
       <button class="btn" onclick="go('s_home')">返回首页</button>
     </div>
   </div>
@@ -174,7 +208,7 @@
       </div>
       <div class="card"><h3>目标规格（先裁剪，后换色）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">驾照 260×378</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div></div>
       <div class="card"><h3>选择底色</h3><div class="colors"><div class="sw sel" style="background:#fff" onclick="selColor(this)"></div><div class="sw" style="background:#ff0000" onclick="selColor(this)"></div><div class="sw" style="background:#00bfe3" onclick="selColor(this)"></div><div class="sw" style="background:#c0c0c0" onclick="selColor(this)"></div></div></div>
-      <button class="btn" onclick="go('s_export')">导出换底照</button>
+      <button class="btn" onclick="openCrop('s_t2','s_export')">下一步：裁剪并导出</button>
     </div>
   </div>
 
@@ -191,7 +225,7 @@
       </div>
       <div class="card"><h3>目标规格（先裁剪，后换装）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">驾照 260×378</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div></div>
       <div class="card"><h3>职业装模板</h3><div><span class="chip" onclick="selChip(this)">西装</span><span class="chip" onclick="selChip(this)">衬衫</span><span class="chip" onclick="selChip(this)">学院风</span></div><p class="tag" style="margin-top:8px;">仅换装，不改五官；只对 9 个标准规格生效</p></div>
-      <button class="btn ghost" onclick="openSelfCheck()">应用换装并自检</button>
+      <button class="btn ghost" onclick="openCrop('s_t3','s_t3_selfcheck')">下一步：裁剪并换装</button>
     </div>
   </div>
 
@@ -212,7 +246,7 @@
     <div class="body">
       <div class="upload-box"><div class="guide"></div><div style="position:absolute;bottom:14px;">上传已有照片</div></div>
       <div class="card"><h3>目标规格</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">驾照 260×378</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div></div>
-      <button class="btn" onclick="go('s_export')">转换为该规格</button>
+      <button class="btn" onclick="openCrop('s_t5','s_export')">下一步：裁剪并转换</button>
     </div>
   </div>
 
@@ -299,7 +333,16 @@
 <script>
   function go(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
   function selColor(el){ document.querySelectorAll('.colors .sw').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
-  function selChip(el){ var box = el.closest('.card'); box.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+  function selChip(el){ var box = el.closest('.card'); box.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); captureSpec(el); }
+  // 规格库（与原型各页 chip 文案一致；用于裁剪框比例锁定）
+  const CROP_SPECS = {
+    '一寸':{w:295,h:413}, '二寸':{w:413,h:579}, '小二寸':{w:413,h:531}, '大一寸':{w:390,h:567},
+    '小一寸':{w:260,h:378}, '驾驶证':{w:260,h:378}, '大二寸':{w:413,h:626}, '护照':{w:390,h:567}, '美国签证':{w:600,h:600}
+  };
+  function captureSpec(el){
+    var m = (el.textContent||'').trim().match(/^(\S+?)\s*[\d×xX]/);
+    if(m && CROP_SPECS[m[1]]){ window.curSpec = Object.assign({name:m[1]}, CROP_SPECS[m[1]]); }
+  }
   // 协议前置闸门（v0.2，2026-10-27）：未勾选协议时选图/拍摄入口不可点
   function gateToggle(cb){
     var screen = cb.closest('.screen');
@@ -323,10 +366,81 @@
   function startProcess(){ openModal('m_auth'); }
   function openModal(id){ document.getElementById(id).classList.add('show'); }
   function closeModal(id){ document.getElementById(id).classList.remove('show'); }
-  function doAuth(){ if(!document.getElementById('agree').checked){ alert('请先勾选同意'); return; } closeModal('m_auth'); go('s_preview'); }
+  function doAuth(){ if(!document.getElementById('agree').checked){ alert('请先勾选同意'); return; } closeModal('m_auth'); openCrop('s_upload','s_preview'); }
   function openSelfCheck(){ openModal('m_self'); }
   function doSelfCheck(){ if(!document.getElementById('selfok').checked){ alert('请确认未改动五官'); return; } closeModal('m_self'); go('s_export'); }
   function showReport(){ document.getElementById('t4report').style.display='block'; }
+
+  // ===== 裁剪过程（s_crop，2026-10-27 v0.3 新增：独立裁剪步骤，比例锁定目标规格） =====
+  let cropFrom = 's_upload';
+  let cropNext = 's_preview';
+  function openCrop(from, next){
+    cropFrom = from;
+    cropNext = (next === 's_t3_selfcheck') ? 's_t3_selfcheck' : next;
+    go('s_crop');
+    renderCrop();
+  }
+  function renderCrop(){
+    const sp = window.curSpec || CROP_SPECS['一寸'];
+    document.getElementById('crop-spec-label').textContent =
+      '目标规格：' + (sp.name||'一寸') + ' ' + sp.w + '×' + sp.h + ' ｜ 裁剪框比例已锁定 ' + sp.w + ':' + sp.h;
+    const stage = document.getElementById('cropstage');
+    const frame = document.getElementById('cropframe');
+    const ratio = sp.w / sp.h;
+    frame.dataset.ratio = ratio;
+    applyCropFrameWidth(stage, frame, 70);
+    const w = parseFloat(frame.style.width), h = parseFloat(frame.style.height);
+    frame.style.left = ((stage.clientWidth - w) / 2) + 'px';
+    frame.style.top = ((stage.clientHeight - h) / 2) + 'px';
+    document.getElementById('cropscale-val').textContent = '70%';
+    document.getElementById('cropscale').value = 70;
+  }
+  function applyCropFrameWidth(stage, frame, pct){
+    const ratio = parseFloat(frame.dataset.ratio);
+    const maxW = stage.clientWidth - 40, maxH = stage.clientHeight - 40;
+    let w = maxW * (pct / 100); let h = w / ratio;
+    if(h > maxH){ h = maxH; w = h * ratio; }
+    w = Math.min(w, maxW); h = Math.min(h, maxH);
+    frame.style.width = w + 'px'; frame.style.height = h + 'px';
+  }
+  function cropScale(v){
+    document.getElementById('cropscale-val').textContent = v + '%';
+    const stage = document.getElementById('cropstage');
+    const frame = document.getElementById('cropframe');
+    applyCropFrameWidth(stage, frame, parseInt(v,10));
+    const maxW = stage.clientWidth - parseFloat(frame.style.width);
+    const maxH = stage.clientHeight - parseFloat(frame.style.height);
+    frame.style.left = Math.min(parseFloat(frame.style.left) || 0, Math.max(0, maxW)) + 'px';
+    frame.style.top = Math.min(parseFloat(frame.style.top) || 0, Math.max(0, maxH)) + 'px';
+  }
+  function cropConfirm(){ if(cropNext === 's_t3_selfcheck'){ openSelfCheck(); } else { go(cropNext); } }
+  function cropBack(){ go(cropFrom || 's_upload'); }
+  (function(){
+    const stage = document.getElementById('cropstage');
+    const frame = document.getElementById('cropframe');
+    const handle = document.getElementById('crophandle');
+    let mode = null, sx = 0, sy = 0, ow = 0, oh = 0, ol = 0, ot = 0;
+    function down(e, m){ mode = m; sx = e.clientX; sy = e.clientY; ow = parseFloat(frame.style.width); oh = parseFloat(frame.style.height); ol = parseFloat(frame.style.left) || 0; ot = parseFloat(frame.style.top) || 0; e.preventDefault(); }
+    frame.addEventListener('pointerdown', function(e){ if(e.target === handle) return; down(e, 'move'); });
+    handle.addEventListener('pointerdown', function(e){ down(e, 'resize'); });
+    window.addEventListener('pointermove', function(e){
+      if(!mode) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if(mode === 'move'){
+        const maxW = stage.clientWidth - ow, maxH = stage.clientHeight - oh;
+        frame.style.left = Math.max(0, Math.min(ol + dx, maxW)) + 'px';
+        frame.style.top = Math.max(0, Math.min(ot + dy, maxH)) + 'px';
+      } else {
+        const ratio = parseFloat(frame.dataset.ratio);
+        let w = Math.max(40, ow + dx); let h = w / ratio;
+        const maxW = stage.clientWidth - 40, maxH = stage.clientHeight - 40;
+        if(w > maxW){ w = maxW; h = w / ratio; }
+        if(h > maxH){ h = maxH; w = h * ratio; }
+        frame.style.width = w + 'px'; frame.style.height = h + 'px';
+      }
+    });
+    window.addEventListener('pointerup', function(){ mode = null; });
+  })();
 
   // ===== T6 冲印排版（原型联动，算法移植自 src/core/paperLibrary.js） =====
   const T6_SPECS = [
