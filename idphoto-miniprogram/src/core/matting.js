@@ -60,8 +60,12 @@ async function segment({ rgba, width, height, session, cloud, consents, audit, t
     });
   } catch (e) {
     // AC5 未授权等硬阻断：上抛，由调用方提示用户去授权（绝不以端侧静默替代授权）
-    if (String(e && e.message || e).startsWith('AC5')) throw e;
-    return { ...base, degraded: true, cloudError: String(e && e.message || e) };
+    const msg = String((e && e.message) || e);
+    if (msg.startsWith('AC5')) throw e;
+    // ⚠️ 降级原因必须可见（任务 #52 教训 + 2026-10-27 真机排障）：
+    //    静默降级会让「云端根本没调通」被误判成「效果就这样」——真机现场就是如此
+    console.warn('[cloud-fallback]', msg);
+    return { ...base, degraded: true, cloudError: msg };
   }
   if (cloudRes.degraded) {
     return { ...base, backend: cloudRes.backend, degraded: true, cloudMeta: cloudRes.cloudMeta };

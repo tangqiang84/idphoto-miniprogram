@@ -60,7 +60,13 @@ const { readStatus, waitForStatus } = require('./smoke_kit');
   try {
     miniProgram = await automator.launch({ projectPath: APP, port: PORT, timeout: 60000 });
     miniProgram.on('console', (msg) => {
-      const t = `[${msg.type}] ${msg.text || msg.message || ''}`;
+      // automator 0.13 的 console 事件字段不稳定（text/message 可能是 undefined），
+      // 兜底用 JSON 序列化，保证诊断信息不丢（2026-10-27 云端排障用）
+      let body = msg.text || msg.message || '';
+      if (!body) {
+        try { body = JSON.stringify(msg); } catch (e) { body = '(unserializable)'; }
+      }
+      const t = `[${msg.type}] ${body}`;
       logs.push(t);
       if (msg.type === 'error') errors.push(t);
     });
@@ -195,6 +201,7 @@ const { readStatus, waitForStatus } = require('./smoke_kit');
     }
 
     const auditLogs = logs.filter((l) => l.includes('[audit]'));
+    const cloudLogs = logs.filter((l) => /cloud|云端|\[warn\]/i.test(l));
 
     if (SKIP_CONSENT) {
       // 反向用例：未授权必须被阻断（AC5）。
@@ -220,6 +227,7 @@ const { readStatus, waitForStatus } = require('./smoke_kit');
     console.log('处理完成:', finished ? (status.includes('完成') ? 'OK' : 'FAIL(失败文案)') : 'FAIL(超时45s)');
     console.log('运行时错误数:', errors.length);
     console.log('audit 日志:', auditLogs.length ? auditLogs.join(' | ') : '（无 → 说明未触发上云增强）');
+    if (cloudLogs.length) console.log('云端相关日志:', cloudLogs.join(' | ').slice(0, 600));
     if (msg) console.log('页面文本:', msg.replace(/\s+/g, ' ').slice(0, 300));
     if (errors.length) console.log('错误:\n' + errors.join('\n'));
     console.log('截图:', SHOTS);

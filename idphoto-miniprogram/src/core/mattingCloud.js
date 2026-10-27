@@ -12,20 +12,17 @@
 // 以便 Node 单测与 PoC 复用同一份逻辑。
 
 const { estimateQuality, runClassicalFallback, gaussianFromSamples, mahalanobis, sampleRGB, sigmoid } = require('./mattingLocal');
+const { bytesToBase64, base64ToBytes } = require('./base64');
 
 // ===================== 序列化（base64，Node/小程序通用） =====================
+// ⚠️ 2026-10-27（任务 #52 续）：小程序运行时没有 Buffer / btoa / atob，
+//    原实现最后落到 Buffer.from(...) → ReferenceError → 上云链路在小程序端必然失败。
+//    改用纯 JS 实现（core/base64.js），Node 与小程序行为一致（单测与 Buffer 逐字节比对）。
 function toBase64(bytes) {
-  if (typeof Buffer !== 'undefined') return Buffer.from(bytes).toString('base64');
-  let bin = '';
-  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-  return (typeof btoa !== 'undefined') ? btoa(bin) : Buffer.from(bytes).toString('base64');
+  return bytesToBase64(bytes);
 }
 function fromBase64(b64) {
-  if (typeof Buffer !== 'undefined') return new Uint8Array(Buffer.from(b64, 'base64'));
-  const bin = (typeof atob !== 'undefined') ? atob(b64) : Buffer.from(b64, 'base64').toString('binary');
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
+  return base64ToBytes(b64);
 }
 function encodeAlphaB64(alpha) {
   const u = new Uint8ClampedArray(alpha.length);
@@ -36,11 +33,30 @@ function decodeAlphaB64(b64, n) {
   const u = fromBase64(b64);
   const f = new Float32Array(n);
   for (let i = 0; i < n; i++) f[i] = (u[i] || 0) / 255;
+  // 实际字节数 ≠ 期望像素数 → 说明云端返回的 alpha 尺寸与请求不一致（需按比例还原）
+  f.__len = u.length;
   return f;
 }
 
 // ===================== 裁剪人像区域（非全图，I3/第171行） =====================
 // 基于本地 alpha 求前景包围盒，padding 后裁出子图；只上传该区域，减少数据外泄面。
+/** 按给定矩形裁剪出子图（含 alpha 同步裁剪） */
+function cropRect(rgba, alpha, w, h, r) {
+  const x0 = Math.max(0, Math.min(w - 1, Math.round(r.x)));
+  const y0 = Math.max(0, Math.min(h - 1, Math.round(r.y)));
+  const cw = Math.max(1, Math.min(w - x0, Math.round(r.w)));
+  const ch = Math.max(1, Math.min(h - y0, Math.round(r.h)));
+  const sub = new Uint8ClampedArray(cw * ch * 4);
+  const subA = new Float32Array(cw * ch);
+  for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+    const si = ((y0 + y) * w + (x0 + x)) * 4;
+    const di = (y * cw + x) * 4;
+    sub[di] = rgba[si]; sub[di + 1] = rgba[si + 1]; sub[di + 2] = rgba[si + 2]; sub[di + 3] = rgba[si + 3];
+    subA[y * cw + x] = alpha[(y0 + y) * w + (x0 + x)];
+  }
+  return { rgba: sub, alpha: subA, w: cw, h: ch, x: x0, y: y0, full: x0 === 0 && y0 === 0 && cw === w && ch === h };
+}
+
 function cropForeground(rgba, alpha, w, h, pad) {
   pad = pad == null ? 8 : pad;
   let minX = w, minY = h, maxX = -1, maxY = -1, has = false;
@@ -52,19 +68,66 @@ function cropForeground(rgba, alpha, w, h, pad) {
     }
   }
   if (!has) return { rgba, alpha, w, h, x: 0, y: 0, full: true };
-  const x0 = Math.max(0, minX - pad), y0 = Math.max(0, minY - pad);
-  const x1 = Math.min(w - 1, maxX + pad), y1 = Math.min(h - 1, maxY + pad);
-  const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
-  const sub = new Uint8ClampedArray(cw * ch * 4);
-  const subA = new Float32Array(cw * ch);
-  for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
-    const si = ((y0 + y) * w + (x0 + x)) * 4;
-    const di = (y * cw + x) * 4;
-    sub[di] = rgba[si]; sub[di + 1] = rgba[si + 1]; sub[di + 2] = rgba[si + 2]; sub[di + 3] = rgba[si + 3];
-    subA[y * cw + x] = alpha[(y0 + y) * w + (x0 + x)];
-  }
-  return { rgba: sub, alpha: subA, w: cw, h: ch, x: x0, y: y0, full: false };
+  return cropRect(rgba, alpha, w, h, {
+    x: Math.max(0, minX - pad), y: Math.max(0, minY - pad),
+    w: Math.min(w - 1, maxX + pad) - Math.max(0, minX - pad) + 1,
+    h: Math.min(h - 1, maxY + pad) - Math.max(0, minY - pad) + 1,
+  });
 }
+/**
+ * 决定「上传给云端的那块区域」（PRD I3：只上传裁剪后的人像区域，减少数据外泄面）。
+ *
+ * ⚠️ 2026-10-27 真机排障发现的设计缺陷（问题台账 #64）：
+ *   原实现用**端侧 alpha 的前景 bbox** 作为上传区域。但端侧经典算法在难图上会产生
+ *   **噪声 alpha**（前景零散、占比低）→ bbox 框不住人、反而框进大片背景 →
+ *   上传的图里人只占 ~19% → 云端真模型在「人只占一小块 + 杂乱背景」的图上也给不出前景
+ *   （scoremap 前景占比 0）→ 质量守门判 degenerate → 整体降级端侧 → 用户拿到烂图。
+ *   **等于用不可信的信号（端侧 alpha）做关键决策**。
+ *
+ * 现在改为**三级策略**（按可信度从高到低）：
+ *   ① 调用方给的人像区域提示（faceRegion）：T1 用人脸几何推出的区域，最可信；
+ *   ② 端侧 alpha 可信（前景占比 ≥ MIN_FG_RATIO 且 bbox 面积 ≤ MAX_BBOX_RATIO）→ 用 alpha bbox；
+ *   ③ 否则**回退为居中人像区**（几何裁剪，不是整图，仍满足「只上传人像区域」的合规意图）。
+ */
+const MIN_FG_RATIO = 0.12;     // 端侧全图前景占比低于此 → 端侧 alpha 不可信
+const MIN_BBOX_DENSITY = 0.35; // **bbox 内前景密度**低于此 → bbox 框不住人（框进大片背景）→ 不可信
+const MAX_BBOX_RATIO = 0.7;    // 前景 bbox 占全图超过此 → 说明框不住人、框进了大片背景
+
+function pickUploadRegion(rgba, alpha, w, h, hintRegion) {
+  const full = { x: 0, y: 0, w, h, mode: 'full' };
+  // ① 调用方提供的人像区域（人脸几何）优先
+  if (hintRegion && hintRegion.w > 8 && hintRegion.h > 8) {
+    const x = Math.max(0, Math.min(w - 1, Math.round(hintRegion.x)));
+    const y = Math.max(0, Math.min(h - 1, Math.round(hintRegion.y)));
+    const cw = Math.max(1, Math.min(w - x, Math.round(hintRegion.w)));
+    const ch = Math.max(1, Math.min(h - y, Math.round(hintRegion.h)));
+    return { x, y, w: cw, h: ch, mode: 'face_region' };
+  }
+  // ② 端侧 alpha 是否可信
+  //    判据一：全图前景占比（太低 → alpha 几乎没抓到人）
+  //    判据二：**bbox 内的前景密度**（bbox 是"框住人"的区域，密度低 → 框里大半是背景 → 不可信）
+  const q = estimateQuality(alpha);
+  const fgRatio = q.foregroundRatio;
+  if (fgRatio >= MIN_FG_RATIO) {
+    const c = cropForeground(rgba, alpha, w, h);
+    if (!c.full) {
+      const areaRatio = (c.w * c.h) / (w * h);
+      let fgInBox = 0;
+      for (let i = 0; i < c.alpha.length; i++) if (c.alpha[i] >= 0.5) fgInBox++;
+      const density = fgInBox / (c.w * c.h);
+      if (density >= MIN_BBOX_DENSITY && areaRatio <= MAX_BBOX_RATIO) {
+        return { x: c.x, y: c.y, w: c.w, h: c.h, mode: 'alpha_bbox', fgRatio, density };
+      }
+    }
+  }
+  // ③ 回退：居中人像区（人像通常在画面中央）
+  const cw = Math.max(16, Math.round(w * 0.6));
+  const ch = Math.max(16, Math.round(h * 0.9));
+  const x = Math.max(0, Math.round((w - cw) / 2));
+  const y = Math.max(0, Math.round((h - ch) / 2));
+  return { x, y, w: Math.min(cw, w - x), h: Math.min(ch, h - y), mode: 'center_region', fgRatio };
+}
+
 // 把子图 alpha 贴回全图对应区域，其余保持端侧 alpha
 function placeBack(fullAlpha, subAlpha, crop, w, h) {
   if (crop.full) return subAlpha;
@@ -341,7 +404,7 @@ function makeLocalBiRefStub({ trustedHosts, endpoint = 'https://cn-gpu-fn.exampl
 //   audit(stageMeta)        : 审计回调，仅收到元数据，绝不传像素(AC8)
 // 返回：
 //   { alpha, backend, confidence, degraded, cloudMeta }
-async function cloudMatting({ rgba, alpha, width, height, adapter, consents = [], audit, tool = 'T1' } = {}) {
+async function cloudMatting({ rgba, alpha, width, height, adapter, consents = [], audit, tool = 'T1', faceRegion = null } = {}) {
   if (!adapter) throw new Error('cloud: 未注入 adapter');
   if (!consents.includes('faceCloudEnhance')) {
     // AC5：缺少上云增强单独授权，阻断（绝不降级偷偷上传）
@@ -352,7 +415,15 @@ async function cloudMatting({ rgba, alpha, width, height, adapter, consents = []
   assertDomestic(adapter.endpoint, adapter.trustedHosts);
 
   // 仅裁剪人像区域(非全图，I3/第171行)
-  const crop = cropForeground(rgba, alpha, width, height);
+  // ⚠️ 区域选择改用 pickUploadRegion：端侧 alpha 不可信时不再用它框人（问题台账 #64）
+  const region = pickUploadRegion(rgba, alpha, width, height, faceRegion);
+  const crop = cropRect(rgba, alpha, width, height, region);
+  if (audit) {
+    audit({
+      stage: 'upload_region', mode: region.mode, fgRatio: region.fgRatio == null ? null : Math.round(region.fgRatio * 1000) / 1000,
+      rect: { x: region.x, y: region.y, w: region.w, h: region.h }, tool, hasPixel: false,
+    });
+  }
 
   // 上传降采样（载荷保护，见 UPLOAD_MAX_PIXELS 注释）：
   // 上云只为精修 alpha 边缘，不必与成品同分辨率；超限时降采样以适配 5MB 载荷上限。
@@ -384,7 +455,13 @@ async function cloudMatting({ rgba, alpha, width, height, adapter, consents = []
     resp = await adapter.call(req);
   } catch (e) {
     // 网络/鉴权失败 → 降级端侧（第258/292行：上云失败有降级提示）
-    audit && audit({ stage: 'cloud_fail', error: String((e && e.message) || e), degraded: true, hasPixel: false });
+    audit && audit({
+      stage: 'cloud_fail',
+      error: String((e && e.message) || e),
+      payloadKb: Math.round((req.image || '').length / 1024), // 载荷体积（排查 callFunction 体积限制）
+      uploadPx: upW * upH,
+      degraded: true, hasPixel: false,
+    });
     return { alpha, backend: 'cloud->edge', confidence: estimateQuality(alpha).confidence, degraded: true, reason: 'network_or_auth', cloudMeta: { latencyMs: Date.now() - t0 } };
   }
   const dt = Date.now() - t0;
@@ -407,6 +484,12 @@ async function cloudMatting({ rgba, alpha, width, height, adapter, consents = []
       stage: 'cloud_degraded_quality', reason: verdict.reason, provider,
       cloudConf: verdict.cloudConf, localConf: verdict.localConf,
       cloudFg: verdict.cloudFg, localFg: verdict.localFg,
+      // 云端返回的元数据（source=scoremap/foreground、personNum=是否检测到人、图尺寸）——
+      // 排查「云端说没人」到底是模型没认出人还是我们解码口径不对（2026-10-27 真机排障）
+      providerMeta: resp.providerMeta || null,
+      uploadPx: upW * upH,
+      cloudAlphaBytes: subAlphaRaw.__len || 0,
+      expectedAlphaBytes: upW * upH,
       degraded: true, hasPixel: false,
     });
     return {
@@ -427,7 +510,9 @@ module.exports = {
   // 序列化
   toBase64, fromBase64, encodeAlphaB64, decodeAlphaB64,
   // 裁剪
-  cropForeground, placeBack,
+  cropForeground, cropRect, placeBack,
+  // 上传区域选择（三级策略：人脸区域 → alpha bbox → 居中回退，问题台账 #64）
+  pickUploadRegion, MIN_FG_RATIO, MIN_BBOX_DENSITY, MAX_BBOX_RATIO,
   // 境内断言
   assertDomestic, isDomesticSuffix,
   // 云端判据
