@@ -10,6 +10,7 @@ import {
   planOutput,
   BG, getSpec, getPixelSize, listSpecs,
   DPI_STD, DPI_HD,
+  backendLabel,
 } from '../../services';
 import { useImagePicker } from '../../hooks/useImagePicker';
 
@@ -51,7 +52,16 @@ export default function ToolSuit() {
   const consentItems = requiredConsents(TOOL);
   const [granted, setGranted] = useState<string[]>([]);
   const rec = buildConsentRecord(TOOL, granted);
-  const picker = useImagePicker((img) => run(img.path, img.width, img.height));
+  const picker = useImagePicker((img, q) =>
+    run(img.path, img.width, img.height, { forceCloud: shouldForceCloud(q) }),
+  );
+
+  // 背景复杂 + 已授权上云 → 强制走云端真模型（任务 #51：端侧置信高 ≠ 质量好）
+  function shouldForceCloud(q: any): boolean {
+    if (!q || !Array.isArray(q.tips)) return false;
+    const complex = q.tips.some((t: any) => t.code === 'complexbg');
+    return complex && granted.includes('faceCloudEnhance');
+  }
 
   const specs = listSpecs();
   const [tplIndex, setTplIndex] = useState(0);
@@ -81,7 +91,7 @@ export default function ToolSuit() {
     path: string,
     srcW: number,
     srcH: number,
-    opts?: { bgHex?: string | null; specIndex?: number; dpi?: number },
+    opts?: { bgHex?: string | null; specIndex?: number; dpi?: number; forceCloud?: boolean },
   ) {
     // 参数覆盖（任务 #50）：state 异步，链式操作必须显式传值（问题台账 #31 同根）
     const specIdx = opts?.specIndex ?? specIndex;
@@ -139,6 +149,7 @@ export default function ToolSuit() {
         consents: granted,
         audit: (meta: any) => console.log('[audit]', meta),
         tool: TOOL,
+        forceCloud: !!opts?.forceCloud, // 任务 #51：复杂背景强制云端精修
       });
 
       // 5. 头肩定位（统一走 services/faceService，任务 #4：与 T1/T4 同一套口径）
@@ -188,7 +199,7 @@ export default function ToolSuit() {
         (specIdx >= 0 ? ` · ${specs[specIdx].name} @${dpiVal}dpi` : ' · 原图尺寸') +
         ` · ${headIsEstimate ? '比例估算定位' : '关键点定位'}`,
       );
-      setMsg(`换装完成（${seg.backend}）——请核对五官后导出`);
+      setMsg(`换装完成（${backendLabel(seg.backend)}${seg.degraded ? '，云端不可用已降级' : ''}）——请核对五官后导出`);
     } catch (e: any) {
       const m = String((e && e.message) || e);
       if (m.startsWith('AC5')) {

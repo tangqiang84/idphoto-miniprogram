@@ -100,7 +100,10 @@ async function getFileSizeBytes(
  * 由本 hook 在相册/拍照两种路径拿到路径与尺寸后统一调用。
  */
 export function useImagePicker(
-  onImage: (img: PickedImage) => void | Promise<void>,
+  /** onImage 第二个参数是本次取图的**质量评估结果**（可能为 null）。
+   *  为什么要传而不是让调用方读 picker.quality：setState 是异步的，
+   *  回调里读到的仍是旧值（问题台账 #31 同根）——任务 #51 需要它决定是否强制上云。 */
+  onImage: (img: PickedImage, quality: QualityTipProps['quality']) => void | Promise<void>,
 ): ImagePicker {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [quality, setQuality] = useState<QualityTipProps['quality']>(null);
@@ -109,12 +112,15 @@ export function useImagePicker(
   const evaluate = async (path: string, w: number, h: number) => {
     setQuality(null);
     const rgba = await samplePixels(path);
-    if (!rgba) return; // 取不到像素 → 不提示
+    if (!rgba) return null; // 取不到像素 → 不提示
+    let q: QualityTipProps['quality'] = null;
     try {
-      setQuality(assessQuality(rgba, SAMPLE_SIZE, SAMPLE_SIZE, w, h));
+      q = assessQuality(rgba, SAMPLE_SIZE, SAMPLE_SIZE, w, h);
+      setQuality(q);
     } catch (e) {
       // 算法异常也不阻断
     }
+    return q;
   };
 
   const pickAlbum = async () => {
@@ -134,8 +140,8 @@ export function useImagePicker(
         Taro.showToast({ title: v.message || '图片不符合要求', icon: 'none' });
         return;
       }
-      await evaluate(path, info.width, info.height);
-      await onImage({ path, width: info.width, height: info.height });
+      const q = await evaluate(path, info.width, info.height);
+      await onImage({ path, width: info.width, height: info.height }, q);
     } catch (e: any) {
       const m = String((e && e.message) || e);
       // 用户主动取消（cancel / 取消）不提示，其余读取失败给轻提示
@@ -160,8 +166,8 @@ export function useImagePicker(
         Taro.showToast({ title: v.message || '图片不符合要求', icon: 'none' });
         return;
       }
-      await evaluate(path, info.width, info.height);
-      await onImage({ path, width: info.width, height: info.height });
+      const q = await evaluate(path, info.width, info.height);
+      await onImage({ path, width: info.width, height: info.height }, q);
     } catch (e) {
       Taro.showToast({ title: '读取照片失败，请重试', icon: 'none' });
     }

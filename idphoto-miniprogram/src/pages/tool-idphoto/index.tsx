@@ -12,6 +12,7 @@ import {
   collectEdgeSamples,
   BG, getSpec, getPixelSize, listSpecs, specLabel,
   DPI_STD, DPI_HD,
+  backendLabel,
 } from '../../services';
 import { useImagePicker } from '../../hooks/useImagePicker';
 import { applyBeauty } from '../../services';
@@ -64,10 +65,17 @@ export default function ToolIdPhoto() {
   const consentItems = requiredConsents(TOOL);
   const [granted, setGranted] = useState<string[]>([]);
   const rec = buildConsentRecord(TOOL, granted);
-  const picker = useImagePicker((img) => {
+  const picker = useImagePicker((img, q) => {
     setLastPick(img);
-    run(img.path, img.width, img.height);
+    run(img.path, img.width, img.height, { forceCloud: shouldForceCloud(q) });
   });
+
+  // 背景复杂 + 已授权上云 → 强制走云端真模型（任务 #51：端侧置信高 ≠ 质量好）
+  function shouldForceCloud(q: any): boolean {
+    if (!q || !Array.isArray(q.tips)) return false;
+    const complex = q.tips.some((t: any) => t.code === 'complexbg');
+    return complex && granted.includes('faceCloudEnhance');
+  }
 
   const specs = listSpecs();
   const [specIndex, setSpecIndex] = useState(0);
@@ -117,7 +125,7 @@ export default function ToolIdPhoto() {
   // 放宽 Taro 类型（微信 canvas 2d API 在部分基础库类型不全，统一用 any 访问）
   const anyTaro: any = Taro;
 
-  async function run(path: string, srcW: number, srcH: number, opts?: { suitOn?: boolean; specIndex?: number; dpi?: number }) {
+  async function run(path: string, srcW: number, srcH: number, opts?: { suitOn?: boolean; specIndex?: number; dpi?: number; forceCloud?: boolean }) {
     if (!rec.ready) {
       Taro.showToast({ title: '请先勾选所需授权', icon: 'none' });
       return;
@@ -269,6 +277,7 @@ export default function ToolIdPhoto() {
         consents: granted,
         audit: (meta: any) => console.log('[audit]', meta),
         tool: TOOL,
+        forceCloud: !!opts?.forceCloud, // 任务 #51：复杂背景强制云端精修
       });
 
       // 6. 换底合成：暂存工作画布的 RGBA 与 alpha，供「手动修补」重合成（PRD B1 / T1-17）
@@ -351,7 +360,7 @@ export default function ToolIdPhoto() {
         headHeightRatio: headRatio != null ? headRatio : undefined,
       });
       setResult(cr);
-      setMsg(`完成（${seg.backend}${seg.degraded ? '，已降级端侧' : ''}）`);
+      setMsg(`完成（${backendLabel(seg.backend)}${seg.degraded ? '，云端不可用已降级' : ''}）`);
     } catch (e: any) {
       const m = String((e && e.message) || e);
       if (m.startsWith('AC5')) {

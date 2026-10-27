@@ -159,6 +159,10 @@ test('路由：置信≥0.85 走端侧，低于走云端', () => {
   assert.strictEqual(decideRoute(0.9), 'edge');
   assert.strictEqual(decideRoute(CONF_THRESHOLD), 'edge');
   assert.strictEqual(decideRoute(0.84), 'cloud');
+  // 任务 #51：forceCloud —— 调用方可强制上云（置信高 ≠ 质量好：复杂背景上端侧可能"自信地抠错"）
+  assert.strictEqual(decideRoute(0.99, true), 'cloud');
+  assert.strictEqual(decideRoute(0.5, true), 'cloud');
+  assert.strictEqual(decideRoute(0.99, false), 'edge');
 });
 
 test('质量评估：干净 alpha（无歧义）→ 置信=1，走端侧', () => {

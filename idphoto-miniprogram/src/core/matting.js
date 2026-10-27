@@ -10,7 +10,10 @@ const { cloudMatting } = require('./mattingCloud');
 const CONF_THRESHOLD = 0.85; // 端侧置信度阈值，低于则触发上云增强
 
 // 根据置信度决定处理路由
-function decideRoute(confidence) {
+// forceCloud：调用方明确要求走云端（如质量评估判定「背景复杂」——**置信高 ≠ 质量好**，
+//              端侧经典算法在复杂背景上可能"自信地抠错"，任务 #51）
+function decideRoute(confidence, forceCloud = false) {
+  if (forceCloud) return 'cloud';
   return confidence >= CONF_THRESHOLD ? 'edge' : 'cloud';
 }
 
@@ -22,10 +25,16 @@ function decideRoute(confidence) {
 //   bgSamples: 背景色采样集（任务 #24）。经典基线的背景色由「画布四边」估计，
 //              T1 自动裁剪把工作画布缩小到「裁剪窗+余量」后四边可能压在人体上，
 //              故允许调用方在整图上先采一次注入。缺省不传 → 沿用四边采样（行为不变）。
-async function segment({ rgba, width, height, session, cloud, consents, audit, tool, bgSamples } = {}) {
+async function segment({ rgba, width, height, session, cloud, consents, audit, tool, bgSamples, forceCloud } = {}) {
   if (!rgba || !width || !height) throw new Error('segment: 缺少 rgba/width/height');
   const res = await localMatting(rgba, width, height, { session, bgSamples });
-  const route = decideRoute(res.quality.confidence);
+  // 强制上云的前提：已注入上云能力 + 已授权 faceCloudEnhance（AC5）
+  // 未授权时不强制（更不能因强制而抛 AC5 阻断用户），按原置信度路由
+  const canForce =
+    !!forceCloud &&
+    !!cloud && !!cloud.adapter &&
+    (consents || []).indexOf('faceCloudEnhance') >= 0;
+  const route = decideRoute(res.quality.confidence, canForce);
   const base = {
     width, height,
     maskSize: width * height,
@@ -92,8 +101,16 @@ function compositeTransparent(rgba, alpha, width, height) {
   return out;
 }
 
+/** 后端名 → 用户可读标签（'classical'/'edge' → 端侧；'cloud' → 云端精修） */
+function backendLabel(backend) {
+  if (backend === 'cloud') return '云端精修';
+  if (backend === 'classical' || backend === 'edge') return '端侧';
+  return String(backend || '');
+}
+
 module.exports = {
   CONF_THRESHOLD, decideRoute, segment, composite, compositeTransparent, estimateQuality, localMatting,
+  backendLabel,
   // 上云增强（来自 mattingCloud）
   cloudMatting,
   // 背景色采样（来自 mattingLocal，任务 #24 区域化裁剪用）

@@ -94,7 +94,7 @@ function assessQuality(rgba, w, h, srcW, srcH) {
     tips.push({
       level: 'warn',
       code: 'complexbg',
-      text: '背景较复杂，抠图边缘可能不干净，建议换纯色背景重拍',
+      text: '背景较复杂，抠图边缘可能不干净；勾选「上云增强」可改用云端精修（推荐）或换纯色背景重拍',
     });
   }
 

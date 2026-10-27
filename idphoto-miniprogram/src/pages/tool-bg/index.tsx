@@ -7,7 +7,7 @@ import {
   buildCloudFnAdapter,
   planOutput,
   BG, getSpec, getPixelSize, listSpecs,
-  DPI_STD, DPI_HD,
+  DPI_STD, DPI_HD, backendLabel,
 } from '../../services';
 import { useImagePicker } from '../../hooks/useImagePicker';
 
@@ -39,7 +39,9 @@ export default function ToolBg() {
   const consentItems = requiredConsents(TOOL);
   const [granted, setGranted] = useState<string[]>([]);
   const rec = buildConsentRecord(TOOL, granted);
-  const picker = useImagePicker((img) => run(img.path, img.width, img.height));
+  const picker = useImagePicker((img, q) =>
+    run(img.path, img.width, img.height, { forceCloud: shouldForceCloud(q) }),
+  );
 
   const specs = listSpecs();
   const [specIndex, setSpecIndex] = useState(-1); // -1 = 保持原图尺寸（不裁剪）
@@ -61,6 +63,13 @@ export default function ToolBg() {
   } | null>(null);
   // 源图信息：换规格/dpi 时据此自动重跑整条链路（用户不必重新选图）
   const lastSrc = useRef<{ path: string; w: number; h: number } | null>(null);
+
+  // 背景复杂 + 已授权上云 → 强制走云端真模型（任务 #51：端侧置信高 ≠ 质量好）
+  function shouldForceCloud(q: any): boolean {
+    if (!q || !Array.isArray(q.tips)) return false;
+    const complex = q.tips.some((t: any) => t.code === 'complexbg');
+    return complex && granted.includes('faceCloudEnhance');
+  }
 
   const toggleConsent = (id: string) => {
     setGranted((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -85,7 +94,7 @@ export default function ToolBg() {
     path: string,
     srcW: number,
     srcH: number,
-    opts?: { bgHex?: string | null; transparent?: boolean; specIndex?: number; dpi?: number },
+    opts?: { bgHex?: string | null; transparent?: boolean; specIndex?: number; dpi?: number; forceCloud?: boolean },
   ) {
     if (!rec.ready) {
       Taro.showToast({ title: '请先勾选所需授权', icon: 'none' });
@@ -156,6 +165,7 @@ export default function ToolBg() {
         consents: granted,
         audit: (meta: any) => console.log('[audit]', meta),
         tool: TOOL,
+        forceCloud: !!opts?.forceCloud, // 任务 #51：复杂背景强制云端精修
       });
 
       // 5. 换底合成 + 导出（共享渲染服务，任务 #50）
@@ -183,7 +193,7 @@ export default function ToolBg() {
         (seg.degraded ? ' · 已降级端侧' : '') +
         (specIdx >= 0 ? ` · ${specs[specIdx].name} @${dpiVal}dpi` : ' · 原图尺寸'),
       );
-      setMsg(`完成（${seg.backend}）`);
+      setMsg(`完成（${backendLabel(seg.backend)}${seg.degraded ? '，云端不可用已降级' : ''}）`);
     } catch (e: any) {
       const m = String((e && e.message) || e);
       if (m.startsWith('AC5')) {
@@ -262,7 +272,7 @@ export default function ToolBg() {
   return (
     <View className='page'>
       <Text className='page__title'>单独换底色</Text>
-      <Text className='page__hint'>上传一张已有照片，仅替换背景色，不改动五官。不强制规格、不做预审。</Text>
+      <Text className='page__hint'>上传一张已有照片，仅替换背景色，不改动五官。不强制规格、不做预审；**只换底不裁剪构图**，要出证件照请用「一键证件照」。</Text>
 
       {/* 授权（默认不勾选，未集齐不启动处理） */}
       <View className='consent'>

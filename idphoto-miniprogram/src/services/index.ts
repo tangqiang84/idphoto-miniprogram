@@ -3,7 +3,7 @@
 import { getSpec, getPixelSize, listSpecs, BG, BG_LABELS, DPI_STD, DPI_HD, specLabel } from '../core/specLibrary';
 import { listPapers, getPaper, planLayout, mmToPx, PAPERS, DEFAULT_MARGIN_MM, DEFAULT_GAP_MM, sheetPixelSize } from '../core/paperLibrary';
 import { check } from '../core/compliance';
-import { decideRoute, CONF_THRESHOLD, segment, composite, compositeTransparent, cloudMatting, collectEdgeSamples } from '../core/matting';
+import { decideRoute, CONF_THRESHOLD, segment, composite, compositeTransparent, cloudMatting, collectEdgeSamples, backendLabel } from '../core/matting';
 import { makeHttpAdapter, makeLocalBiRefStub, assertDomestic, cropForeground, encodeAlphaB64, decodeAlphaB64 } from '../core/mattingCloud';
 import { makeCloudFnAdapter } from './cloudFnAdapter';
 import { composeAndExportImage } from './renderService';
@@ -47,7 +47,7 @@ export {
   // 合规引擎
   check,
   // 抠图
-  decideRoute, CONF_THRESHOLD, segment, composite, compositeTransparent, cloudMatting, collectEdgeSamples,
+  decideRoute, CONF_THRESHOLD, segment, composite, compositeTransparent, cloudMatting, collectEdgeSamples, backendLabel,
   // 换装（T3 端侧贴图合成）
   alphaBBox, suitPlacement, suitCompose,
   // 输出构图规划（600dpi 动态工作图尺寸 + 裁剪窗口，三页共用）
