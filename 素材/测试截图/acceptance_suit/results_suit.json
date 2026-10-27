@@ -1,0 +1,156 @@
+[
+  {
+    "file": "111.jpg",
+    "idx": 0,
+    "status": "换装完成（云端精修）——请核对五官后导出",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.432,\"rect\":{\"x\":60,\"y\":16,\"w\":480,\"h\":782},\"tool\":\"T3\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":4384,\"region\":\"CN\",\"confidence\":0.9866687979539642,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"suit_geometry\",\"source\":\"estimate\",\"bbox\":{\"x\":38,\"y\":128,\"w\":562,\"h\":670},\"headH\":501,\"chinY\":629,\"rawHeadH\":201,\"w\":600,\"h\":798}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance_suit/111_result.jpg",
+    "pageShot": "acceptance/111_page.png"
+  },
+  {
+    "file": "123.png",
+    "idx": 1,
+    "status": "换装完成（云端精修）——请核对五官后导出",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.475,\"rect\":{\"x\":30,\"y\":8,\"w\":236,\"h\":405},\"tool\":\"T3\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":1785,\"region\":\"CN\",\"confidence\":0.5951349654739485,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"suit_geometry\",\"source\":\"estimate\",\"bbox\":{\"x\":0,\"y\":6,\"w\":295,\"h\":407},\"headH\":122.1,\"chinY\":128.1,\"rawHeadH\":122.1,\"w\":295,\"h\":413}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance_suit/123_result.jpg",
+    "pageShot": "acceptance/123_page.png"
+  },
+  {
+    "file": "3652.jpg",
+    "idx": 2,
+    "status": "换装完成（云端精修）——请核对五官后导出",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.382,\"rect\":{\"x\":20,\"y\":6,\"w\":160,\"h\":294},\"tool\":\"T3\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":1031,\"region\":\"CN\",\"confidence\":0.9799319727891156,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"suit_geometry\",\"source\":\"estimate\",\"bbox\":{\"x\":44,\"y\":35,\"w\":113,\"h\":265},\"headH\":67,\"chinY\":102,\"rawHeadH\":79.5,\"w\":200,\"h\":300}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance_suit/3652_result.jpg",
+    "pageShot": "acceptance/3652_page.png"
+  },
+  {
+    "file": "3f5c67b03f7f.jpg",
+    "idx": 3,
+    "status": "换装完成（云端精修）——请核对五官后导出",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.524,\"rect\":{\"x\":40,\"y\":8,\"w\":320,\"h\":392},\"tool\":\"T3\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":1947,\"region\":\"CN\",\"confidence\":0.9567841198979592,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"suit_geometry\",\"source\":\"estimate\",\"bbox\":{\"x\":35,\"y\":0,\"w\":282,\"h\":400},\"headH\":227,\"chinY\":227,\"rawHeadH\":120,\"w\":400,\"h\":400}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance_suit/3f5c67b03f7f_result.jpg",
+    "pageShot": "acceptance/3f5c67b03f7f_page.png"
+  },
+  {
+    "file": "91f990d7fa414d3d92a9377957b9be0f.jpg",
+    "idx": 4,
+    "status": "换装完成（云端精修）——请核对五官后导出",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.607,\"rect\":{\"x\":48,\"y\":10,\"w\":384,\"h\":470},\"tool\":\"T3\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":2200,\"region\":\"CN\",\"confidence\":0.9918273492907801,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"suit_geometry\",\"source\":\"estimate\",\"bbox\":{\"x\":213,\"y\":27,\"w\":267,\"h\":453},\"headH\":192,\"chinY\":219,\"rawHeadH\":135.9,\"w\":480,\"h\":480}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance_suit/91f990d7fa414d3d92a9377957b9be0f_result.jpg",
+    "pageShot": "acceptance/91f990d7fa414d3d92a9377957b9be0f_page.png"
+  },
+  {
+    "file": "FaceQ1411209084675.png",
+    "idx": 5,
+    "status": "换装完成（cloud->edge，云端不可用已降级：cloud_foreground_shift）——请核对五官后导出",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.491,\"rect\":{\"x\":59,\"y\":12,\"w\":472,\"h\":578},\"tool\":\"T3\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_degraded_quality\",\"reason\":\"cloud_foreground_shift\",\"provider\":\"baidu\",\"cloudConf\":0.9812804234355756,\"localConf\":0.9533091900768283,\"cloudFg\":0.14693419740777666,\"localFg\":0.5795297929740191,\"providerMeta\":{\"source\":\"scoremap\",\"personNum\":1,\"uploadPixels\":262521,\"uploadBytes\":60526,\"downscaled\":true,\"retryShrink\":0,\"latencyMs\":307,\"host\":\"aip.baidubce.com\"},\"uploadPx\":272816,\"cloudAlphaBytes\":272816,\"expectedAlphaBytes\":272816,\"degraded\":true,\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"suit_geometry\",\"source\":\"estimate\",\"bbox\":{\"x\":6,\"y\":95,\"w\":580,\"h\":495},\"headH\":148.5,\"chinY\":243.5,\"rawHeadH\":148.5,\"w\":590,\"h\":590}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance_suit/FaceQ1411209084675_result.jpg",
+    "pageShot": "acceptance/FaceQ1411209084675_page.png"
+  },
+  {
+    "file": "images (1).jpeg",
+    "idx": 6,
+    "status": "换装完成（云端精修）——请核对五官后导出",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.241,\"rect\":{\"x\":45,\"y\":9,\"w\":358,\"h\":438},\"tool\":\"T3\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":2249,\"region\":\"CN\",\"confidence\":0.9784508048264074,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"suit_geometry\",\"source\":\"estimate\",\"bbox\":{\"x\":64,\"y\":0,\"w\":335,\"h\":447},\"headH\":341,\"chinY\":341,\"rawHeadH\":134.1,\"w\":447,\"h\":447}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance_suit/images__1__result.jpg",
+    "pageShot": "acceptance/images__1__page.png"
+  },
+  {
+    "file": "images (2).jpeg",
+    "idx": 7,
+    "status": "换装完成（云端精修）——请核对五官后导出",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.498,\"rect\":{\"x\":45,\"y\":9,\"w\":358,\"h\":438},\"tool\":\"T3\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":2139,\"region\":\"CN\",\"confidence\":0.9766970230351266,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"suit_geometry\",\"source\":\"estimate\",\"bbox\":{\"x\":24,\"y\":0,\"w\":360,\"h\":447},\"headH\":291,\"chinY\":291,\"rawHeadH\":134.1,\"w\":447,\"h\":447}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance_suit/images__2__result.jpg",
+    "pageShot": "acceptance/images__2__page.png"
+  },
+  {
+    "file": "images (3).jpeg",
+    "idx": 8,
+    "status": "换装完成（云端精修）——请核对五官后导出",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.237,\"rect\":{\"x\":50,\"y\":7,\"w\":400,\"h\":326},\"tool\":\"T3\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":1893,\"region\":\"CN\",\"confidence\":0.9868711656441718,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"suit_geometry\",\"source\":\"estimate\",\"bbox\":{\"x\":0,\"y\":0,\"w\":385,\"h\":333},\"headH\":99.89999999999999,\"chinY\":99.89999999999999,\"rawHeadH\":99.89999999999999,\"w\":500,\"h\":333}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance_suit/images__3__result.jpg",
+    "pageShot": "acceptance/images__3__page.png"
+  },
+  {
+    "file": "images (4).jpeg",
+    "idx": 9,
+    "status": "换装完成（云端精修）——请核对五官后导出",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.693,\"rect\":{\"x\":45,\"y\":9,\"w\":358,\"h\":438},\"tool\":\"T3\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":2251,\"region\":\"CN\",\"confidence\":0.9871368077344965,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"suit_geometry\",\"source\":\"estimate\",\"bbox\":{\"x\":1,\"y\":115,\"w\":187,\"h\":332},\"headH\":99.6,\"chinY\":214.6,\"rawHeadH\":99.6,\"w\":447,\"h\":447}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance_suit/images__4__result.jpg",
+    "pageShot": "acceptance/images__4__page.png"
+  },
+  {
+    "file": "images.jpeg",
+    "idx": 10,
+    "status": "换装完成（云端精修）——请核对五官后导出",
+    "finished": true,
+    "audit": [
+      "[log] [audit] {\"stage\":\"upload_region\",\"mode\":\"center_region\",\"fgRatio\":0.566,\"rect\":{\"x\":45,\"y\":14,\"w\":362,\"h\":665},\"tool\":\"T3\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"cloud_ok\",\"latencyMs\":2478,\"region\":\"CN\",\"confidence\":0.9902587961616749,\"retained\":false,\"provider\":\"baidu\",\"hasPixel\":false}",
+      "[log] [audit] {\"stage\":\"suit_geometry\",\"source\":\"estimate\",\"bbox\":{\"x\":0,\"y\":76,\"w\":452,\"h\":603},\"headH\":337,\"chinY\":413,\"rawHeadH\":180.9,\"w\":452,\"h\":679}"
+    ],
+    "errors": [],
+    "resultImage": "acceptance_suit/images_result.jpg",
+    "pageShot": "acceptance/images_page.png"
+  }
+]

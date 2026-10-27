@@ -345,19 +345,48 @@ test('换装：全背景 alphaBBox 返回 null', () => {
   assert.strictEqual(alphaBBox(new Float32Array(8), 4, 2), null);
 });
 
-test('换装：suitPlacement 肩宽/顶部定位规则', () => {
+test('换装：suitPlacement chinY 锚定 + 延伸到人体框底（#69 修复口径）', () => {
   const bbox = { x: 40, y: 20, w: 100, h: 200 };
   const headH = 60;
-  const p = suitPlacement(bbox, headH);
-  assert.ok(Math.abs(p.w - 150) < 1e-9); // 100*1.5
-  assert.ok(Math.abs(p.h - 110) < 1e-9); // 200*0.55
+  const chinY = 110; // 真实下巴（landmarks 或 estimate 推算）
+  const p = suitPlacement(bbox, headH, chinY);
+  assert.ok(Math.abs(p.w - 150) < 1e-9); // 100*1.5 肩宽
+  assert.ok(Math.abs(p.y - (110 + 6)) < 1e-9); // 西装顶 = 下巴 + 0.1*headH（脖子根）
+  assert.ok(Math.abs(p.h - (20 + 200 - 116)) < 1e-9); // 延伸到人体框底（不再 0.55 系数）
   assert.ok(Math.abs(p.x - (40 + 50 - 75)) < 1e-9); // 水平居中
-  assert.ok(Math.abs(p.y - (20 + 51)) < 1e-9); // 颈部 0.85*60
+});
+
+test('换装：suitPlacement 无 chinY 时按 estimate 定义（chinY=bbox.y+headH）', () => {
+  const bbox = { x: 0, y: 100, w: 200, h: 400 };
+  const headH = 120; // 0.3*400
+  const p = suitPlacement(bbox, headH);
+  assert.ok(Math.abs(p.y - (100 + 120 + 12)) < 1e-9); // bbox.y+headH+0.1*headH
+  assert.ok(Math.abs(p.h - (100 + 400 - 232)) < 1e-9); // 到框底
+});
+
+test('换装：suitPlacement 宽度 clamp 到 maxW（防 bbox 噪声撑宽爆画布）', () => {
+  const bbox = { x: 0, y: 121, w: 600, h: 677 };
+  const headH = 203;
+  const p = suitPlacement(bbox, headH, 324, 600);
+  assert.strictEqual(p.w, 600); // 1.5*600=900 → clamp 到画布宽 600
 });
 
 test('换装：suitPlacement 缺参抛错', () => {
   assert.throws(() => suitPlacement(null, 60), /bbox/);
   assert.throws(() => suitPlacement({ x: 0, y: 0, w: 1, h: 1 }, 0), /headH/);
+});
+
+test('换装：#69 回归——estimate 路径下西装顶必须在下巴下方（旧口径必然盖脸）', () => {
+  // 旧口径：place.y = bbox.y + 0.85*headH，estimate 的 headH=0.3*bbox.h
+  // → place.y - chinY = -0.045*bbox.h < 0 恒盖脸；新口径必须 > chinY
+  const bbox = { x: 0, y: 121, w: 600, h: 677 }; // 111.jpg 实测
+  const headH = bbox.h * 0.30;
+  const chinY = bbox.y + headH; // estimate 定义
+  const p = suitPlacement(bbox, headH, chinY, 600);
+  assert.ok(p.y > chinY, `西装顶(${p.y})应在下巴(${chinY})下方`);
+  // 脸部（chinY 到 chinY-0.74*headH）完全不被 place.y 触及
+  const faceTop = chinY - 0.74 * headH;
+  assert.ok(p.y > faceTop + (chinY - faceTop), '西装顶应在整张脸以下');
 });
 
 test('换装：suitCompose 只覆盖前景区且不改输入', () => {

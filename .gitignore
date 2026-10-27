@@ -15,6 +15,10 @@ dist/
 # 含个人路径与本机开关，会被工具自动改写，入库只会产生无谓 diff
 idphoto-miniprogram/project.private.config.json
 
+# ---- CloudBase 本地容器配置 ----
+# 云开发 CLI 生成的本地容器状态目录，属机器私有配置（同 project.private.config.json）
+idphoto-miniprogram/.cloudbase/
+
 # ---- 脚手架原始 git 历史备份 ----
 # Taro 脚手架自带 1 次 Initial Commit；已改名保留作追溯，不参与版本管理
 idphoto-miniprogram/.git.scaffold-backup/

@@ -5,7 +5,7 @@ import {
   requiredConsents, buildConsentRecord,
   segment, composeAndExportImage,
   buildCloudFnAdapter,
-  alphaBBox, suitPlacement, suitCompose,
+  alphaBBox, tightBBox, estimateHeadByShoulder, suitPlacement, suitCompose,
   measureHeadMetrics,
   planOutput,
   BG, getSpec, getPixelSize, listSpecs,
@@ -154,7 +154,10 @@ export default function ToolSuit() {
 
       // 5. 头肩定位（统一走 services/faceService，任务 #4：与 T1/T4 同一套口径）
       setMsg('定位头肩区域…');
-      const bbox = alphaBBox(seg.alpha, w, h);
+      // #69：用 tightBBox 收紧版包围盒——alphaBBox 的 min/max 会被云端 alpha 的零星
+      // 噪声前景撑爆（实测 111.jpg 左右两侧背景被判前景 → bbox 满宽），撑爆的 bbox
+      // 直接把下游定位全带偏（盖脸/变形/盖不住原衣）
+      const bbox = tightBBox(seg.alpha, w, h) || alphaBBox(seg.alpha, w, h);
       if (!bbox) throw new Error('未检测到人像，请换一张正面照片');
       const headRes = await measureHeadMetrics(rgba, w, h, bbox);
       if (!headRes.ok || !headRes.headLengthPx) {
@@ -164,11 +167,31 @@ export default function ToolSuit() {
       // 用局部变量而非 state：setState 是异步的，同一函数内后续读取 state 拿到的是旧值
       // （原代码即有此隐患：setOutInfo 里的 headApprox 恒为初始值 null）
       const headIsEstimate = headRes.source === 'estimate';
+      // #69：estimate 路径（无 faceDetect 的环境，如模拟器）的 0.3×bbox.h 口径只在
+      // 标准半身构图成立——胸像特写会低估一半（images(3) 盖眼实锤）→ 肩线法修正
+      let suitHeadH = headH;
+      let suitChinY = headRes.metrics ? headRes.metrics.chinY : null;
+      if (headIsEstimate) {
+        const sh = estimateHeadByShoulder(seg.alpha, w, h, bbox);
+        if (sh) {
+          suitHeadH = sh.headH;
+          suitChinY = sh.shoulderY; // 肩线 ≈ 颈根/下颌线，直接作为西装顶锚点上方基准
+        }
+      }
+      // 几何审计（#69）：换装定位三要素落 audit，供批量验收脚本抓取定位
+      console.log('[audit]', {
+        stage: 'suit_geometry', source: headRes.source,
+        bbox: { x: bbox.x, y: bbox.y, w: bbox.w, h: bbox.h },
+        headH: suitHeadH, chinY: suitChinY, rawHeadH: headH,
+        w, h,
+      });
 
       // 6. 换装贴图合成（仅覆盖肩颈前景区，不触碰脸部像素 → PRD D2）
       setMsg('合成职业装…');
       const tpl = await loadTemplatePixels(SUIT_TEMPLATES[tplIndex].src as any);
-      const place = suitPlacement(bbox, headH);
+      // #69：chinY 锚定（西装顶=下巴+0.1 头长，不再用会冲过下巴的 0.85 系数），
+      // 宽度 clamp 到画布（防 bbox 噪声撑宽后 1.5× 爆出画布被拉伸变形）
+      const place = suitPlacement(bbox, suitHeadH, suitChinY, w);
       const suited = suitCompose(rgba, seg.alpha, w, h, tpl.data, tpl.w, tpl.h, place);
 
       // 7. 换底合成 + 导出（共享渲染服务，任务 #50）

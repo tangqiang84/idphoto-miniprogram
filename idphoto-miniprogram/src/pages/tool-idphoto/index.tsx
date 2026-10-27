@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import {
   requiredConsents, buildConsentRecord,
   segment, composite, check, applyPatches,
-  alphaBBox, suitPlacement, suitCompose,
+  alphaBBox, tightBBox, estimateHeadByShoulder, suitPlacement, suitCompose,
   buildCloudFnAdapter,
   measureHeadMetrics, ratioWithinWindow,
   planOutput, planWindowOutput, planDetectImage,
@@ -296,12 +296,22 @@ export default function ToolIdPhoto() {
       let suitAppliedNow = false;
       if (wantSuit && granted.includes('suitSwap')) {
         setMsg('合成职业装…');
-        const bbox = alphaBBox(seg.alpha, w, h);
+        // #69：tightBBox 收紧 + chinY 锚定（同 T3；alphaBBox 的 min/max 会被云端
+        // alpha 噪声前景撑爆，撑爆的 bbox 把换装定位带偏 → 盖脸/变形）
+        const bbox = tightBBox(seg.alpha, w, h) || alphaBBox(seg.alpha, w, h);
         if (bbox) {
           const headRes = await measureHeadMetrics(workRgbaCopy, w, h, bbox);
           const headH = headRes.ok && headRes.headLengthPx ? headRes.headLengthPx : bbox.h * 0.30;
+          const chinY = headRes.ok && headRes.metrics ? headRes.metrics.chinY : null;
+          // #69：estimate 路径肩线法修正（同 T3；0.3×bbox.h 在胸像特写下低估一半会盖眼）
+          let suitHeadH = headH;
+          let suitChinY = chinY;
+          if (headRes.ok && headRes.source === 'estimate') {
+            const sh = estimateHeadByShoulder(seg.alpha, w, h, bbox);
+            if (sh) { suitHeadH = sh.headH; suitChinY = sh.shoulderY; }
+          }
           const tpl = await loadTemplatePixels(SUIT_TEMPLATES[suitTplIndex].src as any);
-          const place = suitPlacement(bbox, headH);
+          const place = suitPlacement(bbox, suitHeadH, suitChinY, w);
           exportRgba = suitCompose(workRgbaCopy, seg.alpha, w, h, tpl.data, tpl.w, tpl.h, place);
           suitAppliedNow = true;
         }
