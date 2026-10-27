@@ -49,6 +49,7 @@
   .warn { color:#e6a23c; font-weight:600; }
   .tag { font-size:11px; color:#8a94a3; }
   .check { display:flex; align-items:center; gap:8px; font-size:13px; margin:8px 0; }
+  .pickrow { cursor:pointer; }
   .check input { width:18px; height:18px; }
   .pricenote { font-size:12px; color:#e6a23c; margin-top:8px; }
   .success { text-align:center; padding-top:30px; }
@@ -86,18 +87,22 @@
   <div class="screen" id="s_upload">
     <div class="nav"><span class="back" onclick="go('s_home')">‹ 首页</span> 一键证件照 · 上传</div>
     <div class="body">
-      <div class="upload-box"><div class="guide"></div><div style="position:absolute;bottom:14px;">正脸平视 · 光线均匀</div></div>
-      <div class="card">
-        <div class="row"><span>📷 拍摄</span><span class="tag">调用相机</span></div>
-        <div class="row"><span>🖼 从相册选择</span><span class="tag">JPG/PNG/WebP ≤10MB</span></div>
+      <div class="card" style="border:1px solid #e6a23c;">
+        <label class="check" style="margin:0;"><input type="checkbox" id="t1-gate" onchange="gateToggle(this)"> <span><b>已阅读并勾选《人脸处理协议》</b><br><span class="tag">人脸仅在设备本地处理，不上云训练；精度不足时才上传裁剪后的人像区域（境内，百度智能云）</span></span></label>
       </div>
-      <button class="btn" onclick="startProcess()">下一步：智能抠图</button>
+      <div class="upload-box" style="margin-top:12px;"><div class="guide"></div><div style="position:absolute;bottom:14px;">正脸平视 · 光线均匀</div></div>
+      <div class="card">
+        <div class="row pickrow" onclick="pickBlocked(this)"><span>📷 拍摄</span><span class="tag">调用相机</span></div>
+        <div class="row pickrow" onclick="pickBlocked(this)"><span>🖼 从相册选择</span><span class="tag">JPG/PNG/WebP ≤10MB</span></div>
+      </div>
+      <div class="card"><h3>目标规格（先裁剪，后处理）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div><p class="tag" style="margin-top:6px;">选图后先按规格裁剪，再抠图换底（可后改，改后自动重跑）</p></div>
+      <button class="btn" onclick="startProcess()">下一步：开始处理</button>
     </div>
   </div>
 
   <!-- T1 处理/预览 -->
   <div class="screen" id="s_preview">
-    <div class="nav"><span class="back" onclick="go('s_upload')">‹ 返回</span> 抠图换底</div>
+    <div class="nav"><span class="back" onclick="go('s_upload')">‹ 返回</span> 裁剪 · 抠图换底</div>
     <div class="body">
       <div class="preview">人像预览</div>
       <div class="colors">
@@ -107,28 +112,29 @@
         <div class="sw" style="background:#c0c0c0" onclick="selColor(this)"></div>
       </div>
       <div class="card">
+        <div class="row"><span>智能裁切</span><span class="ok">✓ 已按一寸 295×413 裁剪</span></div>
         <div class="row"><span>抠图质量</span><span class="ok">✓ 边缘干净</span></div>
-        <div class="row"><span>头部占比</span><span>75%（合规）</span></div>
+        <div class="row"><span>头部占比</span><span>66%（合规）</span></div>
       </div>
-      <button class="btn" onclick="go('s_spec')">下一步：选择规格</button>
+      <button class="btn" onclick="go('s_dress')">下一步：换装（可选）</button>
     </div>
   </div>
 
-  <!-- T1 选规格 -->
+  <!-- T1 选规格（从预览页「改规格」进入） -->
   <div class="screen" id="s_spec">
     <div class="nav"><span class="back" onclick="go('s_preview')">‹ 返回</span> 选择规格</div>
     <div class="body">
-      <div class="card"><h3>常用规格</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">护照 354×472</span><span class="chip" onclick="selChip(this)">驾照 378×504</span><span class="chip" onclick="selChip(this)">签证 600×600</span></div></div>
+      <div class="card"><h3>常用规格（官方口径）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">大二寸 413×626</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">驾照 260×378</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div><p class="tag" style="margin-top:6px;">改规格后自动重跑「裁剪 → 抠图 → 换底」，不必重新选图</p></div>
       <div class="card"><h3>自定义</h3><div class="row"><span>像素</span><span class="tag">手动输入</span></div><div class="row"><span>dpi</span><span>300 / 600</span></div><div class="row"><span>文件大小</span><span>20–200KB</span></div></div>
-      <button class="btn" onclick="go('s_dress')">下一步：换装（可选）</button>
+      <button class="btn" onclick="go('s_preview')">保存规格并重跑</button>
     </div>
   </div>
 
   <!-- T1 换装 -->
   <div class="screen" id="s_dress">
-    <div class="nav"><span class="back" onclick="go('s_spec')">‹ 返回</span> AI 换装（可选）</div>
+    <div class="nav"><span class="back" onclick="go('s_preview')">‹ 返回</span> AI 换装（可选）</div>
     <div class="body">
-      <div class="card"><h3>职业装模板</h3><div><span class="chip" onclick="selChip(this)">西装</span><span class="chip" onclick="selChip(this)">衬衫</span><span class="chip" onclick="selChip(this)">学院风</span><span class="chip" onclick="selChip(this)">职业女装</span></div><p class="tag" style="margin-top:8px;">仅换装，不改五官</p></div>
+      <div class="card"><h3>职业装模板</h3><div><span class="chip" onclick="selChip(this)">西装</span><span class="chip" onclick="selChip(this)">衬衫</span><span class="chip" onclick="selChip(this)">学院风</span><span class="chip" onclick="selChip(this)">职业女装</span></div><p class="tag" style="margin-top:8px;">仅换装，不改五官；只对 9 个标准规格生效（全身/多人/横图将被拒绝）</p></div>
       <button class="btn ghost" onclick="openSelfCheck()">应用换装并自检</button>
       <button class="btn grey" onclick="go('s_check')">跳过，直接进入预审</button>
     </div>
@@ -149,8 +155,8 @@
     <div class="nav"><span class="back" onclick="go('s_home')">‹ 首页</span> 导出</div>
     <div class="body">
       <div class="success"><div class="ico">✅</div><h3 style="margin:10px 0;">导出完成</h3><p class="tag">300dpi JPG · 无水印 · 免费</p></div>
-      <div class="card"><div class="row"><span>300dpi 标准（基础）</span><span class="ok">免费</span></div><div class="row"><span>600dpi 印刷级</span><span class="warn">¥9.9 明示</span></div></div>
-      <div class="pricenote">基础档全程免费无水印，付费项价格前置明示，无隐藏套路。</div>
+      <div class="card"><div class="row"><span>300dpi 标准（基础）</span><span class="ok">免费 · 无水印</span></div><div class="row"><span>600dpi 印刷级</span><span class="ok">免费 · 无水印</span></div></div>
+      <div class="pricenote">全部功能免费无水印（MVP 不设付费档）。600dpi 为印刷/冲印用途，像素翻倍、体积约为 300dpi 的 2~4 倍。</div>
       <button class="btn" onclick="go('s_home')">返回首页</button>
     </div>
   </div>
@@ -159,7 +165,14 @@
   <div class="screen" id="s_t2">
     <div class="nav"><span class="back" onclick="go('s_home')">‹ 首页</span> 单独换底色</div>
     <div class="body">
-      <div class="upload-box"><div class="guide"></div><div style="position:absolute;bottom:14px;">上传已有照片</div></div>
+      <div class="card" style="border:1px solid #e6a23c;">
+        <label class="check" style="margin:0;"><input type="checkbox" id="t2-gate" onchange="gateToggle(this)"> <span><b>已阅读并勾选《人脸处理协议》</b><br><span class="tag">未勾选时不能上传/拍照（先同意，后收集）</span></span></label>
+      </div>
+      <div class="upload-box" style="margin-top:12px;"><div class="guide"></div><div style="position:absolute;bottom:14px;">上传已有照片</div></div>
+      <div class="card">
+        <div class="row pickrow" onclick="pickBlocked(this)"><span>🖼 从相册选择</span><span class="tag">JPG/PNG/WebP ≤10MB</span></div>
+      </div>
+      <div class="card"><h3>目标规格（先裁剪，后换色）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">驾照 260×378</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div></div>
       <div class="card"><h3>选择底色</h3><div class="colors"><div class="sw sel" style="background:#fff" onclick="selColor(this)"></div><div class="sw" style="background:#ff0000" onclick="selColor(this)"></div><div class="sw" style="background:#00bfe3" onclick="selColor(this)"></div><div class="sw" style="background:#c0c0c0" onclick="selColor(this)"></div></div></div>
       <button class="btn" onclick="go('s_export')">导出换底照</button>
     </div>
@@ -169,8 +182,15 @@
   <div class="screen" id="s_t3">
     <div class="nav"><span class="back" onclick="go('s_home')">‹ 首页</span> 单独 AI 换装</div>
     <div class="body">
-      <div class="upload-box"><div class="guide"></div><div style="position:absolute;bottom:14px;">上传已有照片</div></div>
-      <div class="card"><h3>职业装模板</h3><div><span class="chip" onclick="selChip(this)">西装</span><span class="chip" onclick="selChip(this)">衬衫</span><span class="chip" onclick="selChip(this)">学院风</span></div><p class="tag" style="margin-top:8px;">仅换装，不改五官</p></div>
+      <div class="card" style="border:1px solid #e6a23c;">
+        <label class="check" style="margin:0;"><input type="checkbox" id="t3-gate" onchange="gateToggle(this)"> <span><b>已阅读并勾选《人脸处理协议》</b><br><span class="tag">未勾选时不能上传/拍照（先同意，后收集）</span></span></label>
+      </div>
+      <div class="upload-box" style="margin-top:12px;"><div class="guide"></div><div style="position:absolute;bottom:14px;">上传已有照片</div></div>
+      <div class="card">
+        <div class="row pickrow" onclick="pickBlocked(this)"><span>🖼 从相册选择</span><span class="tag">JPG/PNG/WebP ≤10MB</span></div>
+      </div>
+      <div class="card"><h3>目标规格（先裁剪，后换装）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">驾照 260×378</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div></div>
+      <div class="card"><h3>职业装模板</h3><div><span class="chip" onclick="selChip(this)">西装</span><span class="chip" onclick="selChip(this)">衬衫</span><span class="chip" onclick="selChip(this)">学院风</span></div><p class="tag" style="margin-top:8px;">仅换装，不改五官；只对 9 个标准规格生效</p></div>
       <button class="btn ghost" onclick="openSelfCheck()">应用换装并自检</button>
     </div>
   </div>
@@ -191,7 +211,7 @@
     <div class="nav"><span class="back" onclick="go('s_home')">‹ 首页</span> 规格转换</div>
     <div class="body">
       <div class="upload-box"><div class="guide"></div><div style="position:absolute;bottom:14px;">上传已有照片</div></div>
-      <div class="card"><h3>目标规格</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">护照 354×472</span><span class="chip" onclick="selChip(this)">驾照 378×504</span></div></div>
+      <div class="card"><h3>目标规格</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">驾照 260×378</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div></div>
       <button class="btn" onclick="go('s_export')">转换为该规格</button>
     </div>
   </div>
@@ -280,6 +300,26 @@
   function go(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
   function selColor(el){ document.querySelectorAll('.colors .sw').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
   function selChip(el){ var box = el.closest('.card'); box.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+  // 协议前置闸门（v0.2，2026-10-27）：未勾选协议时选图/拍摄入口不可点
+  function gateToggle(cb){
+    var screen = cb.closest('.screen');
+    screen.querySelectorAll('.pickrow').forEach(function(r){
+      r.style.opacity = cb.checked ? '1' : '.45';
+      r.style.pointerEvents = cb.checked ? 'auto' : 'none';
+    });
+    var up = screen.querySelector('.upload-box');
+    if(up){ up.style.opacity = cb.checked ? '1' : '.45'; up.style.pointerEvents = cb.checked ? 'auto' : 'none'; }
+  }
+  function pickBlocked(row){
+    var screen = row.closest('.screen');
+    var cb = screen.querySelector('input[type=checkbox]');
+    if(cb && !cb.checked){
+      var card = cb.closest('.card');
+      card.style.borderColor = '#e6a23c';
+      setTimeout(function(){ card.style.borderColor = ''; }, 1200);
+      alert('请先阅读并勾选《人脸处理协议》');
+    }
+  }
   function startProcess(){ openModal('m_auth'); }
   function openModal(id){ document.getElementById(id).classList.add('show'); }
   function closeModal(id){ document.getElementById(id).classList.remove('show'); }
@@ -421,6 +461,10 @@
     const cnt = r ? r.count : 0;
     alert(`拼版图已保存至相册\n${paper.name} + ${specEl.textContent} = ${cnt} 张\n输出 ${r.sheet.w}×${r.sheet.h}px · ${r.dpi}dpi\n（无水印 · 免费）`);
   }
+  // 初始化三页协议闸门状态（默认未勾选 → 选图入口置灰）
+  ['t1-gate','t2-gate','t3-gate'].forEach(function(id){
+    var cb=document.getElementById(id); if(cb) gateToggle(cb);
+  });
 </script>
 </body>
 </html>
