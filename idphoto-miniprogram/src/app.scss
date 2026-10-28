@@ -1,193 +1,547 @@
+/* ============================================================================
+ * 全局设计系统（SSOT = prototype.html）
+ * ----------------------------------------------------------------------------
+ * 2026-10-28 UI 还原：此前页面丑的根因 = ① 字号是原型 2 倍（38px vs 21px）
+ *   ② 主按钮用蓝色、原型用微信绿。本文件按原型逐项目翻译，统一令牌。
+ * 单位：px（与原型同尺度，375 屏直接对应）；需要跨设备缩放的间距统一收口在此。
+ * ==========================================================================*/
+
+/* ---- 设计令牌 ---- */
+$green:        #07c160;
+$green-dark:   #0aa34a;
+$green-deep:   #05974a;
+$blue:         #438edb;
+$blue-deep:    #4a90d9;
+$blue-soft:    #eef5fd;
+$ink:          #1a1a1a;
+$sub:          #8a94a3;
+$page-bg:      #f5f7fa;
+$page-bg2:     #e9eef3;
+$card:         #ffffff;
+$line:         #eceff3;
+$line2:        #eef1f4;
+$warn:         #e6a23c;
+$warn-deep:    #e07b00;
+$warn-bg:      #fbf6ec;
+$danger:       #e54d42;
+$ok:           #2ba471;
+
+$radius-card:  14px;
+$radius-hero:  16px;
+$radius-btn:   24px;
+$radius-sm:    8px;
+$shadow-card:  0 2px 8px rgba(0, 0, 0, 0.04);
+
 page {
-  background: #f5f6f8;
+  background: $page-bg2;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  color: $ink;
+  font-size: 14px;
 }
 
-/* 工具页共用样式（全局） */
+/* ---- 页面容器 ---- */
 .page {
   min-height: 100vh;
-  padding: 24px;
+  padding: 16px;
+  box-sizing: border-box;
 
   &__title {
     display: block;
-    font-size: 38px;
+    font-size: 21px;
     font-weight: 700;
-    color: #1a1a1a;
-    margin-bottom: 16px;
+    color: $ink;
+    margin-bottom: 12px;
   }
   &__hint {
     display: block;
-    font-size: 24px;
-    color: #8a8f99;
+    font-size: 13px;
+    color: $sub;
     line-height: 1.6;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
 }
 
+/* ---- 通用卡片 ---- */
+.card {
+  background: $card;
+  border-radius: $radius-card;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: $shadow-card;
+  &__title {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: $ink;
+    margin-bottom: 10px;
+  }
+}
+
+/* ---- 行（列表项）---- */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f2f5;
+  font-size: 14px;
+  color: $ink;
+  &--link { color: $blue; }
+  &:last-child { border-bottom: none; }
+  &__tag {
+    font-size: 11px;
+    color: $sub;
+  }
+}
+
+/* ---- 按钮 ---- */
+.btn-primary {
+  margin-top: 16px;
+  background: $green;
+  color: #fff;
+  border-radius: $radius-btn;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 13px;
+  width: 100%;
+  border: none;
+  &[disabled] { background: #c8ccd1; color: #fff; }
+}
+.btn-camera {
+  margin-top: 12px;
+  background: $blue;
+  color: #fff;
+  border-radius: $radius-btn;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 13px;
+  width: 100%;
+  border: none;
+  &[disabled] { background: #aac4e0; }
+}
+.btn-ghost {
+  margin-top: 12px;
+  background: #fff;
+  color: $green;
+  border: 1px solid $green;
+  border-radius: $radius-btn;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px;
+  width: 100%;
+}
+.btn-grey {
+  background: #c8ccd1;
+  color: #fff;
+}
+
+/* ---- 授权块 ---- */
 .consent {
-  padding: 20px;
-  background: #ffffff;
-  border-radius: 16px;
-  margin-bottom: 24px;
+  padding: 16px;
+  background: $card;
+  border-radius: $radius-card;
+  margin-bottom: 16px;
+  box-shadow: $shadow-card;
 
   &__h {
     display: block;
-    font-size: 26px;
+    font-size: 15px;
     font-weight: 600;
-    color: #1a1a1a;
-    margin-bottom: 12px;
+    color: $ink;
+    margin-bottom: 10px;
   }
   &__item {
-    padding: 12px 0;
-    border-top: 1px solid #f0f0f0;
+    display: flex;
+    align-items: flex-start;
+    padding: 10px;
+    margin-bottom: 6px;
+    border-radius: $radius-sm;
+    border: 1px solid #ddd;
+    background: #fff;
+    &--on {
+      border: 1px solid $blue;
+      background: $blue-soft;
+    }
+    &--hint {
+      border: 1px solid $warn-deep;
+    }
+  }
+  &__check {
+    margin-right: 8px;
+    font-size: 15px;
+    line-height: 1.5;
   }
   &__label {
     display: block;
-    font-size: 26px;
-    color: #1a1a1a;
+    font-size: 14px;
+    color: $ink;
   }
   &__desc {
     display: block;
-    font-size: 22px;
-    color: #8a8f99;
-    margin-top: 4px;
+    font-size: 12px;
+    color: $sub;
+    margin-top: 2px;
+    line-height: 1.5;
+  }
+  &--hinted {
+    border: 2px solid $warn-deep;
+    background: $warn-bg;
+    border-radius: $radius-sm;
+  }
+  &__hint {
+    display: block;
+    font-size: 12px;
+    color: $warn-deep;
+    margin: 4px 0 6px;
     line-height: 1.5;
   }
 }
 
-.btn-primary {
-  margin-top: 24px;
-  background: #438edb;
-  color: #fff;
-  border-radius: 12px;
-  font-size: 30px;
-}
-
-// A1 拍摄入口（半透明人脸引导框）：次级按钮，与 .btn-primary（相册）并列
-.btn-camera {
-  margin-top: 12px;
-  background: #2b6cb0;
-  color: #fff;
-  border-radius: 12px;
-  font-size: 30px;
-}
-
-.steps {
-  padding: 20px;
-  background: #ffffff;
-  border-radius: 16px;
-  &__item {
-    display: block;
-    font-size: 26px;
-    color: #333;
-    padding: 8px 0;
-  }
-}
-
-.bg-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-.bg-item {
-  width: 30%;
-  padding: 16px;
-  background: #fff;
-  border-radius: 12px;
-  text-align: center;
-}
-.bg-swatch {
-  display: block;
-  height: 80px;
-  border-radius: 8px;
-  border: 1px solid #eee;
-  margin-bottom: 8px;
-}
-.bg-name {
-  font-size: 24px;
-  color: #333;
-}
-
-.suit-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-.suit-item {
-  width: 45%;
-  padding: 24px;
-  background: #fff;
-  border-radius: 12px;
-  text-align: center;
-  font-size: 26px;
-  color: #333;
-}
-
-.spec-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.spec-item {
-  padding: 16px;
-  background: #fff;
-  border-radius: 12px;
-}
-.spec-name {
-  display: block;
-  font-size: 28px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-.spec-size {
-  display: block;
-  font-size: 22px;
-  color: #8a8f99;
-  margin-top: 4px;
-}
-
-/* 规格速览芯片（T1/T5）：展示官方像素 + 直接点选
-   2026-10-23 规格数值裁决后新增 —— 用户可直接看到每个规格的确切像素 */
+/* ---- 规格芯片（T1/T5 速选）---- */
 .spec-chips {
   display: flex;
   flex-wrap: wrap;
+  gap: 8px;
   margin: 10px 0 6px;
 }
 .spec-chip {
   display: inline-block;
+  padding: 6px 12px;
+  border-radius: 16px;
+  background: #eef6f0;
+  color: $green;
+  font-size: 12px;
+  border: 1px solid #d6ecdd;
+  &--sel {
+    background: $green;
+    color: #fff;
+    border-color: $green;
+  }
 }
 
-.result {
-  margin-top: 20px;
-  padding: 20px;
+/* ---- 底色色板（T2）---- */
+.bg-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+.bg-swatch {
+  padding: 8px 14px;
+  border-radius: $radius-sm;
+  font-size: 13px;
+  color: #fff;
+  border: 1px solid #ccc;
+  &--light { color: #333; }
+  &--sel { border: 2px solid #333; }
+  &--transparent {
+    background-image:
+      linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%),
+      linear-gradient(45deg, #ddd 25%, #fff 25%, #fff 75%, #ddd 75%);
+    background-size: 10px 10px;
+    background-position: 0 0, 5px 5px;
+    color: #333;
+  }
+}
+
+/* ---- 换装模板（T3）---- */
+.suit-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.suit-item {
+  width: 45%;
+  padding: 14px;
   background: #fff;
-  border-radius: 16px;
+  border-radius: $radius-sm;
+  text-align: center;
+  font-size: 14px;
+  color: #333;
+  border: 1px solid #eee;
+  &--sel { border: 2px solid $green; color: $green; }
+}
+
+/* ---- 规格列表（T5）---- */
+.spec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.spec-item {
+  padding: 14px;
+  background: #fff;
+  border-radius: $radius-sm;
+  border: 1px solid #eee;
+  &--sel { border: 2px solid $green; }
+}
+.spec-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: $ink;
+}
+.spec-size {
+  display: block;
+  font-size: 12px;
+  color: $sub;
+  margin-top: 4px;
+}
+
+/* ---- 结果/合规报告（T4）---- */
+.result {
+  margin-top: 16px;
+  padding: 16px;
+  background: #fff;
+  border-radius: $radius-card;
+  box-shadow: $shadow-card;
   &__row {
     display: flex;
     justify-content: space-between;
-    font-size: 24px;
+    font-size: 14px;
     padding: 10px 0;
     border-bottom: 1px solid #f0f0f0;
   }
-  &__ok {
-    color: #2ba471;
-  }
-  &__bad {
-    color: #e54d42;
-  }
-  // 提示项（advisory）：如 600dpi 印刷级文件的 KB 上限不适用 —— 橙色提示，不判不通过
-  &__warn {
-    color: #b26a00;
-  }
+  &__ok { color: $ok; }
+  &__bad { color: $danger; }
+  &__warn { color: $warn-deep; }
 }
 
-/* 智能裁切状态块（任务 #24 / PRD B2）
-   放在 msg 下方：先告诉用户「已自动构图」，再按需给出降级原因。
-   degraded（红色）= 原片构图不足、占比达不到规格区间；非 degraded 但有 notes（橙色）= 仅提示。 */
+/* ---- 智能裁切状态块 ---- */
 .crop-info {
   margin-top: 8px;
   padding: 10px 12px;
-  background: #eef5fd;
-  border-left: 3px solid #438edb;
-  border-radius: 6px;
+  background: $blue-soft;
+  border-left: 3px solid $blue;
+  border-radius: $radius-sm;
+  font-size: 12px;
+  color: #356;
+  line-height: 1.6;
+}
+
+/* ---- 状态行（处理进度/提示）---- */
+.status-line {
+  display: block;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* ---- 提示/合规/警示框 ---- */
+.compliance {
+  font-size: 12px;
+  color: $warn-deep;
+  margin-top: 10px;
+  line-height: 1.6;
+  background: $warn-bg;
+  padding: 8px 10px;
+  border-radius: $radius-sm;
+}
+.dpi-note {
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: $radius-sm;
+  &--ok { color: $green-deep; background: #eef6f0; }
+  &--warn { color: $warn-deep; background: $warn-bg; }
+}
+.tag {
+  font-size: 11px;
+  color: $sub;
+}
+
+/* ---- 上传区（虚线框 + 人脸引导）---- */
+.upload-box {
+  border: 2px dashed #cbd5de;
+  border-radius: $radius-card;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: $sub;
+  font-size: 13px;
+  position: relative;
+  overflow: hidden;
+  margin-top: 12px;
+  background: #fff;
+}
+.guide {
+  position: absolute;
+  width: 150px;
+  height: 200px;
+  border: 2px solid rgba(7, 193, 96, 0.7);
+  border-radius: 80px 80px 40px 40px;
+  &::before {
+    content: '';
+    position: absolute;
+    top: -34px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 60px;
+    border: 2px solid rgba(7, 193, 96, 0.7);
+    border-radius: 50%;
+  }
+}
+
+/* ---- 预览图 ---- */
+.preview {
+  width: 100%;
+  height: 260px;
+  border-radius: $radius-sm;
+  background: #f0f2f5;
+  margin-top: 14px;
+}
+
+/* ---- 自定义色值输入 ---- */
+.hex-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 12px 0;
+  font-size: 14px;
+}
+.hex-input {
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: $radius-sm;
+  padding: 6px 8px;
+  margin-left: 6px;
+  font-size: 14px;
+}
+.hex-apply {
+  margin-left: 8px;
+}
+.hex-preview {
+  margin-left: 8px;
+  width: 20px;
+  height: 20px;
+  border: 1px solid #999;
+  border-radius: 4px;
+}
+
+/* ---- 选项行 / 选择器值 ---- */
+.opt-row {
+  margin: 12px 0;
+  font-size: 14px;
+}
+.picker-value {
+  color: $blue;
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+/* ---- 输出信息 / 降级提示 ---- */
+.out-info {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+.plan-note {
+  display: block;
+  font-size: 12px;
+  color: $warn-deep;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* ---- 首页 hero / 工具网格（prototype .hero/.toolgrid/.toolcard）---- */
+.hero {
+  background: linear-gradient(135deg, $green, $green-dark);
+  color: #fff;
+  border-radius: $radius-hero;
+  padding: 20px 18px;
+  &__title {
+    display: block;
+    font-size: 21px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  &__sub {
+    display: block;
+    font-size: 12px;
+    opacity: 0.92;
+    line-height: 1.5;
+  }
+  &__badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.22);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    margin-top: 10px;
+  }
+}
+.tool-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+.tool-card {
+  background: #fff;
+  border-radius: $radius-card;
+  padding: 14px;
+  box-shadow: $shadow-card;
+  border: 1px solid $line2;
+  &__ico { font-size: 26px; }
+  &__title {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 6px;
+    color: $ink;
+  }
+  &__desc {
+    display: block;
+    font-size: 11px;
+    color: $sub;
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+  &__free {
+    display: block;
+    font-size: 11px;
+    color: $green;
+    margin-top: 6px;
+    font-weight: 600;
+  }
+}
+
+/* ---- 隐私承诺块（首页）---- */
+.privacy-block {
+  margin-top: 16px;
+  padding: 16px;
+  background: #fff;
+  border-radius: $radius-card;
+  box-shadow: $shadow-card;
+  &__title {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: $ink;
+    margin-bottom: 8px;
+  }
+  &__text {
+    display: block;
+    font-size: 12px;
+    color: $sub;
+    line-height: 1.6;
+  }
+  &__link {
+    display: block;
+    margin-top: 10px;
+    font-size: 13px;
+    color: $blue;
+  }
+  &__icp {
+    display: block;
+    margin-top: 8px;
+    font-size: 11px;
+    color: $sub;
+  }
 }

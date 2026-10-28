@@ -343,32 +343,24 @@ export default function ToolBg() {
       <Text className='page__hint'>上传一张已有照片，仅替换背景色，不改动五官。不强制规格、不做预审；**只换底不裁剪构图**，要出证件照请用「一键证件照」。</Text>
 
       {/* 授权（默认不勾选，未集齐不启动处理；F3：未勾选则选图入口不可点） */}
-      <View
-        className='consent'
-        style={gate.hinted
-          ? { border: '2px solid #e07b00', borderRadius: '8px', padding: '10px', background: '#fff8ec' }
-          : undefined}
-      >
+      <View className={gate.hinted ? 'consent consent--hinted' : 'consent'}>
         <Text className='consent__h'>需授权（{granted.length}/{consentItems.length}）</Text>
         {gate.hinted ? (
-          <Text style={{ display: 'block', fontSize: '12px', color: '#e07b00', margin: '4px 0 6px' }}>
+          <Text className='consent__hint'>
             请先勾选下列全部授权，才能选择照片或拍照（先同意、后收集）
           </Text>
         ) : null}
         {consentItems.map((c: any) => {
           const on = granted.includes(c.id);
+          const cls =
+            'consent__item' +
+            (on ? ' consent__item--on' : '') +
+            (gate.hinted && !on ? ' consent__item--hint' : '');
           return (
             <View
               key={c.id}
-              className='consent__item'
+              className={cls}
               onClick={() => toggleConsent(c.id)}
-              style={{
-                border: on ? '1px solid #438EDB' : (gate.hinted ? '1px solid #e07b00' : '1px solid #ddd'),
-                background: on ? '#eef5fd' : '#fff',
-                padding: '8px',
-                marginBottom: '6px',
-                borderRadius: '6px',
-              }}
             >
               <Text style={{ fontWeight: on ? 'bold' : 'normal' }}>
                 {on ? '☑ ' : '☐ '}
@@ -425,44 +417,34 @@ export default function ToolBg() {
         />
 
         <Text>底色：</Text>
-        <View style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: '6px' }}>
-          {bgOptions.map((o) => (
-            <View
-              key={o.key}
-              onClick={() => {
-                setBg(o.key);
-                setUseTransparent(false);
-                setCustomApplied(null);
-                recompose(BG[o.key], false); // 任务 #50：换底色即刻重新合成
-              }}
-              style={{
-                padding: '8px 14px',
-                marginRight: '8px',
-                marginBottom: '8px',
-                borderRadius: '6px',
-                background: o.color,
-                color: o.key === 'white' || o.key === 'gray' ? '#333' : '#fff',
-                border: !useTransparent && !customApplied && bg === o.key ? '2px solid #333' : '1px solid #ccc',
-              }}
-            >
-              <Text>{o.label}</Text>
-            </View>
-          ))}
+        <View className='bg-swatches'>
+          {bgOptions.map((o) => {
+            const sel = !useTransparent && !customApplied && bg === o.key;
+            const light = o.key === 'white' || o.key === 'gray';
+            const cls = 'bg-swatch' + (light ? ' bg-swatch--light' : '') + (sel ? ' bg-swatch--sel' : '');
+            return (
+              <View
+                key={o.key}
+                className={cls}
+                style={{ background: o.color }}
+                onClick={() => {
+                  setBg(o.key);
+                  setUseTransparent(false);
+                  setCustomApplied(null);
+                  recompose(BG[o.key], false); // 任务 #50：换底色即刻重新合成
+                }}
+              >
+                <Text>{o.label}</Text>
+              </View>
+            );
+          })}
           {/* 透明底（C3：PNG 保留 alpha 通道） */}
           <View
+            className={'bg-swatch bg-swatch--transparent' + (useTransparent ? ' bg-swatch--sel' : '')}
             onClick={() => {
               setUseTransparent(true);
               setCustomApplied(null);
               recompose(null, true); // 任务 #50：透明底即刻重新合成
-            }}
-            style={{
-              padding: '8px 14px',
-              borderRadius: '6px',
-              border: useTransparent ? '2px solid #333' : '1px solid #ccc',
-              backgroundImage:
-                'linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%), linear-gradient(45deg, #ddd 25%, #fff 25%, #fff 75%, #ddd 75%)',
-              backgroundSize: '10px 10px',
-              backgroundPosition: '0 0, 5px 5px',
             }}
           >
             <Text>透明底 PNG</Text>
@@ -471,30 +453,24 @@ export default function ToolBg() {
       </View>
 
       {/* 自定义色值（C2：HEX 输入） */}
-      <View style={{ margin: '12px 0', display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+      <View className='hex-row'>
         <Text>自定义色值：</Text>
         <Input
+          className='hex-input'
           value={customHex}
           onInput={(e: any) => setCustomHex(e.detail.value)}
           placeholder='#RRGGBB，如 1A2B3C'
-          style={{
-            flex: 1,
-            border: '1px solid #ccc',
-            borderRadius: '6px',
-            padding: '6px 8px',
-            marginLeft: '6px',
-          }}
         />
-        <Button size='mini' style={{ marginLeft: '8px' }} onClick={applyCustom}>
+        <Button size='mini' className='hex-apply' onClick={applyCustom}>
           应用
         </Button>
         {customApplied ? (
-          <View style={{ marginLeft: '8px', width: '20px', height: '20px', background: customApplied, border: '1px solid #999' }} />
+          <View className='hex-preview' style={{ background: customApplied }} />
         ) : null}
       </View>
 
       {/* 可选规格裁剪（不选 = 保持原图尺寸） */}
-      <View style={{ margin: '12px 0' }}>
+      <View className='opt-row'>
         <Text>输出尺寸（可选）：</Text>
         <Picker
           mode='selector'
@@ -507,7 +483,7 @@ export default function ToolBg() {
             reprocess({ specIndex: nextIdx }); // 任务 #50：换规格自动重跑（不需重新选图）
           }}
         >
-          <View style={{ color: '#438EDB', padding: '4px 0' }}>
+          <View className='picker-value'>
             {specIndex < 0 ? '保持原图尺寸' : `${specs[specIndex].name} ▾`}
           </View>
         </Picker>
@@ -530,22 +506,20 @@ export default function ToolBg() {
         📷 拍摄（引导框）
       </Button>
 
-      {msg ? <Text className='status-line' style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
+      {msg ? <Text className='status-line'>{msg}</Text> : null}
 
       {/* 输出构图提示（分辨率不足 / 达到处理上限 → 如实告知） */}
       {planNote ? (
-        <Text style={{ display: 'block', fontSize: '12px', color: '#e07b00', marginTop: '6px' }}>
-          {planNote}
-        </Text>
+        <Text className='plan-note'>{planNote}</Text>
       ) : null}
 
       {preview ? (
         <View style={{ marginTop: '14px' }}>
-          <Image src={preview} style={{ width: '100%', height: '260px' }} mode='aspectFit' />
-          {outInfo ? <Text style={{ display: 'block', fontSize: '12px', color: '#888', marginTop: '4px' }}>{outInfo}</Text> : null}
+          <Image src={preview} className='preview' mode='aspectFit' />
+          {outInfo ? <Text className='out-info'>{outInfo}</Text> : null}
           {/* AC1 镜像自查（导出前勾选，未勾选禁用保存） */}
           {picker.MirrorCheck}
-          <Button style={{ marginTop: '8px' }} onClick={save} disabled={!picker.mirrorConfirmed}>
+          <Button className='btn-ghost' style={{ marginTop: '8px' }} onClick={save} disabled={!picker.mirrorConfirmed}>
             保存到相册
           </Button>
         </View>

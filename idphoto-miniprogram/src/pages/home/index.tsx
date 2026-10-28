@@ -49,6 +49,7 @@ export default function Home() {
           人脸仅在设备本地处理；上云增强仅上传裁剪后的人像区域，境内处理、用完即销毁、不训练。换装须单独授权。
         </Text>
         <Text className='home__privacy-link'>查看〈隐私政策〉全文 ›</Text>
+        <Text className='home__privacy-icp'>ICP 备案：苏ICP备2026082326号-1X</Text>
       </View>
     </View>
   );
