@@ -156,15 +156,10 @@ export default function ToolCheck() {
       <Text className='page__hint'>上传已有证件照，出检测报告。仅读取分析，不生成、不改动原图。</Text>
 
       {/* 授权（默认不勾选，未集齐不启动） */}
-      <View
-        className='consent'
-        style={gate.hinted
-          ? { border: '2px solid #e07b00', borderRadius: '8px', padding: '10px', background: '#fff8ec' }
-          : undefined}
-      >
+      <View className={gate.hinted ? 'consent consent--hinted' : 'consent'}>
         <Text className='consent__h'>需授权（{granted.length}/{consentItems.length}）</Text>
         {gate.hinted ? (
-          <Text style={{ display: 'block', fontSize: '12px', color: '#e07b00', margin: '4px 0 6px' }}>
+          <Text className='consent__hint'>
             请先勾选下方授权，才能选择照片或拍照（先同意、后收集）
           </Text>
         ) : null}
@@ -173,17 +168,10 @@ export default function ToolCheck() {
           return (
             <View
               key={c.id}
-              className='consent__item'
+              className={on ? 'consent__item consent__item--on' : 'consent__item'}
               onClick={() => toggleConsent(c.id)}
-              style={{
-                border: on ? '1px solid #438EDB' : '1px solid #ddd',
-                background: on ? '#eef5fd' : '#fff',
-                padding: '8px',
-                marginBottom: '6px',
-                borderRadius: '6px',
-              }}
             >
-              <Text style={{ fontWeight: on ? 'bold' : 'normal' }}>
+              <Text className='consent__check'>
                 {on ? '☑ ' : '☐ '}
                 {c.label}
               </Text>
@@ -194,7 +182,7 @@ export default function ToolCheck() {
       </View>
 
       {/* 目标规格 */}
-      <View style={{ margin: '12px 0' }}>
+      <View className='section'>
         <Text>目标规格：</Text>
         <Picker
           mode='selector'
@@ -202,12 +190,10 @@ export default function ToolCheck() {
           value={specIndex}
           onChange={(e: any) => { setSpecIndex(Number(e.detail.value)); setResult(null); }}
         >
-          <View style={{ color: '#438EDB', padding: '4px 0' }}>{spec.name} ▾</View>
+          <View className='picker-value'>{spec.name} ▾</View>
         </Picker>
-        <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
-          {spec.source}
-        </Text>
-        <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '4px' }}>
+        <Text className='tag tag--block'>{spec.source}</Text>
+        <Text className='note-soft'>
           说明：文件内 dpi 元数据微信端无法读取，按「像素 ÷ 目标规格英寸」换算等效 dpi（同 T5 #24 口径）；头部占比由端侧人脸检测测得（关键点估算头顶，含误差）
         </Text>
       </View>
@@ -222,7 +208,7 @@ export default function ToolCheck() {
         📷 拍摄（引导框）
       </Button>
 
-      {msg ? <Text style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
+      {msg ? <Text className='status-line'>{msg}</Text> : null}
 
       {result ? (
         <View className='result'>
@@ -234,9 +220,9 @@ export default function ToolCheck() {
           </View>
           {result.checks.map((c) => (
             <View className='result__row' key={c.key}>
-              <View style={{ flex: 1, paddingRight: '8px' }}>
+              <View className='result__cell'>
                 <Text>{c.label}{c.key === 'head' && headApprox ? '（估算）' : ''}</Text>
-                <Text style={{ display: 'block', fontSize: '11px', color: '#888' }}>{c.detail}</Text>
+                <Text className='result-row__detail'>{c.detail}</Text>
               </View>
               <Text className={c.level === 'advisory' ? 'result__warn' : (c.pass ? 'result__ok' : 'result__bad')}>
                 {c.level === 'advisory' ? '提示' : (c.pass ? '通过' : '未通过')}
@@ -245,17 +231,15 @@ export default function ToolCheck() {
           ))}
           {headSkipped ? (
             <View className='result__row'>
-              <Text style={{ color: '#999' }}>头部占比</Text>
-              <Text style={{ color: '#999' }}>未检测（当前环境不支持人脸检测）</Text>
+              <Text className='note-soft'>头部占比</Text>
+              <Text className='note-soft'>未检测（当前环境不支持人脸检测）</Text>
             </View>
           ) : null}
           {headNotes.length ? (
-            <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
-              {headNotes.join('；')}
-            </Text>
+            <Text className='note-soft'>{headNotes.join('；')}</Text>
           ) : null}
           {!result.pass && result.suggestions.length ? (
-            <Text style={{ display: 'block', marginTop: '8px', fontSize: '12px', color: '#b26a00' }}>
+            <Text className='result__suggest'>
               建议：用「一键证件照 / 规格转换」重新生成 → {result.suggestions.join('、')}
             </Text>
           ) : null}
@@ -263,13 +247,13 @@ export default function ToolCheck() {
       ) : null}
 
       {preview ? (
-        <View style={{ marginTop: '14px' }}>
-          <Image src={preview} style={{ width: '100%', height: '220px' }} mode='aspectFit' />
-          <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '6px' }}>
+        <View className='section'>
+          <Image src={preview} className='preview' mode='aspectFit' />
+          <Text className='note-soft'>
             仅检测，不生成、不改动原图（AC10）
           </Text>
           {/* AC1 镜像提示（检测工具无导出，仅做引导文案提示） */}
-          <Text style={{ display: 'block', marginTop: '6px', fontSize: '12px', color: '#ad6800' }}>
+          <Text className='result__suggest'>
             ⚠️ 若照片为镜像自拍（左右颠倒），请关闭镜像/翻转后重拍，否则将导致审核失败。
           </Text>
         </View>

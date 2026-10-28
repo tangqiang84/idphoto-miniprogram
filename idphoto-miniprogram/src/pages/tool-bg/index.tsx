@@ -362,7 +362,7 @@ export default function ToolBg() {
               className={cls}
               onClick={() => toggleConsent(c.id)}
             >
-              <Text style={{ fontWeight: on ? 'bold' : 'normal' }}>
+              <Text className='consent__check'>
                 {on ? '☑ ' : '☐ '}
                 {c.label}
               </Text>
@@ -373,7 +373,7 @@ export default function ToolBg() {
       </View>
 
       {/* 底色选择：标准四色 */}
-      <View style={{ margin: '12px 0' }}>
+      <View className='section'>
           {specIndex >= 0 ? (
           <CropStep
             specName={specs[specIndex].name}
@@ -514,12 +514,12 @@ export default function ToolBg() {
       ) : null}
 
       {preview ? (
-        <View style={{ marginTop: '14px' }}>
+        <View className='section'>
           <Image src={preview} className='preview' mode='aspectFit' />
           {outInfo ? <Text className='out-info'>{outInfo}</Text> : null}
           {/* AC1 镜像自查（导出前勾选，未勾选禁用保存） */}
           {picker.MirrorCheck}
-          <Button className='btn-ghost' style={{ marginTop: '8px' }} onClick={save} disabled={!picker.mirrorConfirmed}>
+          <Button className='btn-ghost mt-sm' onClick={save} disabled={!picker.mirrorConfirmed}>
             保存到相册
           </Button>
         </View>

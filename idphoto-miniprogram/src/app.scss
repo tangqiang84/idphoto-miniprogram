@@ -171,6 +171,7 @@ page {
     font-size: 15px;
     line-height: 1.5;
   }
+  &__item--on .consent__check { font-weight: 700; }
   &__label {
     display: block;
     font-size: 14px;
@@ -328,6 +329,32 @@ page {
   line-height: 1.6;
 }
 
+/* ---- 五官自检块（T1/T3 换装后）---- */
+.selfcheck {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: $radius-sm;
+  border: 1px solid #ddd;
+  background: #fff;
+  &--on {
+    border: 1px solid $blue;
+    background: $blue-soft;
+  }
+  &__h {
+    display: block;
+    font-weight: 700;
+    font-size: 14px;
+    color: $ink;
+  }
+  &__desc {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+}
+
 /* ---- 提示/合规/警示框 ---- */
 .compliance {
   font-size: 12px;
@@ -350,6 +377,7 @@ page {
 .tag {
   font-size: 11px;
   color: $sub;
+  &--block { display: block; margin-top: 2px; }
 }
 
 /* ---- 上传区（虚线框 + 人脸引导）---- */
@@ -511,6 +539,155 @@ page {
     font-weight: 600;
   }
 }
+
+/* ---- T1 智能裁切状态块变体 ---- */
+.crop-info {
+  &__auto {
+    display: block;
+    font-size: 12px;
+    color: $blue;
+    line-height: 1.6;
+  }
+  &__warn {
+    display: block;
+    font-size: 12px;
+    color: $warn-deep;
+    margin-top: 4px;
+    line-height: 1.5;
+    &--bad { color: $danger; }
+  }
+}
+
+/* ---- 头部占比信息块（T1 预览区）---- */
+.head-info {
+  padding: 8px 0;
+  &__ratio {
+    display: block;
+    font-size: 13px;
+    color: $ink;
+  }
+  &__note {
+    display: block;
+    font-size: 11px;
+    color: $sub;
+    margin-top: 2px;
+    line-height: 1.5;
+  }
+  &__none {
+    display: block;
+    font-size: 12px;
+    color: $sub;
+    margin-top: 6px;
+  }
+}
+
+/* ---- AI 换装面板（T1/T3）---- */
+.suit-panel {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: $radius-sm;
+  border: 1px solid $line;
+  background: #fafafa;
+  &__head {
+    font-weight: 700;
+    font-size: 14px;
+    color: $ink;
+  }
+  &__desc {
+    display: block;
+    font-size: 12px;
+    color: $sub;
+    margin-top: 2px;
+    line-height: 1.5;
+  }
+  &__granted {
+    display: block;
+    font-size: 12px;
+    color: $ok;
+    margin-bottom: 8px;
+  }
+  &__note {
+    display: block;
+    font-size: 11px;
+    color: $sub;
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+}
+/* 换装模板缩略选择（T1 内嵌） */
+.suit-tpls { display: flex; flex-direction: row; }
+.suit-tpl {
+  flex: 1;
+  margin-right: 8px;
+  padding: 6px 4px;
+  border-radius: $radius-sm;
+  text-align: center;
+  border: 1px solid #ccc;
+  background: #fff;
+  &:last-child { margin-right: 0; }
+  &--sel {
+    border: 2px solid $green;
+    background: #eef6f0;
+  }
+  &__img { width: 44px; height: 44px; }
+  &__name { display: block; font-size: 12px; margin-top: 2px; }
+}
+
+/* ---- 按钮行（并排小按钮）---- */
+.btn-row {
+  display: flex;
+  flex-direction: row;
+  margin-top: 8px;
+  &__item { margin-right: 8px; }
+}
+
+/* ---- 合规预审结果（T1 内嵌版）---- */
+.result-title {
+  display: block;
+  font-weight: 700;
+  font-size: 15px;
+  color: $ink;
+  margin-bottom: 4px;
+}
+.result-row {
+  padding: 6px 0;
+  &__detail {
+    display: block;
+    font-size: 12px;
+    color: #888;
+    margin-top: 2px;
+    line-height: 1.5;
+  }
+}
+
+/* ---- 工具类 ---- */
+.section { margin: 12px 0; }
+.mt { margin-top: 14px; }
+.mt-sm { margin-top: 8px; }
+.row-flex { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px; }
+.input {
+  width: 80px;
+  border: 1px solid #ccc;
+  border-radius: $radius-sm;
+  padding: 6px 8px;
+  margin-left: 6px;
+  font-size: 14px;
+}
+/* 合规报告辅助 */
+.result__cell { flex: 1; padding-right: 8px; }
+.result__suggest { display: block; margin-top: 8px; font-size: 12px; color: #b26a00; line-height: 1.5; }
+/* 说明/提示文字 */
+.note-soft { display: block; font-size: 11px; color: $sub; line-height: 1.5; margin-top: 4px; }
+.note-faint { display: block; font-size: 11px; color: #aaa; margin-top: 14px; line-height: 1.6; }
+
+/* ---- T6 专用 ---- */
+.field-label { display: block; margin-bottom: 6px; font-size: 14px; color: $ink; }
+.incoming { display: block; font-size: 12px; margin-top: 6px; line-height: 1.5;
+  &--ok { color: $blue; }
+  &--bad { color: $danger; }
+}
+.out-info--warn { color: $danger; }
+.preview--tall { height: 300px; }
 
 /* ---- 隐私承诺块（首页）---- */
 .privacy-block {

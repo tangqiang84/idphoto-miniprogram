@@ -195,24 +195,16 @@ export default function ToolSpec() {
       <Text className='page__hint'>按目标规格裁剪 / 改 dpi / 压 KB 后导出。纯图像变换，不涉及人脸处理，无需人脸授权。</Text>
 
       {/* 模式切换 */}
-      <View style={{ display: 'flex', flexDirection: 'row', margin: '12px 0' }}>
+      <View className='row-flex section'>
         <View
           onClick={() => setMode('spec')}
-          style={{
-            padding: '8px 14px', marginRight: '8px', borderRadius: '6px',
-            border: mode === 'spec' ? '2px solid #438EDB' : '1px solid #ccc',
-            background: mode === 'spec' ? '#eef5fd' : '#fff',
-          }}
+          className={mode === 'spec' ? 'spec-chip spec-chip--sel' : 'spec-chip'}
         >
           <Text>内置规格</Text>
         </View>
         <View
           onClick={() => setMode('custom')}
-          style={{
-            padding: '8px 14px', borderRadius: '6px',
-            border: mode === 'custom' ? '2px solid #438EDB' : '1px solid #ccc',
-            background: mode === 'custom' ? '#eef5fd' : '#fff',
-          }}
+          className={mode === 'custom' ? 'spec-chip spec-chip--sel' : 'spec-chip'}
         >
           <Text>自定义像素</Text>
         </View>
@@ -220,7 +212,7 @@ export default function ToolSpec() {
 
       {/* 内置规格 + dpi */}
       {mode === 'spec' ? (
-        <View style={{ margin: '12px 0' }}>
+        <View className='section'>
           {/* 【P1 #77 / P2.7】输出档位提升为独立步骤屏（含像素不足提示；RC-3/RC-4/RC-8） */}
           <DpiStep
             specId={specs[specIndex].id}
@@ -247,7 +239,7 @@ export default function ToolSpec() {
               reprocess({ width: px.width, height: px.height, dpi });
             }}
           >
-            <View style={{ color: '#438EDB', padding: '4px 0' }}>{specs[specIndex].name} ▾</View>
+            <View className='picker-value'>{specs[specIndex].name} ▾</View>
           </Picker>
           {/* 规格速览芯片：直接点选 + 展示官方像素（2026-10-23 规格数值裁决后新增） */}
           <View className='spec-chips'>
@@ -257,36 +249,24 @@ export default function ToolSpec() {
               return (
                 <View
                   key={s.id}
-                  className='spec-chip'
+                  className={on ? 'spec-chip spec-chip--sel' : 'spec-chip'}
                   onClick={() => {
                     setSpecIndex(i);
                     const p2 = getPixelSize(s.id, dpi)!; // 任务 #50：换规格自动重跑
                     reprocess({ width: p2.width, height: p2.height, dpi });
                   }}
-                  style={{
-                    padding: '5px 10px',
-                    marginRight: '6px',
-                    marginBottom: '6px',
-                    borderRadius: '20px',
-                    border: on ? '1px solid #438EDB' : '1px solid #ddd',
-                    background: on ? '#eef5fd' : '#fff',
-                  }}
                 >
-                  <Text style={{ fontSize: '12px', color: on ? '#2b6cb0' : '#666' }}>
-                    {s.name} {px.width}×{px.height}
-                  </Text>
+                  <Text>{s.name} {px.width}×{px.height}</Text>
                 </View>
               );
             })}
           </View>
           {spec ? (
-            <Text style={{ display: 'block', fontSize: '11px', color: '#999' }}>
-              {spec.source}
-            </Text>
+            <Text className='note-soft'>{spec.source}</Text>
           ) : null}
         </View>
       ) : (
-        <View style={{ margin: '12px 0', display: 'flex', flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+        <View className='row-flex section'>
           <Text>宽(px)：</Text>
           <Input
             type='number'
@@ -298,7 +278,7 @@ export default function ToolSpec() {
               if (w2 && h2) reprocess({ width: w2, height: h2, dpi }); // 任务 #50：自定义尺寸失焦后自动重跑
             }}
             placeholder='如 295'
-            style={{ width: '80px', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 8px', marginLeft: '6px' }}
+            className='input'
           />
           <Text style={{ marginLeft: '10px' }}>高(px)：</Text>
           <Input
@@ -311,19 +291,19 @@ export default function ToolSpec() {
               if (w2 && h2) reprocess({ width: w2, height: h2, dpi }); // 任务 #50：自定义尺寸失焦后自动重跑
             }}
             placeholder='如 413'
-            style={{ width: '80px', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 8px', marginLeft: '6px' }}
+            className='input'
           />
         </View>
       )}
 
       {/* 目标像素预览 */}
-      <Text style={{ display: 'block', fontSize: '12px', color: '#888' }}>
+      <Text className='out-info'>
         输出像素：{targetPx.width}×{targetPx.height}
         {mode === 'spec' ? `（${spec!.widthMm}×${spec!.heightMm}mm @${dpi}dpi 换算）` : ''}
       </Text>
 
       {/* KB 上限 */}
-      <View style={{ margin: '12px 0', display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+      <View className='row-flex section'>
         <Switch checked={kbLimitOn} onChange={(e: any) => setKbLimitOn(e.detail.value)} />
         <Text style={{ marginLeft: '6px' }}>KB 上限：</Text>
         <Input
@@ -337,7 +317,7 @@ export default function ToolSpec() {
             if (w2 && h2) reprocess({ width: w2, height: h2, dpi });
           }}
           placeholder={mode === 'spec' ? `规格默认 ${spec!.maxKb}` : '如 200'}
-          style={{ width: '80px', border: '1px solid #ccc', borderRadius: '6px', padding: '6px 8px', marginLeft: '6px' }}
+          className='input'
         />
       </View>
 
@@ -348,22 +328,22 @@ export default function ToolSpec() {
         📷 拍摄（引导框）
       </Button>
 
-      {msg ? <Text className='status-line' style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
+      {msg ? <Text className='status-line'>{msg}</Text> : null}
 
       {preview ? (
-        <View style={{ marginTop: '14px' }}>
-          <Image src={preview} style={{ width: '100%', height: '260px' }} mode='aspectFit' />
-          {outInfo ? <Text style={{ display: 'block', fontSize: '12px', color: '#888', marginTop: '4px' }}>{outInfo}</Text> : null}
+        <View className='section'>
+          <Image src={preview} className='preview' mode='aspectFit' />
+          {outInfo ? <Text className='out-info'>{outInfo}</Text> : null}
           {/* AC1 镜像自查（导出前勾选，未勾选禁用保存） */}
           {picker.MirrorCheck}
-          <Button style={{ marginTop: '8px' }} onClick={save} disabled={!picker.mirrorConfirmed}>
+          <Button className='btn-primary mt-sm' onClick={save} disabled={!picker.mirrorConfirmed}>
             保存到相册
           </Button>
         </View>
       ) : null}
 
       {/* dpi 元数据诚实标注（owner 2026-10-23 确认口径） */}
-      <Text style={{ display: 'block', fontSize: '11px', color: '#aaa', marginTop: '14px' }}>
+      <Text className='note-faint'>
         说明：dpi 决定输出像素数量（同一规格 600dpi 像素翻倍）；文件本身不含 dpi 元数据，报名/办证系统按像素校验。
       </Text>
 

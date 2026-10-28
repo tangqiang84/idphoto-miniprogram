@@ -271,12 +271,7 @@ export default function ToolPrint() {
       <Text className='page__title'>冲印排版</Text>
       <Text className='page__hint'>上传已制作好的证件照，选规格与相纸，自动平铺成可打印拼版图。纯拼版，无需人脸授权。</Text>
       {incoming ? (
-        <Text
-          style={{
-            display: 'block', fontSize: '12px', marginTop: '6px',
-            color: incoming.indexOf('未能') === 0 ? '#e53e3e' : '#2b6cb0',
-          }}
-        >
+        <Text className={incoming.indexOf('未能') === 0 ? 'incoming incoming--bad' : 'incoming incoming--ok'}>
           {incoming}
         </Text>
       ) : null}
@@ -290,25 +285,18 @@ export default function ToolPrint() {
       </Button>
 
       {/* 选规格 */}
-      <View style={{ margin: '14px 0' }}>
-        <Text style={{ display: 'block', marginBottom: '6px' }}>证件照规格：</Text>
+      <View className='section'>
+        <Text className='field-label'>证件照规格：</Text>
         <View className='spec-chips'>
           {specs.map((s: any) => {
             const on = specId === s.id;
             return (
               <View
                 key={s.id}
-                className='spec-chip'
+                className={on ? 'spec-chip spec-chip--sel' : 'spec-chip'}
                 onClick={() => setSpecId(s.id)}
-                style={{
-                  padding: '5px 10px', marginRight: '6px', marginBottom: '6px', borderRadius: '20px',
-                  border: on ? '1px solid #438EDB' : '1px solid #ddd',
-                  background: on ? '#eef5fd' : '#fff',
-                }}
               >
-                <Text style={{ fontSize: '12px', color: on ? '#2b6cb0' : '#666' }}>
-                  {s.name} {s.widthMm}×{s.heightMm}mm
-                </Text>
+                <Text>{s.name} {s.widthMm}×{s.heightMm}mm</Text>
               </View>
             );
           })}
@@ -316,23 +304,18 @@ export default function ToolPrint() {
       </View>
 
       {/* 选相纸：常规 */}
-      <View style={{ margin: '14px 0' }}>
-        <Text style={{ display: 'block', marginBottom: '6px' }}>相纸（常规冲印）：</Text>
+      <View className='section'>
+        <Text className='field-label'>相纸（常规冲印）：</Text>
         <View className='spec-chips'>
           {regularPapers.map((p: any) => {
             const on = paperId === p.id;
             return (
               <View
                 key={p.id}
-                className='spec-chip'
+                className={on ? 'spec-chip spec-chip--sel' : 'spec-chip'}
                 onClick={() => setPaperId(p.id)}
-                style={{
-                  padding: '5px 10px', marginRight: '6px', marginBottom: '6px', borderRadius: '20px',
-                  border: on ? '1px solid #438EDB' : '1px solid #ddd',
-                  background: on ? '#eef5fd' : '#fff',
-                }}
               >
-                <Text style={{ fontSize: '12px', color: on ? '#2b6cb0' : '#666' }}>{p.name}</Text>
+                <Text>{p.name}</Text>
               </View>
             );
           })}
@@ -340,25 +323,18 @@ export default function ToolPrint() {
       </View>
 
       {/* 选相纸：迷你 */}
-      <View style={{ margin: '14px 0' }}>
-        <Text style={{ display: 'block', marginBottom: '6px' }}>相纸（迷你打印机）：</Text>
+      <View className='section'>
+        <Text className='field-label'>相纸（迷你打印机）：</Text>
         <View className='spec-chips'>
           {miniPapers.map((p: any) => {
             const on = paperId === p.id;
             return (
               <View
                 key={p.id}
-                className='spec-chip'
+                className={on ? 'spec-chip spec-chip--sel' : 'spec-chip'}
                 onClick={() => setPaperId(p.id)}
-                style={{
-                  padding: '5px 10px', marginRight: '6px', marginBottom: '6px', borderRadius: '20px',
-                  border: on ? '1px solid #438EDB' : '1px solid #ddd',
-                  background: on ? '#eef5fd' : '#fff',
-                }}
               >
-                <Text style={{ fontSize: '12px', color: on ? '#2b6cb0' : '#666' }}>
-                  {p.name}{p.tileable ? '' : '（每版1张）'}
-                </Text>
+                <Text>{p.name}{p.tileable ? '' : '（每版1张）'}</Text>
               </View>
             );
           })}
@@ -366,42 +342,42 @@ export default function ToolPrint() {
       </View>
 
       {/* 裁剪参考线开关（默认开，Q6 已确认） */}
-      <View style={{ margin: '12px 0', display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+      <View className='row-flex section'>
         <Switch checked={showGuide} onChange={(e: any) => setShowGuide(e.detail.value)} />
         <Text style={{ marginLeft: '6px' }}>显示裁剪参考线（便于自裁）</Text>
       </View>
 
       {/* 结果信息 */}
       {result && result.count > 0 ? (
-        <Text style={{ display: 'block', fontSize: '13px', color: '#333', marginTop: '6px' }}>
+        <Text className='out-info'>
           本版可排 {result.count} 张 · 输出 {result.sheet.width}×{result.sheet.height}px @
           {result.dpi}dpi · {result.fileKb}KB
           {paperLabel && !paperLabel.tileable ? ' · 每版仅 1 张（白边不可拼版）' : ''}
         </Text>
       ) : null}
       {result && result.count === 0 ? (
-        <Text style={{ display: 'block', fontSize: '13px', color: '#e53e3e', marginTop: '6px' }}>
+        <Text className='out-info out-info--warn'>
           ⚠️ {result.note || '该相纸无法容纳所选证件照，请换更大相纸或更小规格'}
         </Text>
       ) : null}
       {msg && (!result || result.count > 0) && msg !== '完成' ? (
-        <Text style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text>
+        <Text className='status-line'>{msg}</Text>
       ) : null}
 
       {/* 预览 */}
       {preview ? (
-        <View style={{ marginTop: '14px' }}>
-          <Image src={preview} style={{ width: '100%', height: '300px', background: '#f0f0f0' }} mode='aspectFit' />
+        <View className='section'>
+          <Image src={preview} className='preview preview--tall' mode='aspectFit' />
           {/* AC1 镜像自查（导出前勾选，未勾选禁用保存，与 T5 一致） */}
           {pick.MirrorCheck}
-          <Button style={{ marginTop: '8px' }} onClick={save} disabled={!pick.mirrorConfirmed}>
+          <Button className='btn-primary mt-sm' onClick={save} disabled={!pick.mirrorConfirmed}>
             保存到相册
           </Button>
         </View>
       ) : null}
 
       {/* 说明 */}
-      <Text style={{ display: 'block', fontSize: '11px', color: '#aaa', marginTop: '14px' }}>
+      <Text className='note-faint'>
         说明：导出为拼版 JPG（白底、无水印、免费）。mini 相纸中 instax / 方形贴纸每版仅 1 张，四周白边不可裁掉用于拼版；裁剪参考线仅供自裁定位，不会印到成品。
       </Text>
 

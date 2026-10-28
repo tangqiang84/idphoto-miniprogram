@@ -445,34 +445,26 @@ export default function ToolSuit() {
       </Text>
 
       {/* 授权（默认不勾选，未集齐不启动处理；含换装单独授权 suitSwap；F3：未勾选则选图入口不可点） */}
-      <View
-        className='consent'
-        style={gate.hinted
-          ? { border: '2px solid #e07b00', borderRadius: '8px', padding: '10px', background: '#fff8ec' }
-          : undefined}
-      >
+      <View className={gate.hinted ? 'consent consent--hinted' : 'consent'}>
         <Text className='consent__h'>需授权（{granted.length}/{consentItems.length}）</Text>
         {gate.hinted ? (
-          <Text style={{ display: 'block', fontSize: '12px', color: '#e07b00', margin: '4px 0 6px' }}>
+          <Text className='consent__hint'>
             请先勾选下列全部授权（含换装单独授权），才能选择照片或拍照（先同意、后收集）
           </Text>
         ) : null}
         {consentItems.map((c: any) => {
           const on = granted.includes(c.id);
+          const cls =
+            'consent__item' +
+            (on ? ' consent__item--on' : '') +
+            (gate.hinted && !on ? ' consent__item--hint' : '');
           return (
             <View
               key={c.id}
-              className='consent__item'
+              className={cls}
               onClick={() => toggleConsent(c.id)}
-              style={{
-                border: on ? '1px solid #438EDB' : (gate.hinted ? '1px solid #e07b00' : '1px solid #ddd'),
-                background: on ? '#eef5fd' : '#fff',
-                padding: '8px',
-                marginBottom: '6px',
-                borderRadius: '6px',
-              }}
             >
-              <Text style={{ fontWeight: on ? 'bold' : 'normal' }}>
+              <Text className='consent__check'>
                 {on ? '☑ ' : '☐ '}
                 {c.label}
               </Text>
@@ -483,7 +475,7 @@ export default function ToolSuit() {
       </View>
 
       {/* 职业装模板（自绘素材，AI 自绘自有版权，PRD Q3 合规） */}
-      <View style={{ margin: '12px 0' }}>
+      <View className='section'>
       {/* 【P1 #77 / P2.5】裁剪步骤屏（比例锁定 + 智能构图结果） */}
       <CropStep
         specName={specs[specIndex].name}
@@ -526,56 +518,46 @@ export default function ToolSuit() {
         />
 
         <Text>职业装模板：</Text>
-        <View style={{ display: 'flex', flexDirection: 'row', marginTop: '6px' }}>
+        <View className='suit-tpls'>
           {SUIT_TEMPLATES.map((t, i) => (
             <View
               key={t.id}
+              className={tplIndex === i ? 'suit-tpl suit-tpl--sel' : 'suit-tpl'}
               onClick={() => setTplIndex(i)}
-              style={{
-                flex: 1,
-                marginRight: i < SUIT_TEMPLATES.length - 1 ? '8px' : 0,
-                padding: '8px 4px',
-                borderRadius: '6px',
-                textAlign: 'center',
-                border: tplIndex === i ? '2px solid #333' : '1px solid #ccc',
-                background: tplIndex === i ? '#eef5fd' : '#fff',
-              }}
             >
-              <Image src={t.src as any} style={{ width: '48px', height: '48px' }} mode='aspectFit' />
-              <Text style={{ display: 'block', fontSize: '12px', marginTop: '2px' }}>{t.name}</Text>
+              <Image src={t.src as any} className='suit-tpl__img' mode='aspectFit' />
+              <Text className='suit-tpl__name'>{t.name}</Text>
             </View>
           ))}
         </View>
       </View>
 
       {/* 底色 */}
-      <View style={{ margin: '12px 0' }}>
+      <View className='section'>
         <Text>底色：</Text>
-        <View style={{ display: 'flex', flexDirection: 'row', marginTop: '6px' }}>
-          {bgOptions.map((o) => (
-            <View
-              key={o.key}
-              onClick={() => {
-                setBg(o.key);
-                recompose(BG[o.key]); // 任务 #50：换底色即刻重新合成
-              }}
-              style={{
-                padding: '8px 14px',
-                marginRight: '8px',
-                borderRadius: '6px',
-                background: o.color,
-                color: o.key === 'white' || o.key === 'gray' ? '#333' : '#fff',
-                border: bg === o.key ? '2px solid #333' : '1px solid #ccc',
-              }}
-            >
-              <Text>{o.label}</Text>
-            </View>
-          ))}
+        <View className='bg-swatches'>
+          {bgOptions.map((o) => {
+            const light = o.key === 'white' || o.key === 'gray';
+            const cls = 'bg-swatch' + (light ? ' bg-swatch--light' : '') + (bg === o.key ? ' bg-swatch--sel' : '');
+            return (
+              <View
+                key={o.key}
+                className={cls}
+                style={{ background: o.color }}
+                onClick={() => {
+                  setBg(o.key);
+                  recompose(BG[o.key]); // 任务 #50：换底色即刻重新合成
+                }}
+              >
+                <Text>{o.label}</Text>
+              </View>
+            );
+          })}
         </View>
       </View>
 
       {/* 输出尺寸（R1：换装必须锚定标准规格画布，默认一寸）+ 输出档位（dpi） */}
-      <View style={{ margin: '12px 0' }}>
+      <View className='section'>
         <Text>输出尺寸：</Text>
         <Picker
           mode='selector'
@@ -587,7 +569,7 @@ export default function ToolSuit() {
             reprocess({ specIndex: nextIdx }); // 任务 #50：换规格自动重跑
           }}
         >
-          <View style={{ color: '#438EDB', padding: '4px 0' }}>
+          <View className='picker-value'>
             {specIndex < 0 ? '一寸' : `${specs[specIndex].name} ▾`}
           </View>
         </Picker>
@@ -612,34 +594,25 @@ export default function ToolSuit() {
         📷 拍摄（引导框）
       </Button>
 
-      {msg ? <Text className='status-line' style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
+      {msg ? <Text className='status-line'>{msg}</Text> : null}
 
       {/* 输出构图提示（分辨率不足 / 达到处理上限 → 如实告知） */}
       {planNote ? (
-        <Text style={{ display: 'block', fontSize: '12px', color: '#e07b00', marginTop: '6px' }}>
-          {planNote}
-        </Text>
+        <Text className='plan-note'>{planNote}</Text>
       ) : null}
 
       {preview ? (
-        <View style={{ marginTop: '14px' }}>
-          <Image src={preview} style={{ width: '100%', height: '260px' }} mode='aspectFit' />
-          {outInfo ? <Text style={{ display: 'block', fontSize: '12px', color: '#888', marginTop: '4px' }}>{outInfo}</Text> : null}
+        <View className='section'>
+          <Image src={preview} className='preview' mode='aspectFit' />
+          {outInfo ? <Text className='out-info'>{outInfo}</Text> : null}
 
           {/* D3/AC6 强制五官自检：未确认不得导出 */}
           <View
-            className='selfcheck'
+            className={selfChecked ? 'selfcheck selfcheck--on' : 'selfcheck'}
             onClick={() => setSelfChecked(!selfChecked)}
-            style={{
-              marginTop: '12px',
-              padding: '10px',
-              borderRadius: '6px',
-              border: selfChecked ? '1px solid #438EDB' : '1px solid #ddd',
-              background: selfChecked ? '#eef5fd' : '#fff',
-            }}
           >
-            <Text style={{ fontWeight: 'bold' }}>{selfChecked ? '☑ ' : '☐ '}五官自检（PRD D3 / AC6）</Text>
-            <Text style={{ display: 'block', fontSize: '12px', color: '#666', marginTop: '4px' }}>
+            <Text className='selfcheck__h'>{selfChecked ? '☑ ' : '☐ '}五官自检（PRD D3 / AC6）</Text>
+            <Text className='selfcheck__desc'>
               请仔细核对：换装后的照片五官未被改动。端侧合成只覆盖肩颈区域，理论上不触碰脸部像素；如发现五官异常请勿导出，重新拍摄或换模板。未确认自检无法导出。
             </Text>
           </View>
@@ -647,7 +620,7 @@ export default function ToolSuit() {
           {/* AC1 镜像自查（与 T3 五官自检并列，导出前双闸门） */}
           {picker.MirrorCheck}
           <Button
-            style={{ marginTop: '10px' }}
+            className='btn-primary mt-sm'
             type={selfChecked && picker.mirrorConfirmed ? 'primary' : 'default'}
             onClick={exportSave}
             disabled={!selfChecked || !picker.mirrorConfirmed}

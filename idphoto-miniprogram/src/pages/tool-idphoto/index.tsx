@@ -561,34 +561,26 @@ export default function ToolIdPhoto() {
       <StepFlow steps={T1_STEPS} current={stepIndex} />
 
       {/* 授权（默认不勾选，未集齐不启动处理；F3：未勾选则选图入口不可点） */}
-      <View
-        className='consent'
-        style={gate.hinted
-          ? { border: '2px solid #e07b00', borderRadius: '8px', padding: '10px', background: '#fff8ec' }
-          : undefined}
-      >
+      <View className={gate.hinted ? 'consent consent--hinted' : 'consent'}>
         <Text className='consent__h'>需授权（{granted.length}/{consentItems.length}）</Text>
         {gate.hinted ? (
-          <Text style={{ display: 'block', fontSize: '12px', color: '#e07b00', margin: '4px 0 6px' }}>
+          <Text className='consent__hint'>
             请先勾选下列全部授权，才能选择照片或拍照（先同意、后收集）
           </Text>
         ) : null}
         {consentItems.map((c: any) => {
           const on = granted.includes(c.id);
+          const cls =
+            'consent__item' +
+            (on ? ' consent__item--on' : '') +
+            (gate.hinted && !on ? ' consent__item--hint' : '');
           return (
             <View
               key={c.id}
-              className='consent__item'
+              className={cls}
               onClick={() => toggleConsent(c.id)}
-              style={{
-                border: on ? '1px solid #438EDB' : (gate.hinted ? '1px solid #e07b00' : '1px solid #ddd'),
-                background: on ? '#eef5fd' : '#fff',
-                padding: '8px',
-                marginBottom: '6px',
-                borderRadius: '6px',
-              }}
             >
-              <Text style={{ fontWeight: on ? 'bold' : 'normal' }}>
+              <Text className='consent__check'>
                 {on ? '☑ ' : '☐ '}
                 {c.label}
               </Text>
@@ -599,7 +591,7 @@ export default function ToolIdPhoto() {
       </View>
 
       {/* 规格与底色 */}
-      <View style={{ margin: '12px 0' }}>
+      <View className='section'>
       {/* 【P1 #77 / P2.5】裁剪步骤屏（比例锁定 + 智能构图结果透明化，RC-1） */}
       <CropStep
         specName={specs[specIndex].name}
@@ -649,9 +641,9 @@ export default function ToolIdPhoto() {
             reprocess({ specIndex: nextIdx }); // 任务 #50：换规格自动重跑（不需重新选图）
           }}
         >
-          <View style={{ color: '#438EDB', padding: '4px 0' }}>{specs[specIndex].name} ▾</View>
+          <View className='picker-value'>{specs[specIndex].name} ▾</View>
         </Picker>
-        <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
+        <Text className='tag tag--block'>
           {specs[specIndex].source}
         </Text>
         {/* 规格速览芯片：直接点选 + 展示官方像素（2026-10-23 规格数值裁决后新增） */}
@@ -662,46 +654,35 @@ export default function ToolIdPhoto() {
             return (
               <View
                 key={s.id}
-                className='spec-chip'
+                className={on ? 'spec-chip spec-chip--sel' : 'spec-chip'}
                 onClick={() => setSpecIndex(i)}
-                style={{
-                  padding: '5px 10px',
-                  marginRight: '6px',
-                  marginBottom: '6px',
-                  borderRadius: '20px',
-                  border: on ? '1px solid #438EDB' : '1px solid #ddd',
-                  background: on ? '#eef5fd' : '#fff',
-                }}
               >
-                <Text style={{ fontSize: '12px', color: on ? '#2b6cb0' : '#666' }}>
-                  {s.name} {px.width}×{px.height}
-                </Text>
+                <Text>{s.name} {px.width}×{px.height}</Text>
               </View>
             );
           })}
         </View>
       </View>
 
-      <View style={{ display: 'flex', flexDirection: 'row', margin: '12px 0' }}>
-        {bgOptions.map((o) => (
-          <View
-            key={o.key}
-            onClick={() => {
-              setBg(o.key);
-              recomposeBg(BG[o.key]); // 任务 #50：换底色即刻重新合成（不重跑抠图）
-            }}
-            style={{
-              padding: '8px 14px',
-              marginRight: '8px',
-              borderRadius: '6px',
-              background: o.color,
-              color: o.key === 'white' ? '#333' : '#fff',
-              border: bg === o.key ? '2px solid #333' : '1px solid #ccc',
-            }}
-          >
-            <Text>{o.label}</Text>
-          </View>
-        ))}
+      <View className='bg-swatches'>
+        {bgOptions.map((o) => {
+          const sel = bg === o.key;
+          const light = o.key === 'white';
+          const cls = 'bg-swatch' + (light ? ' bg-swatch--light' : '') + (sel ? ' bg-swatch--sel' : '');
+          return (
+            <View
+              key={o.key}
+              className={cls}
+              style={{ background: o.color }}
+              onClick={() => {
+                setBg(o.key);
+                recomposeBg(BG[o.key]); // 任务 #50：换底色即刻重新合成（不重跑抠图）
+              }}
+            >
+              <Text>{o.label}</Text>
+            </View>
+          );
+        })}
       </View>
 
       {/* F3（P1 / 台账 #76）：选图前协议闸门 —— 未集齐授权，选图/拍摄入口不可达 */}
@@ -721,21 +702,18 @@ export default function ToolIdPhoto() {
         📷 拍摄（引导框）
       </Button>
 
-      {msg ? <Text className='status-line' style={{ display: 'block', marginTop: '10px', color: '#666' }}>{msg}</Text> : null}
+      {msg ? <Text className='status-line'>{msg}</Text> : null}
 
       {/* 智能裁切状态（任务 #24 / PRD B2）：按规格头占比自动定位裁剪框 */}
       {cropInfo ? (
         <View className='crop-info'>
-          <Text style={{ fontSize: '12px', color: cropInfo.auto ? '#2b6cb0' : '#999' }}>
+          <Text className='crop-info__auto'>
             {cropInfo.auto
               ? `智能裁切：已按目标头部占比 ${(cropInfo.ratioTarget * 100).toFixed(0)}% 自动构图`
               : '智能裁切：未检出人脸，已按画面居中裁剪'}
           </Text>
           {cropInfo.notes && cropInfo.notes.length ? (
-            <Text
-              className='crop-info__warn'
-              style={{ display: 'block', fontSize: '12px', color: cropInfo.degraded ? '#c62828' : '#e07b00', marginTop: '4px' }}
-            >
+            <Text className={cropInfo.degraded ? 'crop-info__warn crop-info__warn--bad' : 'crop-info__warn'}>
               {cropInfo.degraded ? '⚠ ' : ''}
               {cropInfo.notes.join('；')}
             </Text>
@@ -749,18 +727,16 @@ export default function ToolIdPhoto() {
 
       {/* 输出构图提示（分辨率不足 / 达到处理上限 → 如实告知，不静默输出糊图） */}
       {planNote ? (
-        <Text style={{ display: 'block', fontSize: '12px', color: '#e07b00', marginTop: '6px' }}>
-          {planNote}
-        </Text>
+        <Text className='plan-note'>{planNote}</Text>
       ) : null}
 
       {preview ? (
-        <View style={{ marginTop: '14px' }}>
-          <Image src={preview} style={{ width: '100%', height: '260px' }} mode='aspectFit' />
+        <View className='section'>
+          <Image src={preview} className='preview' mode='aspectFit' />
           {/* 头部占比（PRD B3）：实测值 + 来源标注；未检测时说明原因 */}
           {headInfo ? (
-            <View style={{ padding: '8px 0' }}>
-              <Text style={{ fontSize: '13px', color: '#333' }}>
+            <View className='head-info'>
+              <Text className='head-info__ratio'>
                 头部占比{' '}
                 {headInfo.ratio != null
                   ? `${(headInfo.ratio * 100).toFixed(0)}%`
@@ -769,18 +745,18 @@ export default function ToolIdPhoto() {
                 {headInfo.quality === 'low' ? '（可信度低）' : ''}
               </Text>
               {headInfo.notes && headInfo.notes.length ? (
-                <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                <Text className='head-info__note'>
                   {headInfo.notes.join('；')}
                 </Text>
               ) : null}
             </View>
           ) : (
-            <Text style={{ display: 'block', fontSize: '12px', color: '#999', marginTop: '6px' }}>
+            <Text className='head-info__none'>
               头部占比：未检测到人脸，当前环境不支持人脸检测
             </Text>
           )}
           {/* 手动修补（PRD B1 / T1-17，任务 #42）：低置信边缘自行涂改修正 */}
-          <Button style={{ marginTop: '8px' }} onClick={() => setPatching(true)} disabled={!patchBase || busy}>
+          <Button className='btn-ghost mt-sm' onClick={() => setPatching(true)} disabled={!patchBase || busy}>
             ✏️ 手动修补边缘
           </Button>
           {patching && patchBase ? (
@@ -795,53 +771,45 @@ export default function ToolIdPhoto() {
 
 
           {/* AI 换装（可选，PRD D 章 / T1-11/12，任务 #43）：端侧贴图合成 + 强制五官自检 */}
-          <View style={{ marginTop: '10px', padding: '10px', borderRadius: '6px', border: '1px solid #e6e6e6', background: '#fafafa' }}>
+          <View className='suit-panel'>
             <View onClick={() => setSuitPanelOpen(!suitPanelOpen)}>
-              <Text style={{ fontWeight: 'bold' }}>{suitPanelOpen ? '▾ ' : '▸ '}👔 AI 换装（可选）</Text>
-              <Text style={{ display: 'block', fontSize: '12px', color: '#999', marginTop: '2px' }}>
+              <Text className='suit-panel__head'>{suitPanelOpen ? '▾ ' : '▸ '}👔 AI 换装（可选）</Text>
+              <Text className='suit-panel__desc'>
                 {suitApplied ? '已换装（更换模板后请点「应用换装」）' : '点开可选职业装模板；仅换装、不改五官'}
               </Text>
             </View>
             {suitPanelOpen ? (
-              <View style={{ marginTop: '8px' }}>
+              <View className='mt-sm'>
                 {/* suitSwap 单独授权（个保法敏感信息单独同意 / AC5） */}
                 {!granted.includes('suitSwap') ? (
                   <View
                     onClick={() => toggleConsent('suitSwap')}
-                    style={{ border: '1px solid #ddd', background: '#fff', padding: '8px', borderRadius: '6px', marginBottom: '8px' }}
+                    className='consent__item'
                   >
                     <Text>☐ {SUIT_CONSENT.label}（需单独授权）</Text>
                     <Text className='consent__desc'>{SUIT_CONSENT.desc}</Text>
                   </View>
                 ) : (
-                  <Text style={{ display: 'block', fontSize: '12px', color: '#2e7d32', marginBottom: '8px' }}>✓ 已授权 AI 换装</Text>
+                  <Text className='suit-panel__granted'>✓ 已授权 AI 换装</Text>
                 )}
                 {/* 职业装模板（自绘素材，AI 自绘自有版权，PRD Q3 合规） */}
-                <View style={{ display: 'flex', flexDirection: 'row' }}>
+                <View className='suit-tpls'>
                   {SUIT_TEMPLATES.map((t, i) => (
                     <View
                       key={t.id}
+                      className={suitTplIndex === i ? 'suit-tpl suit-tpl--sel' : 'suit-tpl'}
                       onClick={() => setSuitTplIndex(i)}
-                      style={{
-                        flex: 1,
-                        marginRight: i < SUIT_TEMPLATES.length - 1 ? '8px' : 0,
-                        padding: '6px 4px',
-                        borderRadius: '6px',
-                        textAlign: 'center',
-                        border: suitTplIndex === i ? '2px solid #333' : '1px solid #ccc',
-                        background: suitTplIndex === i ? '#eef5fd' : '#fff',
-                      }}
                     >
-                      <Image src={t.src as any} style={{ width: '44px', height: '44px' }} mode='aspectFit' />
-                      <Text style={{ display: 'block', fontSize: '12px', marginTop: '2px' }}>{t.name}</Text>
+                      <Image src={t.src as any} className='suit-tpl__img' mode='aspectFit' />
+                      <Text className='suit-tpl__name'>{t.name}</Text>
                     </View>
                   ))}
                 </View>
-                <View style={{ display: 'flex', flexDirection: 'row', marginTop: '8px' }}>
-                  <Button size='mini' style={{ marginRight: '8px' }} loading={busy} disabled={busy} onClick={applySuit}>应用换装</Button>
+                <View className='btn-row'>
+                  <Button size='mini' className='btn-row__item' loading={busy} disabled={busy} onClick={applySuit}>应用换装</Button>
                   {suitApplied ? <Button size='mini' onClick={cancelSuit}>取消换装</Button> : null}
                 </View>
-                <Text style={{ display: 'block', fontSize: '11px', color: '#999', marginTop: '6px' }}>
+                <Text className='suit-panel__note'>
                   端侧贴图合成，只覆盖肩颈区域、不改五官；换装后须完成五官自检方可导出。
                 </Text>
               </View>
@@ -851,12 +819,11 @@ export default function ToolIdPhoto() {
           {/* D3/AC6 强制五官自检：换装后未确认不得导出 */}
           {suitApplied ? (
             <View
-              className='selfcheck'
+              className={selfChecked ? 'selfcheck selfcheck--on' : 'selfcheck'}
               onClick={() => setSelfChecked(!selfChecked)}
-              style={{ marginTop: '10px', padding: '10px', borderRadius: '6px', border: selfChecked ? '1px solid #438EDB' : '1px solid #ddd', background: selfChecked ? '#eef5fd' : '#fff' }}
             >
-              <Text style={{ fontWeight: 'bold' }}>{selfChecked ? '☑ ' : '☐ '}五官自检（PRD D3 / AC6）</Text>
-              <Text style={{ display: 'block', fontSize: '12px', color: '#666', marginTop: '4px' }}>
+              <Text className='selfcheck__h'>{selfChecked ? '☑ ' : '☐ '}五官自检（PRD D3 / AC6）</Text>
+              <Text className='selfcheck__desc'>
                 请核对：换装后的照片五官未被改动。端侧合成只覆盖肩颈区域，理论上不触碰脸部像素；如发现五官异常请勿导出，重拍或换模板。未确认自检无法导出。
               </Text>
             </View>
@@ -865,7 +832,7 @@ export default function ToolIdPhoto() {
           {/* AC1 镜像自查（导出前勾选，未勾选禁用保存） */}
           {picker.MirrorCheck}
           <Button
-            style={{ marginTop: '8px' }}
+            className='btn-primary mt-sm'
             onClick={save}
             disabled={!picker.mirrorConfirmed || (suitApplied && !selfChecked)}
           >
@@ -873,7 +840,7 @@ export default function ToolIdPhoto() {
           </Button>
           {/* PRD K1 入口①：另存为排版版 → T6 冲印排版（纯拼版，不需要人脸授权） */}
           <Button
-            style={{ marginTop: '8px' }}
+            className='btn-ghost mt-sm'
             onClick={goPrintLayout}
           >
             🖨️ 另存为冲印排版（拼版打印）
@@ -883,20 +850,19 @@ export default function ToolIdPhoto() {
 
       {/* 合规预审结果 */}
       {result ? (
-        <View style={{ marginTop: '14px' }}>
-          <Text style={{ fontWeight: 'bold' }}>
+        <View className='mt'>
+          <Text className='result-title'>
             合规预审：{result.pass ? '全部通过' : '有不通过项'}
           </Text>
           {result.checks.map((c: any) => (
-            <View key={c.key} style={{ padding: '6px 0' }}>
+            <View key={c.key} className='result-row'>
               <Text
                 className={c.level === 'advisory' ? 'result__warn' : (c.pass ? 'result__ok' : 'result__bad')}
-                style={{ color: c.level === 'advisory' ? '#e07b00' : (c.pass ? '#2e7d32' : '#c62828') }}
               >
                 {c.level === 'advisory' ? 'ⓘ' : (c.pass ? '✓' : '✗')} {c.label}
                 {c.level === 'advisory' ? '（提示项）' : ''}
               </Text>
-              <Text style={{ display: 'block', fontSize: '12px', color: '#888' }}>{c.detail}</Text>
+              <Text className='result-row__detail'>{c.detail}</Text>
             </View>
           ))}
         </View>
