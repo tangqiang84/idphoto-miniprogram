@@ -6,6 +6,7 @@
 
 const { localMatting, estimateQuality, collectEdgeSamples } = require('./mattingLocal');
 const { cloudMatting } = require('./mattingCloud');
+const { resolveBackground, sampleGradient } = require('./color');
 
 const CONF_THRESHOLD = 0.85; // 端侧置信度阈值，低于则触发上云增强
 
@@ -74,17 +75,38 @@ async function segment({ rgba, width, height, session, cloud, consents, audit, t
   return { ...base, backend: 'cloud', alpha: cloudRes.alpha, confidence: cloudRes.confidence, degraded: false, cloudMeta: cloudRes.cloudMeta };
 }
 
-// 用 alpha 合成纯色背景；返回合成后 RGBA（Uint8ClampedArray，长度 w*h*4）
+// 用 alpha 合成背景；返回合成后 RGBA（Uint8ClampedArray，长度 w*h*4）
+//
+// 【2026-10-28 渐变底支持】bgHex 现在接受三种形态（core/color.js 的 resolveBackground 归一化）：
+//   · null / undefined → 纯白（既有行为，零回归）
+//   · string（HEX）    → 纯色（既有行为，零回归）
+//   · {type:'gradient', from, to, angle} → 线性渐变（新增）
+// 形态由 resolveBackground 统一解析，非法输入一律回落到白色（不抛，避免打断导出链路）。
 function composite(rgba, alpha, width, height, bgHex) {
-  const s = (bgHex || '#ffffff').replace('#', '');
-  const br = parseInt(s.slice(0, 2), 16);
-  const bg = parseInt(s.slice(2, 4), 16);
-  const bb = parseInt(s.slice(4, 6), 16);
+  const bg = resolveBackground(bgHex == null ? '#ffffff' : bgHex);
   const out = new Uint8ClampedArray(width * height * 4);
+  if (bg.type === 'gradient') {
+    // 渐变：逐像素取色（背景色随位置变化，前景仍按 alpha 混合）
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = y * width + x;
+        const c = sampleGradient(bg, x, y, width, height);
+        const a = Math.max(0, Math.min(1, alpha[i]));
+        out[i * 4] = rgba[i * 4] * a + c[0] * (1 - a);
+        out[i * 4 + 1] = rgba[i * 4 + 1] * a + c[1] * (1 - a);
+        out[i * 4 + 2] = rgba[i * 4 + 2] * a + c[2] * (1 - a);
+        out[i * 4 + 3] = 255;
+      }
+    }
+    return out;
+  }
+  const br = bg.rgb ? bg.rgb[0] : 255;
+  const bg2 = bg.rgb ? bg.rgb[1] : 255;
+  const bb = bg.rgb ? bg.rgb[2] : 255;
   for (let i = 0; i < width * height; i++) {
     const a = Math.max(0, Math.min(1, alpha[i]));
     out[i * 4] = rgba[i * 4] * a + br * (1 - a);
-    out[i * 4 + 1] = rgba[i * 4 + 1] * a + bg * (1 - a);
+    out[i * 4 + 1] = rgba[i * 4 + 1] * a + bg2 * (1 - a);
     out[i * 4 + 2] = rgba[i * 4 + 2] * a + bb * (1 - a);
     out[i * 4 + 3] = 255;
   }

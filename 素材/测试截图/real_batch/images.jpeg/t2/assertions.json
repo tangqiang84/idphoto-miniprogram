@@ -1,0 +1,162 @@
+{
+  "asset": "images.jpeg",
+  "assetPurpose": "positive",
+  "assetSize": {
+    "height": 679,
+    "width": 452
+  },
+  "tool": "t2",
+  "connectivity": true,
+  "status": "完成（云端精修）",
+  "product": "素材/测试截图/real_batch/images.jpeg/t2/result.jpg",
+  "assertions": {
+    "pass": true,
+    "passCount": 6,
+    "failCount": 0,
+    "results": [
+      {
+        "name": "assertPixelSize",
+        "ok": true,
+        "actual": {
+          "width": 452,
+          "height": 679
+        },
+        "expected": {
+          "width": 452,
+          "height": 679,
+          "dpi": 300,
+          "specId": null,
+          "specName": "保持原图尺寸（长边≤800 等比缩放，原图 452×679）"
+        },
+        "detail": "成品 452×679px == 保持原图尺寸（长边≤800 等比缩放，原图 452×679） 要求 452×679px（容差±2）",
+        "method": null,
+        "estimated": false,
+        "estimatedNote": null
+      },
+      {
+        "name": "assertBackgroundColor",
+        "ok": true,
+        "actual": {
+          "hex": "#FFFFFF",
+          "rgb": [
+            255,
+            255,
+            255
+          ],
+          "support": 0.5,
+          "votes": 6,
+          "alphaRatio": 0
+        },
+        "expected": {
+          "hex": "#FFFFFF",
+          "tolerance": 12
+        },
+        "detail": "底色实测众数色 #FFFFFF（四角 12 点中 6 票，支撑率 50%），期望 #FFFFFF，偏差 0 ≤ 容差 12",
+        "method": null,
+        "estimated": false,
+        "estimatedNote": null
+      },
+      {
+        "name": "assertFileSize",
+        "ok": true,
+        "actual": {
+          "kb": 24.9,
+          "bytes": 25461
+        },
+        "expected": 200,
+        "detail": "文件 24.9KB ≤ 上限 200KB",
+        "method": null,
+        "estimated": false,
+        "estimatedNote": null
+      },
+      {
+        "name": "assertHeadRatio",
+        "ok": true,
+        "actual": {
+          "ratio": 0.6229749631811488,
+          "method": "neck-estimate",
+          "estimated": true
+        },
+        "expected": {
+          "min": 0.61,
+          "max": 0.71,
+          "tolerance": 0
+        },
+        "detail": "头部占比 62.3%（**估算值**：颈部轮廓法，头顶行 73px、下巴行 496px、头长 423px ÷ 图高 679px）落在规格 一寸 区间 61%~71%｜局限：估算口径，误差约 ±5~8 个百分点，贴近边界时可能误判",
+        "method": "neck-estimate",
+        "estimated": true,
+        "estimatedNote": "估算值（颈部轮廓法），非实测；误差约 ±5~8 个百分点",
+        "notApplicable": true,
+        "notApplicableReason": "该工具未选规格（保持原图尺寸），成品不按规格裁切 → 头占比不与规格区间绑定，此断言不适用"
+      },
+      {
+        "name": "assertNoWatermark",
+        "ok": true,
+        "actual": {
+          "suspectCount": 0,
+          "suspects": [],
+          "bgHex": "#FFFFFF",
+          "blocks": 17,
+          "subjectPx": 78669,
+          "candidateRows": 0,
+          "isTexture": false
+        },
+        "expected": {
+          "suspectCount": 0
+        },
+        "detail": "未检出文字水印：①元数据无水印标记；②像素启发式：背景基准色 #FFFFFF，非背景连通块 17 个（人像主体 78669px 已排除），成行候选子行 0 条，均未达「≥3 块 + 同色 + 悬浮平坦背景」门槛｜局限：启发式检测，半透明 / 压在人像身上 / 与主体相连 / 单字 / 斜向平铺水印会漏检",
+        "method": "metadata+heuristic",
+        "estimated": false,
+        "estimatedNote": "像素启发式（子行模型）：不是逐像素基准比对，不能保证检出全部水印"
+      },
+      {
+        "name": "assertFaceRegionClean",
+        "ok": true,
+        "actual": {
+          "mean": 163.94,
+          "std": 56.159,
+          "gradMean": 3.609,
+          "highFreqRatio": 0.0096
+        },
+        "expected": {
+          "minStd": 3,
+          "maxGrad": 26,
+          "highFreqRatio": 0.5
+        },
+        "detail": "脸部区域 (116,164)-(359,440)：灰度均值 163.9，标准差 56.16，相邻像素梯度均值 3.61，高频像素占比 1.0% → 区域有正常内容，非纯色、非花屏",
+        "method": "variance+gradient",
+        "estimated": true,
+        "estimatedNote": "faceRect 为自动近似（上部中央区域）"
+      }
+    ],
+    "failed": [],
+    "notApplicableCount": 1
+  },
+  "audit": [
+    {
+      "stage": "upload_region",
+      "mode": "center_region",
+      "fgRatio": 0.566,
+      "rect": {
+        "x": 45,
+        "y": 14,
+        "w": 362,
+        "h": 665
+      },
+      "tool": "T2",
+      "hasPixel": false
+    },
+    {
+      "stage": "cloud_ok",
+      "latencyMs": 2219,
+      "region": "CN",
+      "confidence": 0.9902587961616749,
+      "retained": false,
+      "provider": "baidu",
+      "hasPixel": false
+    }
+  ],
+  "error": null,
+  "cropInfo": "",
+  "faceDetectAvailable": false
+}

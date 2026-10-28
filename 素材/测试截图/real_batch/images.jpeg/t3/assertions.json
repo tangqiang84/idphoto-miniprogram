@@ -1,0 +1,234 @@
+{
+  "asset": "images.jpeg",
+  "assetPurpose": "positive",
+  "assetSize": {
+    "height": 679,
+    "width": 452
+  },
+  "tool": "t3",
+  "connectivity": true,
+  "status": "换装完成（云端精修）——请核对五官后导出（姿态信号：posekey:call_failed）",
+  "product": "素材/测试截图/real_batch/images.jpeg/t3/result.jpg",
+  "assertions": {
+    "pass": false,
+    "passCount": 6,
+    "failCount": 1,
+    "results": [
+      {
+        "name": "assertPixelSize",
+        "ok": true,
+        "actual": {
+          "width": 295,
+          "height": 413
+        },
+        "expected": {
+          "width": 295,
+          "height": 413,
+          "dpi": 300,
+          "specId": "one-inch",
+          "specName": "一寸"
+        },
+        "detail": "成品 295×413px == 一寸 要求 295×413px（容差±2）",
+        "method": null,
+        "estimated": false,
+        "estimatedNote": null
+      },
+      {
+        "name": "assertBackgroundColor",
+        "ok": true,
+        "actual": {
+          "hex": "#428DDA",
+          "rgb": [
+            66,
+            141,
+            218
+          ],
+          "support": 0.5,
+          "votes": 6,
+          "alphaRatio": 0
+        },
+        "expected": {
+          "hex": "#438EDB",
+          "tolerance": 12
+        },
+        "detail": "底色实测众数色 #428DDA（四角 12 点中 6 票，支撑率 50%），期望 #438EDB，偏差 1 ≤ 容差 12",
+        "method": null,
+        "estimated": false,
+        "estimatedNote": null
+      },
+      {
+        "name": "assertFileSize",
+        "ok": true,
+        "actual": {
+          "kb": 18.3,
+          "bytes": 18749
+        },
+        "expected": 200,
+        "detail": "文件 18.3KB ≤ 上限 200KB",
+        "method": null,
+        "estimated": false,
+        "estimatedNote": null
+      },
+      {
+        "name": "assertHeadRatio",
+        "ok": false,
+        "actual": {
+          "ratio": 0.46246973365617433,
+          "method": "neck-estimate",
+          "estimated": true
+        },
+        "expected": {
+          "min": 0.61,
+          "max": 0.71,
+          "tolerance": 0
+        },
+        "detail": "头部占比 46.2%（**估算值**：颈部轮廓法，头顶行 33px、下巴行 224px、头长 191px ÷ 图高 413px）超出规格 一寸 区间 61%~71%｜局限：估算口径，误差约 ±5~8 个百分点，贴近边界时可能误判",
+        "method": "neck-estimate",
+        "estimated": true,
+        "estimatedNote": "估算值（颈部轮廓法），非实测；误差约 ±5~8 个百分点",
+        "envLimited": true,
+        "envLimitedReason": "开发者工具模拟器不支持人脸检测（services/faceService.ts 跳过 devtools 平台） → 裁切降级为「按画面居中裁剪」→ 头占比必然不落规格区间；此项为环境限制，非产品缺陷（真机可验）"
+      },
+      {
+        "name": "assertNoWatermark",
+        "ok": true,
+        "actual": {
+          "suspectCount": 0,
+          "suspects": [],
+          "bgHex": "#428DDA",
+          "blocks": 3,
+          "subjectPx": 74965,
+          "candidateRows": 0,
+          "isTexture": false
+        },
+        "expected": {
+          "suspectCount": 0
+        },
+        "detail": "未检出文字水印：①元数据无水印标记；②像素启发式：背景基准色 #428DDA，非背景连通块 3 个（人像主体 74965px 已排除），成行候选子行 0 条，均未达「≥3 块 + 同色 + 悬浮平坦背景」门槛｜局限：启发式检测，半透明 / 压在人像身上 / 与主体相连 / 单字 / 斜向平铺水印会漏检",
+        "method": "metadata+heuristic",
+        "estimated": false,
+        "estimatedNote": "像素启发式（子行模型）：不是逐像素基准比对，不能保证检出全部水印"
+      },
+      {
+        "name": "assertFaceRegionClean",
+        "ok": true,
+        "actual": {
+          "mean": 131.02,
+          "std": 49.159,
+          "gradMean": 6.009,
+          "highFreqRatio": 0.0148
+        },
+        "expected": {
+          "minStd": 3,
+          "maxGrad": 26,
+          "highFreqRatio": 0.5
+        },
+        "detail": "脸部区域 (76,92)-(233,165)：灰度均值 131.0，标准差 49.16，相邻像素梯度均值 6.01，高频像素占比 1.5% → 区域有正常内容，非纯色、非花屏",
+        "method": "variance+gradient",
+        "estimated": true,
+        "estimatedNote": "faceRect 为自动近似（上部中央区域）"
+      },
+      {
+        "name": "assertSuitKeepsFacePixels",
+        "ok": false,
+        "actual": {
+          "skinInRef": 21279,
+          "covered": 12334,
+          "coveredRatio": 0.5796,
+          "faceRect": {
+            "x": 76,
+            "y": 92,
+            "w": 158,
+            "h": 190
+          }
+        },
+        "expected": {
+          "maxCoveredRatio": 0.08
+        },
+        "detail": "脸部框 (76,92)-(233,281)（参考图连续肤色段，21279 肤色像素）中，换装后**不再是肤色**的有 12334 个 = 58.0%（阈值 8%） → **换装覆盖了脸部像素**（AC6/D2 违规）",
+        "method": "skin-retention",
+        "estimated": false,
+        "estimatedNote": null
+      }
+    ],
+    "failed": [
+      {
+        "name": "assertSuitKeepsFacePixels",
+        "detail": "脸部框 (76,92)-(233,281)（参考图连续肤色段，21279 肤色像素）中，换装后**不再是肤色**的有 12334 个 = 58.0%（阈值 8%） → **换装覆盖了脸部像素**（AC6/D2 违规）"
+      }
+    ],
+    "envLimitedCount": 1
+  },
+  "audit": [
+    {
+      "stage": "upload_region",
+      "mode": "center_region",
+      "fgRatio": 0.566,
+      "rect": {
+        "x": 45,
+        "y": 14,
+        "w": 362,
+        "h": 665
+      },
+      "tool": "T3",
+      "hasPixel": false
+    },
+    {
+      "stage": "cloud_ok",
+      "latencyMs": 2252,
+      "region": "CN",
+      "confidence": 0.9902587961616749,
+      "retained": false,
+      "provider": "baidu",
+      "hasPixel": false
+    },
+    {
+      "stage": "pose_signal",
+      "ok": false,
+      "reason": "posekey:call_failed",
+      "model": null,
+      "latencyMs": null
+    },
+    {
+      "stage": "suit_geometry",
+      "source": "estimate",
+      "bbox": {
+        "x": 0,
+        "y": 76,
+        "w": 452,
+        "h": 603
+      },
+      "headH": 180.9,
+      "chinY": 256.9,
+      "w": 452,
+      "h": 679
+    },
+    {
+      "stage": "suit_fit_v2",
+      "ok": true,
+      "spec": "one-inch",
+      "canvasW": 452,
+      "canvasH": 679,
+      "headH": 180.9,
+      "headHPhys": 448.13999999999993,
+      "chinY": 256.9,
+      "crownY": 76,
+      "shoulderSpan": 289.44,
+      "shoulderSpanPhys": 289.44,
+      "rotateDeg": 0,
+      "scale": 0.804,
+      "garmentTop": 274.98999999999995,
+      "widthClamped": false,
+      "bottomOverflowPx": 0,
+      "source": "estimate",
+      "basis": {
+        "head": "estimate",
+        "shoulder": "physical"
+      },
+      "warnings": []
+    }
+  ],
+  "error": null,
+  "cropInfo": "",
+  "faceDetectAvailable": false
+}

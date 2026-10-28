@@ -1,0 +1,357 @@
+{
+  "_comment": "PRD 需求清单（coverage_matrix.js 的输入）。owner 可直接改写本文件；格式：{id, module, desc, verify, tool}。verify 取值：unit | smoke | batch | pixel | manual。tool 填工具编号或 '-'。",
+  "_source": "初始版本由 证件照小程序PRD正文.md 第4章(A~K) + 第11章(AC1~AC13) + 产品功能清单.md 派生；owner 后续以 PRD 为准覆盖。",
+  "requirements": [
+    {
+      "id": "A0",
+      "module": "A 拍摄/上传",
+      "desc": "协议前置闸门：未勾选人脸处理协议时，拍摄/相册选择入口不可点，点击提示并高亮勾选区",
+      "verify": "smoke",
+      "tool": "T1"
+    },
+    {
+      "id": "A1",
+      "module": "A 拍摄/上传",
+      "desc": "相机拍摄提供半透明人脸轮廓引导框，提示正脸、平视、光线均匀",
+      "verify": "manual",
+      "tool": "-"
+    },
+    {
+      "id": "A2",
+      "module": "A 拍摄/上传",
+      "desc": "相册上传支持 JPG/PNG/WebP，单张 ≤10MB；非法格式与超大文件被拦截",
+      "verify": "unit",
+      "tool": "T1"
+    },
+    {
+      "id": "A3",
+      "module": "A 拍摄/上传",
+      "desc": "上传后即时检测光线/背景复杂度/分辨率，不满足门槛时提示重拍（非阻断）",
+      "verify": "smoke",
+      "tool": "T1"
+    },
+    {
+      "id": "B1",
+      "module": "B AI 生成",
+      "desc": "端侧优先自动抠图；端侧置信不足时触发上云增强（境内闭环）；模型许可须可商用",
+      "verify": "batch",
+      "tool": "T1"
+    },
+    {
+      "id": "B2",
+      "module": "B AI 生成",
+      "desc": "智能裁切：按所选规格的头占比区间反解裁剪框，面部水平居中，构图不足时出图+醒目提示不阻断",
+      "verify": "batch",
+      "tool": "T1"
+    },
+    {
+      "id": "B3",
+      "module": "B AI 生成",
+      "desc": "头部占比校验：实时计算并提示是否落入规格合规区间",
+      "verify": "pixel",
+      "tool": "T1"
+    },
+    {
+      "id": "C1",
+      "module": "C 换底色",
+      "desc": "标准底色（白/蓝/浅蓝/红/灰）换底无色边漏底",
+      "verify": "pixel",
+      "tool": "T2"
+    },
+    {
+      "id": "C2",
+      "module": "C 换底色",
+      "desc": "自定义 HEX 色值：格式校验并正确应用",
+      "verify": "smoke",
+      "tool": "T2"
+    },
+    {
+      "id": "C3",
+      "module": "C 换底色",
+      "desc": "透明底导出 PNG 且保留 Alpha 通道",
+      "verify": "pixel",
+      "tool": "T2"
+    },
+    {
+      "id": "D1",
+      "module": "D AI 换装",
+      "desc": "职业装模板库：提供模板并标注「仅换装、不改五官」",
+      "verify": "smoke",
+      "tool": "T3"
+    },
+    {
+      "id": "D2",
+      "module": "D AI 换装",
+      "desc": "五官不变：换装不得改动脸型/五官像素，脸部区域像素差异在阈值内",
+      "verify": "pixel",
+      "tool": "T3"
+    },
+    {
+      "id": "D3",
+      "module": "D AI 换装",
+      "desc": "强制自检：换装完成后未确认五官自检不得导出",
+      "verify": "smoke",
+      "tool": "T3"
+    },
+    {
+      "id": "D4",
+      "module": "D AI 换装",
+      "desc": "规格锚定与构图拒绝：非目标构图（无人脸/双肩）明确拒绝并提示，不静默出图",
+      "verify": "batch",
+      "tool": "T3"
+    },
+    {
+      "id": "E1",
+      "module": "E 美颜",
+      "desc": "允许项磨皮/美白/亮眼为轻度，可正常生效",
+      "verify": "smoke",
+      "tool": "T1"
+    },
+    {
+      "id": "E2",
+      "module": "E 美颜",
+      "desc": "禁止项瘦脸/大眼/重塑五官在合规模式下硬拦截并提示",
+      "verify": "unit",
+      "tool": "T1"
+    },
+    {
+      "id": "F1",
+      "module": "F 规格库",
+      "desc": "9 种内置规格参数与官方口径一致（含驾驶证 260×378 白底、中国护照 390×567 白底、美国签证 600×600）",
+      "verify": "pixel",
+      "tool": "T1"
+    },
+    {
+      "id": "F2",
+      "module": "F 规格库",
+      "desc": "自定义规格：像素 1~5000px 与 KB 上限可调，边界值被正确限制",
+      "verify": "smoke",
+      "tool": "T5"
+    },
+    {
+      "id": "G1",
+      "module": "G 合规预审",
+      "desc": "实时校验头部占比/像素/文件大小/底色色值；底色区分标准深蓝 #438EDB 与浅蓝 #00BFF3",
+      "verify": "pixel",
+      "tool": "T1"
+    },
+    {
+      "id": "G2",
+      "module": "G 合规预审",
+      "desc": "模拟审核提示：给出预计通过/风险点与改进建议",
+      "verify": "smoke",
+      "tool": "T4"
+    },
+    {
+      "id": "H1",
+      "module": "H 导出",
+      "desc": "300dpi JPG/PNG 导出：像素符合规格、KB ≤ 上限、无水印、免费",
+      "verify": "pixel",
+      "tool": "T1"
+    },
+    {
+      "id": "H2",
+      "module": "H 导出",
+      "desc": "600dpi 印刷级导出同样免费无水印；输出为真 600dpi（非放大糊图）",
+      "verify": "pixel",
+      "tool": "T1"
+    },
+    {
+      "id": "H2.1",
+      "module": "H 导出",
+      "desc": "600dpi 的文件大小项降级为提示（不阻断、不计入整改建议）",
+      "verify": "unit",
+      "tool": "T1"
+    },
+    {
+      "id": "I1",
+      "module": "I 隐私合规",
+      "desc": "人脸处理前取得单独授权，未授权不得启动处理链路",
+      "verify": "smoke",
+      "tool": "T1"
+    },
+    {
+      "id": "I2",
+      "module": "I 隐私合规",
+      "desc": "人像在端侧处理，处理完本地销毁，不上云训练",
+      "verify": "manual",
+      "tool": "-"
+    },
+    {
+      "id": "I3",
+      "module": "I 隐私合规",
+      "desc": "上云增强境内闭环，仅上传裁剪后人像区域，处理完即销毁",
+      "verify": "batch",
+      "tool": "T1"
+    },
+    {
+      "id": "I4",
+      "module": "I 隐私合规",
+      "desc": "首页展示合规/等保标识作为信任信号（当前实现只有「隐私承诺」与「免费承诺」文案，无等保/备案标识 → 需产品确认口径或补实现）",
+      "verify": "smoke",
+      "tool": "-",
+      "_gapNote": "2026-10-28 核对：idphoto-miniprogram/src/ 全库无「等保/备案」字样；首页只有 隐私承诺 + 免费承诺 两块。故本条要么补实现、要么改 PRD 口径为「隐私承诺」。"
+    },
+    {
+      "id": "J1",
+      "module": "J 首页",
+      "desc": "首页首屏为工具箱，集中展示 T1~T6 独立入口",
+      "verify": "smoke",
+      "tool": "-"
+    },
+    {
+      "id": "J2",
+      "module": "J 首页",
+      "desc": "T1~T6 各工具可独立使用，不依赖完整流程（T6 无需人脸授权）",
+      "verify": "smoke",
+      "tool": "-"
+    },
+    {
+      "id": "J3",
+      "module": "J 首页",
+      "desc": "共享能力复用：抠图/规格库/预审引擎跨工具复用；T3 换装需独立授权",
+      "verify": "unit",
+      "tool": "T3"
+    },
+    {
+      "id": "K1",
+      "module": "K 冲印排版",
+      "desc": "T6 入口可达：首页卡片 + T1「另存为冲印排版」承接入口",
+      "verify": "smoke",
+      "tool": "T6"
+    },
+    {
+      "id": "K3",
+      "module": "K 冲印排版",
+      "desc": "排版算法：按可打印区算 tiling 张数与居中，单张保持原规格像素/占比/底色",
+      "verify": "unit",
+      "tool": "T6"
+    },
+    {
+      "id": "K4",
+      "module": "K 冲印排版",
+      "desc": "输出分辨率 = 相纸 mm × 输出 dpi（误差 ≤1px），排版图无水印",
+      "verify": "unit",
+      "tool": "T6"
+    },
+    {
+      "id": "K5",
+      "module": "K 冲印排版",
+      "desc": "instax 等不可拼版机型仅出 1 张并提示白边不可拼版",
+      "verify": "unit",
+      "tool": "T6"
+    },
+    {
+      "id": "AC1",
+      "module": "验收标准",
+      "desc": "镜像自拍图被识别并提示「不支持镜像照，请关闭镜像后重拍」",
+      "verify": "smoke",
+      "tool": "T1"
+    },
+    {
+      "id": "AC2",
+      "module": "验收标准",
+      "desc": "合规模式下开启瘦脸/大眼被硬拦截并提示",
+      "verify": "unit",
+      "tool": "T1"
+    },
+    {
+      "id": "AC3",
+      "module": "验收标准",
+      "desc": "低分辨率（<600×800）或复杂背景原片触发重拍引导",
+      "verify": "batch",
+      "tool": "T1"
+    },
+    {
+      "id": "AC4",
+      "module": "验收标准",
+      "desc": "导出文件满足所选规格的像素/dpi/底色/头部占比硬性指标（600dpi 的 KB 项仅提示）",
+      "verify": "pixel",
+      "tool": "T1"
+    },
+    {
+      "id": "AC5",
+      "module": "验收标准",
+      "desc": "未获人脸单独授权时处理链路不得启动（协议闸门前移至选图前）",
+      "verify": "smoke",
+      "tool": "T1"
+    },
+    {
+      "id": "AC6",
+      "module": "验收标准",
+      "desc": "换装后五官像素差异超阈值应提示，且未通过自检不得导出",
+      "verify": "pixel",
+      "tool": "T3"
+    },
+    {
+      "id": "AC7",
+      "module": "验收标准",
+      "desc": "全部档位（300/600dpi）导出均无水印、无强制广告、均可免费导出",
+      "verify": "pixel",
+      "tool": "T1"
+    },
+    {
+      "id": "AC8",
+      "module": "验收标准",
+      "desc": "上云增强链路可审计且境内，日志不含人脸原始数据",
+      "verify": "batch",
+      "tool": "T1"
+    },
+    {
+      "id": "AC9",
+      "module": "验收标准",
+      "desc": "首页提供 T1~T6 独立入口，任一工具可单独使用",
+      "verify": "smoke",
+      "tool": "-"
+    },
+    {
+      "id": "AC10",
+      "module": "验收标准",
+      "desc": "T4 合规检测仅出报告、不生成、不改动原图",
+      "verify": "smoke",
+      "tool": "T4"
+    },
+    {
+      "id": "AC11",
+      "module": "验收标准",
+      "desc": "冲印排版按可打印区计算 tiling 并合成；输出像素误差 ≤1px；排版图无水印",
+      "verify": "unit",
+      "tool": "T6"
+    },
+    {
+      "id": "AC12",
+      "module": "验收标准",
+      "desc": "T1/T2/T3 上传后必须先裁剪到目标规格再换装/换色；T2 无「保持原图尺寸」选项",
+      "verify": "batch",
+      "tool": "T2"
+    },
+    {
+      "id": "AC13",
+      "module": "验收标准",
+      "desc": "换装只覆盖 9 个标准规格，逐一回归不出画布/不盖脸；非目标构图明确拒绝",
+      "verify": "batch",
+      "tool": "T3"
+    },
+    {
+      "id": "NFR-1",
+      "module": "非功能",
+      "desc": "端侧处理性能：选图到出图 5 秒内（含上云 8 秒内）",
+      "verify": "manual",
+      "tool": "-"
+    },
+    {
+      "id": "NFR-2",
+      "module": "非功能",
+      "desc": "成品无强制广告、无付费入口（MVP 全部功能免费）",
+      "verify": "pixel",
+      "tool": "T1"
+    },
+    {
+      "id": "NFR-3",
+      "module": "非功能",
+      "desc": "导出文件格式为 JPG/PNG，无异常元数据泄漏",
+      "verify": "pixel",
+      "tool": "T1"
+    }
+  ]
+}

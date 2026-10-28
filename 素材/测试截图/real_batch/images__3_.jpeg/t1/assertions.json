@@ -1,0 +1,157 @@
+{
+  "asset": "images (3).jpeg",
+  "assetPurpose": "negative-landscape",
+  "assetSize": {
+    "height": 333,
+    "width": 500
+  },
+  "tool": "t1",
+  "connectivity": true,
+  "status": "完成（云端精修）",
+  "product": "素材/测试截图/real_batch/images__3_.jpeg/t1/result.jpg",
+  "assertions": {
+    "pass": true,
+    "passCount": 6,
+    "failCount": 0,
+    "results": [
+      {
+        "name": "assertPixelSize",
+        "ok": true,
+        "actual": {
+          "width": 295,
+          "height": 413
+        },
+        "expected": {
+          "width": 295,
+          "height": 413,
+          "dpi": 300,
+          "specId": "one-inch",
+          "specName": "一寸"
+        },
+        "detail": "成品 295×413px == 一寸 要求 295×413px（容差±2）",
+        "method": null,
+        "estimated": false,
+        "estimatedNote": null
+      },
+      {
+        "name": "assertBackgroundColor",
+        "ok": true,
+        "actual": {
+          "hex": "#FFFFFF",
+          "rgb": [
+            255,
+            255,
+            255
+          ],
+          "support": 0.5,
+          "votes": 6,
+          "alphaRatio": 0
+        },
+        "expected": {
+          "hex": "#FFFFFF",
+          "tolerance": 12
+        },
+        "detail": "底色实测众数色 #FFFFFF（四角 12 点中 6 票，支撑率 50%），期望 #FFFFFF，偏差 0 ≤ 容差 12",
+        "method": null,
+        "estimated": false,
+        "estimatedNote": null
+      },
+      {
+        "name": "assertFileSize",
+        "ok": true,
+        "actual": {
+          "kb": 19.1,
+          "bytes": 19509
+        },
+        "expected": 200,
+        "detail": "文件 19.1KB ≤ 上限 200KB",
+        "method": null,
+        "estimated": false,
+        "estimatedNote": null
+      },
+      {
+        "name": "assertHeadRatio",
+        "ok": false,
+        "actual": null,
+        "expected": {
+          "min": 0.61,
+          "max": 0.71
+        },
+        "detail": "无法测量头部占比：前景掩膜可用，但未找到可靠的「头顶行」与「颈部最窄行」（人物可能被裁出画面）",
+        "method": "unavailable",
+        "estimated": true,
+        "estimatedNote": "未测量（不做臆测）",
+        "envLimited": true,
+        "envLimitedReason": "开发者工具模拟器不支持人脸检测（services/faceService.ts 跳过 devtools 平台） → 裁切降级为「按画面居中裁剪」→ 头占比必然不落规格区间；此项为环境限制，非产品缺陷（真机可验）"
+      },
+      {
+        "name": "assertNoWatermark",
+        "ok": true,
+        "actual": {
+          "suspectCount": 0,
+          "suspects": [],
+          "bgHex": "#FFFFFF",
+          "blocks": 1,
+          "subjectPx": 108167,
+          "candidateRows": 0,
+          "isTexture": false
+        },
+        "expected": {
+          "suspectCount": 0
+        },
+        "detail": "未检出文字水印：①元数据无水印标记；②像素启发式：背景基准色 #FFFFFF，非背景连通块 1 个（人像主体 108167px 已排除），成行候选子行 0 条，均未达「≥3 块 + 同色 + 悬浮平坦背景」门槛｜局限：启发式检测，半透明 / 压在人像身上 / 与主体相连 / 单字 / 斜向平铺水印会漏检",
+        "method": "metadata+heuristic",
+        "estimated": false,
+        "estimatedNote": "像素启发式（子行模型）：不是逐像素基准比对，不能保证检出全部水印"
+      },
+      {
+        "name": "assertFaceRegionClean",
+        "ok": true,
+        "actual": {
+          "mean": 72.1,
+          "std": 42.518,
+          "gradMean": 2.06,
+          "highFreqRatio": 0.0002
+        },
+        "expected": {
+          "minStd": 3,
+          "maxGrad": 26,
+          "highFreqRatio": 0.5
+        },
+        "detail": "脸部区域 (0,139)-(249,267)：灰度均值 72.1，标准差 42.52，相邻像素梯度均值 2.06，高频像素占比 0.0% → 区域有正常内容，非纯色、非花屏",
+        "method": "variance+gradient",
+        "estimated": true,
+        "estimatedNote": "faceRect 为自动近似（上部中央区域）"
+      }
+    ],
+    "failed": [],
+    "envLimitedCount": 1
+  },
+  "audit": [
+    {
+      "stage": "upload_region",
+      "mode": "center_region",
+      "fgRatio": 0.237,
+      "rect": {
+        "x": 50,
+        "y": 7,
+        "w": 400,
+        "h": 326
+      },
+      "tool": "T1",
+      "hasPixel": false
+    },
+    {
+      "stage": "cloud_ok",
+      "latencyMs": 1829,
+      "region": "CN",
+      "confidence": 0.9868711656441718,
+      "retained": false,
+      "provider": "baidu",
+      "hasPixel": false
+    }
+  ],
+  "error": null,
+  "cropInfo": "智能裁切：未检出人脸，已按画面居中裁剪未检出人脸，已按画面居中裁剪；建议正对镜头、面部清晰的照片",
+  "faceDetectAvailable": false
+}

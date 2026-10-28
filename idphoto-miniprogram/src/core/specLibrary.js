@@ -29,6 +29,33 @@ const BG = {
   gray: '#C0C0C0', // 标准灰底 R192 G192 B192
 };
 
+// 【2026-10-28 新增】bg key ↔ HEX 双向映射（由 BG 派生，不硬编码第二份色表）。
+// 为什么需要：预审引擎（core/compliance.js）的底色判定原本只按 key 比对
+// （spec.bg.includes(measured.bg)），但调用方传进来的 measured.bg 有时是 HEX 字符串
+// （如换底色后 '#438EDB'）→ key 比对永远不中 → 底色项被误判为不通过。
+// 这里提供单一权威的反查表，compliance 侧只调用 bgKeyOf()，避免两处色表漂移。
+// 大小写不敏感：'#438edb' 与 '#438EDB' 等价。
+const BG_KEYS = Object.keys(BG);
+const BG_HEX_TO_KEY = BG_KEYS.reduce((m, k) => {
+  m[BG[k].toUpperCase()] = k;
+  return m;
+}, {});
+
+/** HEX → bg key（大小写不敏感）；不是标准色则返回 null */
+function bgKeyOf(value) {
+  if (typeof value !== 'string') return null;
+  const s = value.trim().replace(/^#/, '').toUpperCase();
+  if (s.length !== 6) return null;
+  return BG_HEX_TO_KEY['#' + s] || null;
+}
+
+/** bg key → HEX；不是标准底色返回 null */
+function hexOfBgKey(key) {
+  if (typeof key !== 'string') return null;
+  return Object.prototype.hasOwnProperty.call(BG, key) ? BG[key] : null;
+}
+
+
 const SPECS = [
   {
     id: 'one-inch',
@@ -36,6 +63,7 @@ const SPECS = [
     widthMm: 25, heightMm: 35,
     bg: ['white', 'blue', 'blueLight', 'red'],
     maxKb: 200,
+    minKb: 20,
     headHeightRatioMin: 0.61,
     headHeightRatioMax: 0.71,
     note: '最常用：简历、社保、学生证等',
@@ -47,6 +75,7 @@ const SPECS = [
     widthMm: 22, heightMm: 32,
     bg: ['white', 'blue', 'blueLight', 'red'],
     maxKb: 200,
+    minKb: 20,
     headHeightRatioMin: 0.59,
     headHeightRatioMax: 0.69,
     note: '驾驶证、体检等',
@@ -58,6 +87,7 @@ const SPECS = [
     widthMm: 22, heightMm: 32,
     bg: ['white'],
     maxKb: 200,
+    minKb: 20,
     headHeightRatioMin: 0.59,
     headHeightRatioMax: 0.69,
     note: '交管 12123 专用：白底、22×32mm',
@@ -69,6 +99,7 @@ const SPECS = [
     widthMm: 35, heightMm: 49,
     bg: ['white', 'blue', 'blueLight', 'red'],
     maxKb: 200,
+    minKb: 20,
     headHeightRatioMin: 0.61,
     headHeightRatioMax: 0.71,
     note: '毕业证、简历、部分签证',
@@ -80,6 +111,7 @@ const SPECS = [
     widthMm: 35, heightMm: 45,
     bg: ['white', 'blue', 'blueLight'],
     maxKb: 200,
+    minKb: 20,
     headHeightRatioMin: 0.61,
     headHeightRatioMax: 0.71,
     note: '护照（中国）、部分签证',
@@ -91,6 +123,7 @@ const SPECS = [
     widthMm: 33, heightMm: 48,
     bg: ['white', 'blue', 'blueLight', 'red'],
     maxKb: 200,
+    minKb: 20,
     headHeightRatioMin: 0.61,
     headHeightRatioMax: 0.71,
     note: '护照、签证、公务员考试',
@@ -102,6 +135,7 @@ const SPECS = [
     widthMm: 35, heightMm: 53,
     bg: ['white', 'blue', 'blueLight'],
     maxKb: 200,
+    minKb: 20,
     headHeightRatioMin: 0.61,
     headHeightRatioMax: 0.71,
     note: '简历、部分资格考试',
@@ -113,6 +147,7 @@ const SPECS = [
     widthMm: 33, heightMm: 48,
     bg: ['white'],
     maxKb: 200,
+    minKb: 20,
     headHeightRatioMin: 0.58,
     headHeightRatioMax: 0.69,
     note: '白底，头长 28~33mm',
@@ -124,6 +159,7 @@ const SPECS = [
     widthMm: 50.8, heightMm: 50.8, // 2×2 英寸精确值：50.8mm → 300dpi = 600×600px（官方硬指标）
     bg: ['white'],
     maxKb: 240,
+    minKb: 54,
     headHeightRatioMin: 0.49,
     headHeightRatioMax: 0.69,
     note: '2×2 inch 正方形，白底，600×600px',
@@ -148,6 +184,7 @@ function listSpecs() {
     heightMm: s.heightMm,
     bg: s.bg,
     maxKb: s.maxKb,
+    minKb: s.minKb,
     source: s.source,
   }));
 }
@@ -181,6 +218,7 @@ function specLabel(specOrId, dpi = DPI_STD) {
 }
 
 module.exports = {
-  SPECS, BG, BG_LABELS, DPI_STD, DPI_HD,
+  SPECS, BG, BG_LABELS, BG_KEYS, BG_HEX_TO_KEY, DPI_STD, DPI_HD,
   mmToPx, getSpec, listSpecs, getPixelSize, specLabel,
+  bgKeyOf, hexOfBgKey,
 };
