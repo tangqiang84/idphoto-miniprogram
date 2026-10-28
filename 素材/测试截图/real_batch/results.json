@@ -1,6 +1,6 @@
 {
   "summary": {
-    "generatedAt": "2026-10-27T20:52:46.179Z",
+    "generatedAt": "2026-10-28T02:16:09.958Z",
     "ideRetries": 0,
     "total": 1,
     "connectivity": {
@@ -14,25 +14,25 @@
       "notEvaluated": 0,
       "envLimited": 1,
       "notApplicable": 0,
-      "faceDetectUnavailable": 1
+      "faceDetectUnavailable": 0
     },
     "note": "连通性通过数与业务断言通过数是两个独立指标，不合并为单一「通过」；envLimited = 环境限制导致的断言偏差（人脸检测不可用），已从业务失败中剔除；notApplicable = 该路径下断言本身不适用（如未选规格时的头占比）"
   },
   "results": [
     {
-      "asset": "111.jpg",
-      "assetPurpose": "positive",
+      "asset": "3652.jpg",
+      "assetPurpose": "lowres",
       "assetSize": {
-        "height": 798,
-        "width": 600
+        "height": 300,
+        "width": 200
       },
-      "tool": "t1",
+      "tool": "t3",
       "connectivity": true,
-      "status": "完成（云端精修）",
-      "product": "素材/测试截图/real_batch/111.jpg/t1/result.jpg",
+      "status": "（复用既有成品）",
+      "product": "/Users/tq/WorkBuddy/XiaoChengXu/素材/测试截图/real_batch/3652.jpg/t3/result.jpg",
       "assertions": {
         "pass": true,
-        "passCount": 6,
+        "passCount": 7,
         "failCount": 0,
         "results": [
           {
@@ -58,21 +58,21 @@
             "name": "assertBackgroundColor",
             "ok": true,
             "actual": {
-              "hex": "#FEFEFF",
+              "hex": "#428DDA",
               "rgb": [
-                254,
-                254,
-                255
+                66,
+                141,
+                218
               ],
-              "support": 0.75,
-              "votes": 9,
+              "support": 1,
+              "votes": 12,
               "alphaRatio": 0
             },
             "expected": {
-              "hex": "#FFFFFF",
+              "hex": "#438EDB",
               "tolerance": 12
             },
-            "detail": "底色实测众数色 #FEFEFF（四角 12 点中 9 票，支撑率 75%），期望 #FFFFFF，偏差 1 ≤ 容差 12",
+            "detail": "底色实测众数色 #428DDA（四角 12 点中 12 票，支撑率 100%），期望 #438EDB，偏差 1 ≤ 容差 12",
             "method": null,
             "estimated": false,
             "estimatedNote": null
@@ -81,11 +81,11 @@
             "name": "assertFileSize",
             "ok": true,
             "actual": {
-              "kb": 32.2,
-              "bytes": 32979
+              "kb": 11.6,
+              "bytes": 11908
             },
             "expected": 200,
-            "detail": "文件 32.2KB ≤ 上限 200KB",
+            "detail": "文件 11.6KB ≤ 上限 200KB",
             "method": null,
             "estimated": false,
             "estimatedNote": null
@@ -94,7 +94,7 @@
             "name": "assertHeadRatio",
             "ok": false,
             "actual": {
-              "ratio": 0.4794188861985472,
+              "ratio": 0.18886198547215496,
               "method": "neck-estimate",
               "estimated": true
             },
@@ -103,12 +103,12 @@
               "max": 0.71,
               "tolerance": 0
             },
-            "detail": "头部占比 47.9%（**估算值**：颈部轮廓法，头顶行 64px、下巴行 262px、头长 198px ÷ 图高 413px）超出规格 一寸 区间 61%~71%｜局限：估算口径，误差约 ±5~8 个百分点，贴近边界时可能误判",
+            "detail": "头部占比 18.9%（**估算值**：颈部轮廓法，头顶行 34px、下巴行 112px、头长 78px ÷ 图高 413px）超出规格 一寸 区间 61%~71%｜局限：估算口径，误差约 ±5~8 个百分点，贴近边界时可能误判",
             "method": "neck-estimate",
             "estimated": true,
             "estimatedNote": "估算值（颈部轮廓法），非实测；误差约 ±5~8 个百分点",
             "envLimited": true,
-            "envLimitedReason": "开发者工具模拟器不支持人脸检测（services/faceService.ts 跳过 devtools 平台） → 裁切降级为「按画面居中裁剪」→ 头占比必然不落规格区间；此项为环境限制，非产品缺陷（真机可验）"
+            "envLimitedReason": "既有成品产自开发者工具模拟器（不支持人脸检测）→ 裁切降级为居中裁剪 → 头占比断言不适用；此项为环境限制，非产品缺陷（真机可验）"
           },
           {
             "name": "assertNoWatermark",
@@ -116,16 +116,16 @@
             "actual": {
               "suspectCount": 0,
               "suspects": [],
-              "bgHex": "#FEFEFF",
-              "blocks": 61,
-              "subjectPx": 57724,
+              "bgHex": "#428DDA",
+              "blocks": 5,
+              "subjectPx": 47371,
               "candidateRows": 0,
               "isTexture": false
             },
             "expected": {
               "suspectCount": 0
             },
-            "detail": "未检出文字水印：①元数据无水印标记；②像素启发式：背景基准色 #FEFEFF，非背景连通块 61 个（人像主体 57724px 已排除），成行候选子行 0 条，均未达「≥3 块 + 同色 + 悬浮平坦背景」门槛｜局限：启发式检测，半透明 / 压在人像身上 / 与主体相连 / 单字 / 斜向平铺水印会漏检",
+            "detail": "未检出文字水印：①元数据无水印标记；②像素启发式：背景基准色 #428DDA，非背景连通块 5 个（人像主体 47371px 已排除），成行候选子行 0 条，均未达「≥3 块 + 同色 + 悬浮平坦背景」门槛｜局限：启发式检测，半透明 / 压在人像身上 / 与主体相连 / 单字 / 斜向平铺水印会漏检",
             "method": "metadata+heuristic",
             "estimated": false,
             "estimatedNote": "像素启发式（子行模型）：不是逐像素基准比对，不能保证检出全部水印"
@@ -134,52 +134,49 @@
             "name": "assertFaceRegionClean",
             "ok": true,
             "actual": {
-              "mean": 148.34,
-              "std": 67.859,
-              "gradMean": 5.832,
-              "highFreqRatio": 0.0257
+              "mean": 137.96,
+              "std": 37.754,
+              "gradMean": 7.091,
+              "highFreqRatio": 0.0259
             },
             "expected": {
               "minStd": 3,
               "maxGrad": 26,
               "highFreqRatio": 0.5
             },
-            "detail": "脸部区域 (58,101)-(235,267)：灰度均值 148.3，标准差 67.86，相邻像素梯度均值 5.83，高频像素占比 2.6% → 区域有正常内容，非纯色、非花屏",
+            "detail": "脸部区域 (110,52)-(181,131)：灰度均值 138.0，标准差 37.75，相邻像素梯度均值 7.09，高频像素占比 2.6% → 区域有正常内容，非纯色、非花屏",
             "method": "variance+gradient",
             "estimated": true,
             "estimatedNote": "faceRect 为自动近似（上部中央区域）"
+          },
+          {
+            "name": "assertSuitKeepsFacePixels",
+            "ok": true,
+            "actual": {
+              "skinInRef": 4001,
+              "covered": 76,
+              "coveredRatio": 0.019,
+              "faceRect": {
+                "x": 110,
+                "y": 52,
+                "w": 74,
+                "h": 80
+              }
+            },
+            "expected": {
+              "maxCoveredRatio": 0.08
+            },
+            "detail": "脸部框 (110,52)-(183,131)（参考图连续肤色段，4001 肤色像素）中，换装后**不再是肤色**的有 76 个 = 1.9%（阈值 8%） → 脸部像素基本未被换装覆盖",
+            "method": "skin-retention",
+            "estimated": false,
+            "estimatedNote": null
           }
         ],
         "failed": [],
         "envLimitedCount": 1
       },
-      "audit": [
-        {
-          "stage": "upload_region",
-          "mode": "center_region",
-          "fgRatio": 0.432,
-          "rect": {
-            "x": 60,
-            "y": 16,
-            "w": 480,
-            "h": 782
-          },
-          "tool": "T1",
-          "hasPixel": false
-        },
-        {
-          "stage": "cloud_ok",
-          "latencyMs": 3708,
-          "region": "CN",
-          "confidence": 0.9866687979539642,
-          "retained": false,
-          "provider": "baidu",
-          "hasPixel": false
-        }
-      ],
-      "error": null,
-      "cropInfo": "智能裁切：未检出人脸，已按画面居中裁剪未检出人脸，已按画面居中裁剪；建议正对镜头、面部清晰的照片",
-      "faceDetectAvailable": false
+      "audit": null,
+      "error": null
     }
   ]
 }

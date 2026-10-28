@@ -1,0 +1,5 @@
+{
+  "error": "ide-unavailable",
+  "message": "小程序页面栈未就绪（重试 12 次）：timeout waiting for automator response",
+  "results": []
+}

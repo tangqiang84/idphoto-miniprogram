@@ -21,12 +21,15 @@
  *   · 状态等待  → 工具链/smoke_kit.js 的 waitForStatus（只认 .status-line）
  *
  * 【成品落盘】
- *   素材/测试截图/real_batch/<素材名>/<工具>/
+ *   素材/测试截图/real_batch/run-<YYYYMMDD-HHMMSS>/<素材名>/<工具>/
  *       original.<ext>   原图副本（便于人工复核）
  *       result.jpg       成品
  *       page.png         页面截图
  *       assertions.json  该组合的断言结果（含每条的判定依据）
- *   汇总：素材/测试截图/real_batch/results.json
+ *   汇总：素材/测试截图/real_batch/run-<YYYYMMDD-HHMMSS>/results.json
+ *
+ *   每次跑批写入**新的时间戳目录**，永不删除、永不覆盖旧结果。
+ *   需要「清场重跑」时直接跑即可 —— 新结果进新目录，旧结果原地留着（全局规则 F-7）。
  *
  * 【已知坑（问题台账 #86/#87）】
  *   「timeout waiting for automator response」= IDE 通道没开，不是脚本失败。
@@ -82,7 +85,8 @@ if (hasArg('--help') || hasArg('-h')) {
   --spec <specId>     断言用规格（默认 one-inch）
   --dpi <n>           断言用 dpi（默认 300）
   --bg <#RRGGBB>      期望底色（默认 #FFFFFF；T3 默认蓝底 #438EDB）
-  --out <目录>        成品输出目录（默认 素材/测试截图/real_batch）
+  --out <目录>        成品输出目录（原样使用，不再追加时间戳）
+  --latest            复用最近一次跑批目录（配 --no-ide 对已有成品重新断言）
   --strict            兼容保留（退出码已恒定反映业务断言结果，此开关不再改变行为）
   --keep-going        单张失败继续跑（默认：继续）
   --no-ide            只跑断言（对已有成品重新断言，不连 IDE）
@@ -105,12 +109,68 @@ const TOOLS = TOOLS_RAW.split(',').map((s) => s.trim()).filter(Boolean);
 const SPEC_ID = getArg('--spec', 'one-inch');
 const DPI = Number(getArg('--dpi', 300));
 const BG = getArg('--bg', '');
-const OUT_DIR = path.resolve(ROOT, getArg('--out', '素材/测试截图/real_batch'));
 // --strict 保留为兼容别名：退出码已恒定反映「连通性/业务断言」两个维度，
 // 不再需要靠开关决定「失败算不算失败」。
 const STRICT = hasArg('--strict');
 const NO_IDE = hasArg('--no-ide');
 const PORT = Number(getArg('--port', 9441));
+
+// ------------------------------------------------------ 输出目录（只增不删）
+// 每次跑批写入**新的时间戳目录**：从机制上消灭「先 rm -rf 再重跑」的必要。
+// 旧结果一律原地保留，谁也不许删（全局规则 F-7）。
+const pad2 = (n) => String(n).padStart(2, '0');
+const RUN_STAMP = (() => {
+  const d = new Date();
+  return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-`
+    + `${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`;
+})();
+
+const listRunDirs = () => {
+  try {
+    return fs.readdirSync(OUT_ROOT, { withFileTypes: true })
+      .filter((d) => d.isDirectory() && /^run-\d{8}-\d{6}$/.test(d.name))
+      .map((d) => d.name)
+      .sort();
+  } catch { return []; }
+};
+const latestRunDir = () => {
+  const dirs = listRunDirs();
+  return dirs.length ? path.join(OUT_ROOT, dirs[dirs.length - 1]) : null;
+};
+// 兼容既有遗留结构：real_batch/ 根下直接是 <素材名>/<工具>/ 的历史产物
+const legacyHasProducts = () => {
+  try {
+    return fs.readdirSync(OUT_ROOT, { withFileTypes: true })
+      .some((d) => d.isDirectory() && fs.existsSync(path.join(OUT_ROOT, d.name, 't1')));
+  } catch { return false; }
+};
+
+const OUT_ARG = getArg('--out', '');
+// 复用已有成品的场景：显式 --latest，或 --no-ide（不连 IDE，只能对已有成品重新断言）
+const REUSE_EXISTING = hasArg('--latest') || NO_IDE;
+let OUT_DIR;
+if (OUT_ARG) {
+  OUT_DIR = path.resolve(ROOT, OUT_ARG);                    // 显式指定：原样使用
+} else if (REUSE_EXISTING) {
+  OUT_DIR = latestRunDir() || (legacyHasProducts() ? OUT_ROOT : path.join(OUT_ROOT, `run-${RUN_STAMP}`));
+} else {
+  OUT_DIR = path.join(OUT_ROOT, `run-${RUN_STAMP}`);        // 默认：新建时间戳目录
+}
+
+// 汇总写盘：复用目录时先把旧的 results.json 备份一份（只增不删）
+const writeResults = (obj) => {
+  const f = path.join(OUT_DIR, 'results.json');
+  try {
+    if (fs.existsSync(f)) {
+      const d = new Date();
+      const bak = path.join(OUT_DIR, `results.backup-${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}`
+        + `-${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}.json`);
+      fs.copyFileSync(f, bak);
+      console.log(`（旧汇总已备份为 ${path.basename(bak)}）`);
+    }
+  } catch { /* 备份失败不阻断主流程 */ }
+  fs.writeFileSync(f, JSON.stringify(obj, null, 2));
+};
 
 // 工具 → 首页卡片下标（home/index.tsx 的 TOOLS 顺序：T1..T6）
 const TOOL_CARDS = { t1: 0, t2: 1, t3: 2 };
@@ -464,6 +524,12 @@ function runBusinessAssertions(file, o) {
   console.log('');
 
   fs.mkdirSync(OUT_DIR, { recursive: true });
+  // 记录本次跑批目录指针（只增不删：旧 run 目录永不清理）
+  try {
+    fs.mkdirSync(OUT_ROOT, { recursive: true });
+    fs.writeFileSync(path.join(OUT_ROOT, 'LATEST.txt'),
+      `${path.basename(OUT_DIR)}\t${new Date().toISOString()}\t${TOOLS.join(',')}\n`);
+  } catch { /* 指针写失败不影响主流程 */ }
 
   const results = [];
   let miniProgram = null;
@@ -498,8 +564,7 @@ function runBusinessAssertions(file, o) {
       console.error(`        "${IDE_CLI}" auto --project "${APP}" --auto-port ${PORT} --port 16780`);
       console.error('     3) 确认开发者工具「设置 → 安全设置 → 服务端口」已开启（默认 16780）');
       console.error('     4) 确认开发者工具未处于编译/预览忙碌状态（忙碌时页面栈起不来）');
-      fs.writeFileSync(path.join(OUT_DIR, 'results.json'),
-        JSON.stringify({ error: 'ide-unavailable', message: String(e && e.message || e), results: [] }, null, 2));
+      writeResults({ error: 'ide-unavailable', message: String(e && e.message || e), results: [] });
       process.exit(3);
     }
   }
@@ -704,7 +769,7 @@ function runBusinessAssertions(file, o) {
   } catch (e) {
     console.error('\n❌ 批量验收异常终止：' + (e && e.message ? e.message : e));
     try { if (miniProgram) await miniProgram.close(); } catch (e2) { /* ignore */ }
-    fs.writeFileSync(path.join(OUT_DIR, 'results.json'), JSON.stringify({ results }, null, 2));
+    writeResults({ results });
     process.exit(3);
   }
 
@@ -739,7 +804,7 @@ function runBusinessAssertions(file, o) {
       + 'notApplicable = 该路径下断言本身不适用（如未选规格时的头占比）',
   };
 
-  fs.writeFileSync(path.join(OUT_DIR, 'results.json'), JSON.stringify({ summary, results }, null, 2));
+  writeResults({ summary, results });
 
   console.log('\n=========================================================');
   console.log(' 汇总');
