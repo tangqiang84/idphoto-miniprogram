@@ -43,6 +43,11 @@ const ROTATE_LIMIT_DEG = 15;
 // 与 headH 的来源解耦（landmarks/estimate/physical 都成立），不再用会冲过下巴的 0.85×headH。
 const CHIN_TO_SUIT_TOP_RATIO = 0.10;
 
+// 无人脸检测（physical 兜底）时的硬性安全下限：衣身顶端绝不越过
+// 「头顶留白 + 规格头占比上限 + 该余量」这条线 —— 即脸（下巴）不可能低于此。
+// 越界时把西装整体下移（宁可露一点领口空隙，也绝不盖脸；PRD D2 / AC6 硬合规）。
+const SAFE_FACE_MARGIN = 0.02;
+
 // 颈根双信号（chinY 推导值 vs pose 肩线中点）偏差告警阈值（倍头长）。
 // 超过 → 记 WARN 并**偏向 chinY**（脸信号优先，PRD D2 合规：不碰脸）。
 const NECK_DEVIATION_WARN_RATIO = 0.15;
@@ -147,6 +152,7 @@ function fitSuitV2(p = {}) {
 
   // ---- 1. 头长 headH：实测优先，其次物理标尺 ----
   const ratioMid = (spec.headHeightRatioMin + spec.headHeightRatioMax) / 2;
+  const ratioMax = num(spec.headHeightRatioMax) || ratioMid; // 头占比上限（无人脸检测时锚定安全位用）
   const headHPhys = ch * ratioMid; // 物理标尺：规格头身比区间中值 × 画布高
   let headH = null;
   let headBasis = 'physical';
@@ -162,11 +168,14 @@ function fitSuitV2(p = {}) {
   let chinY = face ? num(face.chinY) : null;
   let crownY = face ? num(face.crownY) : null;
   if (chinY === null || crownY === null) {
-    // 物理标尺：头顶 = 留白下方；下巴 = 头顶 + 头长
-    const hPhys = headH !== null ? headH : headHPhys;
+    // 物理标尺：无人脸检测时用**规格头占比上限**估颈根，把西装锚到更靠下的安全位
+    // （避免中值低估头长导致颈根落在脸上 → 盖脸，违反 PRD D2）；有人脸实测则走准确值。
+    const estRatio = face ? null : ratioMax;
+    const hPhys = headH !== null ? headH : (estRatio ? estRatio * ch : headHPhys);
+    if (headH === null) headH = hPhys;
     if (chinY === null) chinY = TOP_GAP * hPhys + hPhys;
     if (crownY === null) crownY = chinY - hPhys;
-    headBasis = headBasis === 'physical' ? 'physical' : headBasis;
+    headBasis = 'physical';
   }
   if (headH === null) headH = Math.max(1, chinY - crownY) > 0 ? chinY - crownY : headHPhys;
   if (!(headH > 0)) {
@@ -224,6 +233,16 @@ function fitSuitV2(p = {}) {
     }
     // 无论是否告警，颈根**恒取 chinY 推导值**（脸信号优先，PRD D2：绝不因 pose 漂移把衣服往脸上挪）
     neckY = suitTopByChin;
+  }
+
+  // 【D2 硬合规】仅无人脸检测（physical 兜底）时，衣身顶端硬性安全下限：
+  // 越界则整体下移（宁可露一点领口空隙，也绝不盖脸）。有人脸实测时颈根已精确，不夹断（信任 chinY）。
+  if (face === null) {
+    const safeTopY = (TOP_GAP + ratioMax + SAFE_FACE_MARGIN) * ch;
+    if (neckY < safeTopY) {
+      warnings.push('suit_shifted_down_for_face_safety:' + ((safeTopY - neckY) / ch).toFixed(3));
+      neckY = safeTopY;
+    }
   }
 
   // ---- 5. 模板缩放：实测肩宽 ÷ 模板肩宽（限位 0.6~1.8）----
