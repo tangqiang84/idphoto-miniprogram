@@ -1,0 +1,31 @@
+[
+  {
+    "name": "tool-tests-complete",
+    "command": [
+      "node",
+      "--test",
+      "工具链/tests/acceptance_contracts.test.js",
+      "工具链/tests/coverage_matrix.test.js",
+      "工具链/tests/processing_session_page.test.js"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "page-flow-complete",
+    "command": [
+      "node",
+      "工具链/smoke_steps.js",
+      "--node"
+    ],
+    "exit_code": 1
+  },
+  {
+    "name": "registry-complete",
+    "command": [
+      "node",
+      "工具链/coverage_matrix.js",
+      "--validate"
+    ],
+    "exit_code": 0
+  }
+]

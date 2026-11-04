@@ -9,13 +9,13 @@ const CONSENT_ITEMS = {
     // ⚠️ 个保法第 23 条：向第三方提供个人信息，须告知**接收方名称**并取得单独同意。
     // 2026-10-23 起云端增强由「百度智能云·人像分割」接口完成（云函数内调用，密钥不进包体），
     // 故文案必须点名接收方；改 provider（如换自部署 BiRefNet）时此处须同步改。
-    desc: '仅上传裁剪后的人像区域，交由境内第三方服务「百度智能云·人像分割」完成抠图增强，处理完即销毁，不用于模型训练',
+    desc: '可选：仅上传裁剪后的人像区域，由境内「百度智能云·人像分割」增强；换装时还可请求境内云函数姿态分析。处理完即销毁，不用于模型训练',
     required: false,
   },
   suitSwap: {
     id: 'suitSwap',
     label: 'AI换装',
-    desc: '云端合成职业装，仅换装不改五官，需单独授权',
+    desc: '本地合成职业装，仅换装不改五官；如需云端姿态分析，还须另行同意上云增强',
     required: false,
   },
 };
@@ -27,17 +27,25 @@ const TOOL_CONSENTS = {
   T3: ['faceLocal', 'faceCloudEnhance', 'suitSwap'],
   T4: ['faceLocal'],
   T5: [],
+  T6: [],
 };
 
 function requiredConsents(tool) {
   return (TOOL_CONSENTS[tool] || []).map((k) => CONSENT_ITEMS[k]).filter(Boolean);
 }
 
-function buildConsentRecord(tool, granted) {
-  const need = requiredConsents(tool).map((c) => c.id);
+function buildConsentRecord(tool, granted = [], action = 'local') {
+  const face = ['T1', 'T2', 'T3', 'T4'].includes(tool);
+  const needs = { collect: face ? ['faceLocal'] : [], local: face ? ['faceLocal'] : [],
+    cloud: ['T1', 'T2', 'T3'].includes(tool) ? ['faceLocal', 'faceCloudEnhance'] : null,
+    suit: ['T1', 'T3'].includes(tool) ? ['faceLocal', 'suitSwap'] : null,
+    pose: ['T1', 'T3'].includes(tool) ? ['faceLocal', 'faceCloudEnhance', 'suitSwap'] : null };
+  const need = needs[action];
+  if (!need || !Object.prototype.hasOwnProperty.call(TOOL_CONSENTS, tool)) return { tool, action, granted: [], missing: ['unsupported_action'], ready: false };
   const missing = need.filter((id) => !granted.includes(id));
   return {
     tool,
+    action,
     granted: need.filter((id) => granted.includes(id)),
     missing,
     ready: missing.length === 0,
@@ -58,7 +66,7 @@ const WITHDRAW_METHODS = [
   {
     id: 'pageToggle',
     label: '页面内撤回',
-    desc: '在功能页的授权勾选处取消勾选即可撤回；撤回后该工具将无法继续使用',
+    desc: '在功能页取消对应勾选即可撤回；撤回上云仍可本地处理，撤回换装可跳过（T3须重新同意才可换装）',
     scope: '立即停止后续的采集与上传',
   },
   {
@@ -82,8 +90,8 @@ const WITHDRAW_METHODS = [
  */
 function withdrawalNotice(tool) {
   const scope = tool
-    ? `撤回「${tool}」工具的授权后，将立即停止该工具后续的照片采集与云端上传；已完成的处理结果不受影响。`
-    : '撤回授权后，将立即停止后续的照片采集与云端上传；已完成的处理结果不受影响。';
+    ? `撤回「${tool}」对应授权后立即停止相关新操作，在途结果及页面旧结果失效；已发出的请求不能撤回，手机相册内已保存文件不受影响。`
+    : '撤回对应授权后停止相关新操作，在途结果及页面旧结果失效；已发出的请求不能撤回，手机相册内已保存文件不受影响。';
   return {
     title: '如何撤回授权',
     body: scope,

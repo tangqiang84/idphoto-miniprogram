@@ -1,0 +1,48 @@
+.t1-nav { display:flex; align-items:center; gap:12px; }
+.t1-heading { display:block; font-size:36px; font-weight:600; margin:24px 0; }
+.flow-screen { background:#fff; padding:24px; border-radius:18px; margin-top:20px; }
+.flow-screen button { margin-top:20px; }
+.t1-page .preview { display:block; width:100%; height:600px; background:#f3f5f8; border-radius:12px; }
+.t1-page .bg-swatches { display:flex; gap:12px; margin:20px 0; }
+.t1-page .bg-swatch { flex:1; min-height:72px; padding:12px 6px; border:3px solid #ddd; border-radius:12px; text-align:center; }
+.t1-page .bg-swatch--sel { border-color:#1d6dee; }
+.t1-page .suit-tpls { display:flex; gap:12px; margin:20px 0; }
+.t1-page .suit-tpl { flex:1; border:3px solid #ddd; border-radius:12px; text-align:center; }
+.t1-page .suit-tpl--sel { border-color:#1d6dee; }
+.t1-page .suit-tpl__img { width:100%; height:220px; }
+.t1-page .result-row { display:flex; flex-direction:column; gap:8px; padding:16px 0; border-bottom:1px solid #eee; }
+.t1-selfcheck { position:relative; margin-top:24px; padding:24px; border:3px solid #e6a23c; border-radius:18px; background:#fff9ec; }
+.t1-page .selfcheck { padding:20px; border:2px solid #aaa; margin:16px 0; }
+.t1-page .selfcheck--on { border-color:#1d6dee; background:#edf5ff; }
+.flow-error { margin-top:20px; padding:20px; border:2px solid #e6a23c; border-radius:12px; }
+.t1-progress { padding:20px; text-align:center; }
+
+.t1-modal-mask { position:fixed; top:0; bottom:0; left:0; right:0; z-index:200; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; padding:24px; }
+.t1-modal-mask .t1-selfcheck { margin:0; width:100%; max-height:85vh; overflow-y:auto; box-sizing:border-box; }
+.t1-selfcheck .preview { height:460px; }
+/* 本页以750设计稿单位覆盖旧375字号，避免步骤组件与原生按钮大小不一致。 */
+.t1-page { padding:24px; font-size:28px; line-height:1.5; }
+.t1-nav { position:relative; justify-content:center; min-height:68px; margin-bottom:12px; }
+.t1-nav .page__title { margin:0; font-size:36px; text-align:center; }
+.t1-nav .flow-back { position:absolute; left:0; margin:0; padding:0 12px; width:auto; font-size:28px; line-height:68px; background:transparent; color:#167d45; }
+.t1-nav .flow-back::after { border:none; }
+.t1-page .tag, .t1-page .consent__desc { display:block; font-size:24px; line-height:1.5; }
+.t1-page .consent__item { flex-direction:column; align-items:stretch; font-size:26px; line-height:1.5; padding:16px; }
+.t1-page .picker-value { padding:20px 0; font-size:28px; }
+.t1-page .step-flow { padding:16px; gap:8px; }
+.t1-page .step-flow__item { font-size:22px; margin-right:12px; }
+.t1-page .step-flow__idx { width:28px; height:28px; line-height:28px; font-size:20px; }
+.t1-page .step-crop, .t1-page .step-beauty, .t1-page .step-dpi { padding:20px; margin:20px 0; }
+.t1-page .step-crop__title, .t1-page .step-beauty__title, .t1-page .step-dpi__title { font-size:28px; }
+.t1-page .step-crop__sub, .t1-page .step-beauty__sub, .t1-page .step-dpi__sub,
+.t1-page .step-crop__row, .t1-page .step-dpi__spec, .t1-page .step-dpi__req,
+.t1-page .step-dpi__verdict, .t1-page .step-dpi__advice, .t1-page .crop-zoom,
+.t1-page .step-dpi__chip-sub, .t1-page .beauty__hint { font-size:24px; line-height:1.5; }
+.t1-page .step-dpi__chip-main, .t1-page .beauty__title, .t1-page .beauty__label { font-size:28px; }
+.t1-page .beauty__forbidden { font-size:24px; }
+.t1-page .flow-screen button, .t1-page .t1-selfcheck button { width:100%; margin-top:24px; padding:22px 16px; border-radius:14px; font-size:30px; line-height:1.45; background:#07c160; color:#fff; }
+.t1-page .flow-screen button::after, .t1-page .t1-selfcheck button::after { border:none; }
+.t1-page .flow-screen .flow-skip-beauty, .t1-page .flow-screen .flow-skip-suit,
+.t1-page .flow-screen .flow-patch, .t1-page .flow-screen .flow-print,
+.t1-page .t1-selfcheck .flow-self-back { background:#edf7f1; color:#167d45; }
+.t1-page button[disabled] { background:#e1e5e9; color:#8a94a3; }

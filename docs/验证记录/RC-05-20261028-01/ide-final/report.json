@@ -1,0 +1,17 @@
+{
+  "status": "FAIL",
+  "scope": "真实微信UI/本地图像算法，云端适配器禁用；非真实云模型/双平台真机验收",
+  "app": "/Users/tq/WorkBuddy/XiaoChengXu/docs/验证记录/t1-local-builds/run-207f2f02396d/workspace/idphoto-miniprogram",
+  "checks": [
+    {
+      "status": "FAIL",
+      "code": "PAGE_NOT_READY"
+    }
+  ],
+  "sample": "REAL-111",
+  "traceId": "d359d561-3087-4439-a787-bbefd79b8e1d",
+  "timestamp": "2026-10-28T14:45:35.687Z",
+  "artifacts": [],
+  "runtimeErrors": 0,
+  "diagnostic": "PAGE_NOT_READY"
+}

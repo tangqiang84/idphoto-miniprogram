@@ -1,0 +1,102 @@
+{
+  "status": "FAIL",
+  "traceId": "step-150a84d0-face-4dc0-b703-dc3d7e0a2fad",
+  "scope": "Node实际页面控制代码/平台与图像算法替身，非微信UI或真实模型验收",
+  "rows": [
+    {
+      "tool": "T1",
+      "status": "FAIL",
+      "reason": "用户确认裁剪前已进入下游处理",
+      "observed": [
+        "segment"
+      ],
+      "observation": {
+        "imageDelivered": true,
+        "cropConfirmed": false,
+        "events": [
+          {
+            "kind": "segment",
+            "cropConfirmed": false
+          }
+        ]
+      },
+      "loaded": {
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx": "6145626b7306078ceeb3090ea5db758c1da5b0445f83aec484a17e8fcdd3cd67",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts": "143cce12da76d0fd731aa5dcf07ec1c67c4d475f8a160b53c92d8fa26cdcbd3a"
+      },
+      "environment": "node-page-controller/mock-picker/mock-platform/mock-image-algorithm",
+      "limitations": "真实页面代码仅执行控制流；不验证微信渲染、图片质量、模型、网络或完整授权流程；不会读取/上传照片"
+    },
+    {
+      "tool": "T2",
+      "status": "FAIL",
+      "reason": "用户确认裁剪前已进入下游处理",
+      "observed": [
+        "segment"
+      ],
+      "observation": {
+        "imageDelivered": true,
+        "cropConfirmed": false,
+        "events": [
+          {
+            "kind": "segment",
+            "cropConfirmed": false
+          }
+        ]
+      },
+      "loaded": {
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx": "3ed1deca1f64507b1d38d633637338dd136fc29d8b3dc011a526bb509aa9f973",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts": "143cce12da76d0fd731aa5dcf07ec1c67c4d475f8a160b53c92d8fa26cdcbd3a"
+      },
+      "environment": "node-page-controller/mock-picker/mock-platform/mock-image-algorithm",
+      "limitations": "真实页面代码仅执行控制流；不验证微信渲染、图片质量、模型、网络或完整授权流程；不会读取/上传照片"
+    },
+    {
+      "tool": "T3",
+      "status": "FAIL",
+      "reason": "用户确认裁剪前已进入下游处理",
+      "observed": [
+        "segment"
+      ],
+      "observation": {
+        "imageDelivered": true,
+        "cropConfirmed": false,
+        "events": [
+          {
+            "kind": "segment",
+            "cropConfirmed": false
+          }
+        ]
+      },
+      "loaded": {
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx": "acb89643f12e0e56c1501e500e74a67fcf389faa6ef749e8e852b9cd46db7e98",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts": "143cce12da76d0fd731aa5dcf07ec1c67c4d475f8a160b53c92d8fa26cdcbd3a"
+      },
+      "environment": "node-page-controller/mock-picker/mock-platform/mock-image-algorithm",
+      "limitations": "真实页面代码仅执行控制流；不验证微信渲染、图片质量、模型、网络或完整授权流程；不会读取/上传照片"
+    },
+    {
+      "tool": "T5",
+      "status": "FAIL",
+      "reason": "用户确认裁剪前已进入下游处理",
+      "observed": [
+        "product-export"
+      ],
+      "observation": {
+        "imageDelivered": true,
+        "cropConfirmed": false,
+        "events": [
+          {
+            "kind": "product-export",
+            "cropConfirmed": false
+          }
+        ]
+      },
+      "loaded": {
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx": "b03768413ac7ea7d061f28dc3fb6605940d5b768535ffef4be35a291d377d979"
+      },
+      "environment": "node-page-controller/mock-picker/mock-platform/mock-image-algorithm",
+      "limitations": "真实页面代码仅执行控制流；不验证微信渲染、图片质量、模型、网络或完整授权流程；不会读取/上传照片"
+    }
+  ]
+}

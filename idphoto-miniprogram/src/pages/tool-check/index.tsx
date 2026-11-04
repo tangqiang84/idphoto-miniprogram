@@ -1,7 +1,8 @@
+import { useActionConsent } from '../../hooks/useActionConsent';
 import { View, Text, Button, Image, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { useState } from 'react';
-import { requiredConsents, buildConsentRecord, BG, listSpecs, getSpec, check, specLabel, measureHeadRatio } from '../../services';
+import { useRef, useState } from 'react';
+import { requiredConsents, BG, listSpecs, getSpec, check, specLabel, measureHeadRatio } from '../../services';
 import { useImagePicker } from '../../hooks/useImagePicker';
 import { useConsentGate } from '../../hooks/useConsentGate';
 
@@ -48,11 +49,12 @@ function detectBgKey(rgba: Uint8ClampedArray, w: number, h: number): string | nu
 
 export default function ToolCheck() {
   const consentItems = requiredConsents(TOOL);
-  const [granted, setGranted] = useState<string[]>([]);
-  const rec = buildConsentRecord(TOOL, granted);
+  const resultPermission = useRef<any>(null);
+  const { granted, setGranted, authorization } = useActionConsent(TOOL, () => { setResult(null); setPreview(''); setBusy(false); setMsg('授权已变化，请重新检测'); });
+
   // 【P1 #77 / RC-7】T4 补人脸处理协议闸门：未勾选时上传区不可点
-  const gate = useConsentGate(rec.ready, '合规检测');
-  const picker = useImagePicker((img) => run(img.path, img.width, img.height));
+  const gate = useConsentGate(() => authorization.permits('collect'), '合规检测');
+  const picker = useImagePicker((img) => run(img.path, img.width, img.height), authorization);
 
   const specs = listSpecs();
   const [specIndex, setSpecIndex] = useState(0);
@@ -71,10 +73,12 @@ export default function ToolCheck() {
   };
 
   async function run(path: string, srcW: number, srcH: number) {
-    if (!rec.ready) {
+    if (!authorization.permits('local')) {
       Taro.showToast({ title: '请先勾选所需授权', icon: 'none' });
       return;
     }
+    const token = authorization.capture('local');
+    if (!token.current()) { Taro.showToast({ title: '请先同意本地处理授权', icon: 'none' }); return; }
     setBusy(true);
     setResult(null);
     setMsg('读取图片…');
@@ -87,9 +91,10 @@ export default function ToolCheck() {
       // 2. 真实尺寸 + 真实 KB（取图已剥离到 useImagePicker，PRD A1 引导框在拍摄路径叠加）
       let fileKb = 0;
       try {
-        const fi: any = await Taro.getFileInfo({ filePath: path });
+        const fi: any = await token.call(() => Taro.getFileInfo({ filePath: path }));
         fileKb = Math.max(1, Math.round((fi.size || 0) / 1024));
       } catch (_) { fileKb = 0; }
+      token.check();
 
       // 3. 工作图（长边 ≤ MAX_EDGE）用于底色采样与人脸检测
       const scale = Math.min(1, MAX_EDGE / Math.max(srcW, srcH));
@@ -98,11 +103,11 @@ export default function ToolCheck() {
       const canvas = anyTaro.createOffscreenCanvas({ type: '2d', width: w, height: h });
       const ctx = canvas.getContext('2d');
       const img = canvas.createImage();
-      await new Promise<void>((resolve, reject) => {
+      await token.call(() => new Promise<void>((resolve, reject) => {
         img.onload = () => resolve();
         img.onerror = (e: any) => reject(e || new Error('图片加载失败'));
         img.src = path;
-      });
+      }));
       ctx.drawImage(img, 0, 0, w, h);
       const rgba = ctx.getImageData(0, 0, w, h).data;
 
@@ -120,7 +125,7 @@ export default function ToolCheck() {
       // 6. 头部占比（统一走 services/faceService：VisionKit 优先 → faceDetect 降级 → 几何估算）
       //    T4 是只读检测，不做抠图，故无 alpha 包围盒可作几何估算兜底 → 完全不可用时为「未检测」
       setMsg('检测人脸区域…');
-      const head = await measureHeadRatio(rgba, w, h, null);
+      const head = await token.call(() => measureHeadRatio(rgba, w, h, null));
       const ratio = head.ok ? head.ratio : null;
       setHeadApprox(head.source === 'estimate' || head.quality === 'low');
       setHeadSkipped(ratio == null);
@@ -143,10 +148,11 @@ export default function ToolCheck() {
         '（等效 dpi 口径：像素 ÷ 目标规格英寸）',
       );
     } catch (e: any) {
-      setMsg('检测失败：' + String((e && e.message) || e));
-      console.error('[T4]', e);
+      if (!token.current()) return;
+      setMsg('检测失败，请重试（CHECK_FAILED）');
+      console.warn('[T4]', { code: e?.code || 'CHECK_FAILED', traceId: token.traceId });
     } finally {
-      setBusy(false);
+      if (token.current()) setBusy(false);
     }
   }
 
@@ -157,7 +163,7 @@ export default function ToolCheck() {
 
       {/* 授权（默认不勾选，未集齐不启动） */}
       <View className={gate.hinted ? 'consent consent--hinted' : 'consent'}>
-        <Text className='consent__h'>需授权（{granted.length}/{consentItems.length}）</Text>
+        <Text className='consent__h'>本地处理授权（可随时撤回，不上云）</Text>
         {gate.hinted ? (
           <Text className='consent__hint'>
             请先勾选下方授权，才能选择照片或拍照（先同意、后收集）
@@ -169,6 +175,7 @@ export default function ToolCheck() {
             <View
               key={c.id}
               className={on ? 'consent__item consent__item--on' : 'consent__item'}
+              style={{ flexDirection: 'column' }}
               onClick={() => toggleConsent(c.id)}
             >
               <Text className='consent__check'>

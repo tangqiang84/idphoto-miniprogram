@@ -19,10 +19,10 @@ export interface ConsentGate {
   blocked: boolean;
 }
 
-export function useConsentGate(ready: boolean, toolLabel = '处理'): ConsentGate {
+export function useConsentGate(ready: boolean | (() => boolean), toolLabel = '处理'): ConsentGate {
   const [hinted, setHinted] = useState(false);
   const gate = (fn: () => void) => {
-    if (!ready) {
+    if (!(typeof ready === 'function' ? ready() : ready)) {
       setHinted(true);
       Taro.showToast({
         title: `请先勾选上方所需的授权（${toolLabel}需要你先同意，才会读取照片）`,
@@ -33,5 +33,5 @@ export function useConsentGate(ready: boolean, toolLabel = '处理'): ConsentGat
     setHinted(false);
     fn();
   };
-  return { hinted, gate, blocked: !ready };
+  return { hinted, gate, blocked: !(typeof ready === 'function' ? ready() : ready) };
 }

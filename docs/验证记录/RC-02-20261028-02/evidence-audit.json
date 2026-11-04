@@ -1,0 +1,90 @@
+{
+  "scope": "RC-02完成性复核，文档更新前快照",
+  "artifacts": [
+    {
+      "file": "工具链/verify.sh",
+      "sha256": "ed3a348f618d8d7cf6effd09455ff7dddd60191fb9cfd3b2be1caa3c14943509",
+      "matches_previous": true
+    },
+    {
+      "file": "工具链/verify_all.sh",
+      "sha256": "0304e79809b8eea9ad6525db0591c7be29f74f951007cfb6470ca51ffe4dafe3",
+      "matches_previous": true
+    },
+    {
+      "file": "工具链/verify_runner.py",
+      "sha256": "2259f3c5cb32f75d67e3e5d6412bd078c8db925e3d88f2f0661088fd9cf91f1e",
+      "matches_previous": true
+    },
+    {
+      "file": "工具链/test_verify_runner.py",
+      "sha256": "ebf2f1158968387575d39ac4a192c99b7d7570751cc1fe6e22218c3679c53b3a",
+      "matches_previous": true
+    },
+    {
+      "file": "工具链/daily_summary.py",
+      "sha256": "9834c027b7fbd2183abf43162b9b2ceb26db4afaf3af2453a20ad36bcb44178e",
+      "matches_previous": true
+    },
+    {
+      "file": "工具链/lint/package.json",
+      "sha256": "103a91059f1dfb0bee99a35dbbab287347c479c3c668ed5d87002bc962840335",
+      "matches_previous": true
+    },
+    {
+      "file": "工具链/lint/package-lock.json",
+      "sha256": "8e3042e07acb0ee3838a6f5295a80e425692a9ffe81e38468f3954b96f4aa1f4",
+      "matches_previous": true
+    },
+    {
+      "file": "工具链/lint/run.cjs",
+      "sha256": "61d843ef9c0a504f30c899f9ca77f37ae87d321c1a4f535a1297244894cbc0bf",
+      "matches_previous": true
+    },
+    {
+      "file": "idphoto-miniprogram/package.json",
+      "sha256": "28243c283f85bf593ed4135fa7371dc16f50008ef9ec7cd6d7748dd3106f8756",
+      "matches_previous": true
+    },
+    {
+      "file": "idphoto-miniprogram/package-lock.json",
+      "sha256": "d434f0e9ed770556d90d3c1fbb00bd29f81186c17b5feca0f278328f519b1cf7",
+      "matches_previous": true
+    },
+    {
+      "file": "docs/整改开发任务.md",
+      "sha256": "bc76977d3afe9b4aa618837bcdf08fa521272195b6a8b0f793ca3bea3a61cf3c",
+      "matches_previous": true
+    },
+    {
+      "file": "docs/RC-02验证入口说明.md",
+      "sha256": "fc9eef9d249987c477702fa53b5c934e0f4b11f90605ede386af0b89c1102b9d",
+      "matches_previous": true
+    },
+    {
+      "file": "docs/验证记录/RC-02-20261028-01/报告.md",
+      "sha256": "af7233c3b8c61aa45a52a580e8d480f174edbe706ac8501d2439db104bf113c2",
+      "matches_previous": true
+    }
+  ],
+  "builds": [
+    {
+      "report": "docs/验证记录/verify-runs/run-20261028-145256-3942c76e/report.json",
+      "status": "PASS",
+      "build_id": "6346c1096f6d2eadf822181c0491acdae422eda690ff0650f1da756e24a06eae",
+      "verified_app_inputs": 116,
+      "verified_build_files": 43
+    },
+    {
+      "report": "docs/验证记录/verify-runs/run-20261028-145440-ac409757/report.json",
+      "status": "BLOCKED",
+      "build_id": "6346c1096f6d2eadf822181c0491acdae422eda690ff0650f1da756e24a06eae",
+      "verified_app_inputs": 116,
+      "verified_build_files": 43
+    }
+  ],
+  "app_dependencies_unchanged": true,
+  "app_lock_unchanged": true,
+  "python_syntax": "PASS",
+  "document_links": "PASS"
+}

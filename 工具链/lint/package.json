@@ -1,0 +1,12 @@
+{
+  "name": "idphoto-isolated-lint",
+  "version": "1.0.0",
+  "private": true,
+  "description": "独立开发检查工具，不改变小程序依赖图",
+  "devDependencies": {
+    "@typescript-eslint/parser": "8.72.1",
+    "eslint": "8.57.1",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "typescript": "5.9.3"
+  }
+}

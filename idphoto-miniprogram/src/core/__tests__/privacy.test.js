@@ -48,13 +48,15 @@ test('withdrawalNotice：返回的是副本，外部改动不污染源数据', (
   assert.notStrictEqual(WITHDRAW_METHODS[0].label, '被改了');
 });
 
-test('既有同意契约零回归：T3 需三项授权且换装须单独授权', () => {
+test('RC-06：授权项目与动作必需项分开，本地入口不捆绑可选项', () => {
   const need = requiredConsents('T3').map((c) => c.id);
   assert.deepStrictEqual(need, ['faceLocal', 'faceCloudEnhance', 'suitSwap']);
   assert.ok(CONSENT_ITEMS.suitSwap.required === false, '换装是非必需项但需单独授权');
   const rec = buildConsentRecord('T3', ['faceLocal']);
-  assert.strictEqual(rec.ready, false);
-  assert.deepStrictEqual(rec.missing, ['faceCloudEnhance', 'suitSwap']);
+  assert.strictEqual(rec.ready, true);
+  assert.deepStrictEqual(rec.missing, []);
+  assert.strictEqual(buildConsentRecord('T3', ['faceLocal'], 'suit').ready, false);
+  assert.strictEqual(buildConsentRecord('T3', ['faceLocal', 'suitSwap'], 'suit').ready, true);
   assert.strictEqual(buildConsentRecord('T3', need).ready, true);
 });
 

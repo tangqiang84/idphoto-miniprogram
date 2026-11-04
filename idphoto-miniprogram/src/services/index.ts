@@ -35,8 +35,15 @@ export const CLOUD_CONFIG = {
   region: 'CN',
 };
 // 路2（生产/HTTP）：真实上云（adapter 内部按运行环境选 wx.request / fetch）
-export function buildCloudAdapter(overrides = {}) {
-  return makeHttpAdapter({ ...CLOUD_CONFIG, ...overrides });
+export function buildCloudAdapter(overrides: { authorization?: { check(): void }; [key: string]: any } = {}) {
+  const adapter = makeHttpAdapter({ ...CLOUD_CONFIG, ...overrides });
+  return { ...adapter, async call(req: any) {
+    if (!overrides.authorization) throw { code: 'CONSENT_REQUIRED', message: '请单独同意上云增强', traceId: 'http-' + Date.now() };
+    overrides.authorization.check();
+    const result = await adapter.call(req);
+    overrides.authorization.check();
+    return result;
+  } };
 }
 // 离线/PoC 用：本地 BiRefNet 影子实现，链路可跑通但非真模型
 export function buildLocalStubAdapter(overrides = {}) {

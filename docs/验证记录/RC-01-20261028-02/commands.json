@@ -1,0 +1,29 @@
+{
+  "scope": "RC-01第二轮完成性复核；没有业务全链/真机/云端验收",
+  "checks": [
+    {
+      "check": "core-tests",
+      "exit_code": 0,
+      "elapsed_seconds": 5.703837667,
+      "output_excerpt": "Warning: truncated output (original token count: 7394)\nTotal output lines: 376\n\n\n> idphoto-miniprogram@0.1.0 test:core\n> node --test src/core/__tests__/*.test.js\n\n✔ erase 把笔刷覆盖像素置 0，其余保持不变 (3.459174ms)\n✔ restore 把笔刷覆盖像素置 1（含从 0 恢复） (0.360496ms)\n✔ 相邻两点之间插值落点，避免断点空洞 (2.169845ms)\n✔ 越界坐标被 clamp，不污染画布 (3.27393ms)\n✔ 空笔画返回原值（不改） (2.063097ms)\n✔ 半径越大覆盖像素越多 (1.455675ms)\n✔ 缺省 mode 视为 erase (0.465696ms)\n✔ 无 alpha/尺寸 返回入参 (0.58223ms)\n✔ stamp 圆形印章边界正确 (0.550527ms)\n✔ 辅助函数 newStroke / addPoint / boundsOfStrokes (0.409822ms)\n✔ 正常 resolve：值透传、不触发超时 (2.018511ms)\n✔ 慢于超时：reject 且错误消息带原因码 (202.154737ms)\n✔ 原 Promise 先 reject：透传原错误（不被超时消息替换） (5.498739ms)\n✔ 原 Promise 成功后定时器被清理（不泄漏、不误报） (60.444922ms)\n✔ 非法入参被拒（防呆） (0.45…6894 tokens truncated…躯干必然延续，不能切断） (2.525908ms)\n✔ ② bbox 仅在头部（底部未及中线）→ 不贴底 (2.893704ms)\n✔ ③ 居中回退区域：加宽且底部贴图底（证件照躯干必然到图底） (0.842525ms)\n✔ 常量：允许格式与上限 (27.877383ms)\n✔ getExt：常规 / 大小写 / 无扩展名 / query / hash / 段内无点 (1.779583ms)\n✔ checkFormat：扩展名合法即通过 (0.297907ms)\n✔ checkFormat：扩展名缺失时用 type 兜底 (0.168731ms)\n✔ checkFormat：两者都非法 → 拦截 (43.199165ms)\n✔ checkSize：边界与降级 (0.282449ms)\n✔ validateUpload：组合通过 (0.194896ms)\n✔ validateUpload：格式不符优先拦截 (0.146245ms)\n✔ validateUpload：大小超限拦截（即便格式合法） (0.236208ms)\n✔ validateUpload：格式与大小都缺失但字节无法取得 → 仍因格式拦截 (0.275806ms)\nℹ tests 363\nℹ suites 0\nℹ pass 363\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 5215.976827\n"
+    },
+    {
+      "check": "typescript",
+      "exit_code": 0,
+      "elapsed_seconds": 4.36926656,
+      "output_excerpt": ""
+    },
+    {
+      "check": "lint",
+      "exit_code": 1,
+      "elapsed_seconds": 1.692304944,
+      "output_excerpt": "npm error Missing script: \"lint\"\nnpm error\nnpm error Did you mean this?\nnpm error   npm link # Symlink a package folder\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run\nnpm error A complete log of this run can be found in: /Users/tq/.npm/_logs/2026-10-28T06_30_44_290Z-debug-0.log\n"
+    },
+    {
+      "check": "baseline-and-syntax",
+      "exit_code": 0,
+      "elapsed_seconds": 2.357703895,
+      "output_excerpt": "{\n  \"status\": \"PASS\",\n  \"scope\": \"RC-01文档基线，不代表业务验收\",\n  \"requirements\": 76,\n  \"historical_tasks\": 62,\n  \"negative_cases\": 11,\n  \"errors\": []\n}\nPASS：新增检查器语法与62条具体复核证据\n"
+    }
+  ]
+}

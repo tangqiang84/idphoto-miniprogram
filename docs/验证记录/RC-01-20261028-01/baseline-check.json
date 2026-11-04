@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "scope": "RC-01文档基线，不代表业务验收",
+  "requirements": 76,
+  "historical_tasks": 62,
+  "negative_cases": 7,
+  "errors": []
+}

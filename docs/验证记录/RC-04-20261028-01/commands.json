@@ -1,0 +1,24 @@
+[
+  {
+    "name": "tool-tests-recheck",
+    "command": [
+      "node",
+      "--test",
+      "工具链/tests/acceptance_contracts.test.js",
+      "工具链/tests/coverage_matrix.test.js",
+      "工具链/tests/processing_session_page.test.js"
+    ],
+    "exit_code": 0,
+    "log": "tool-tests-recheck.log"
+  },
+  {
+    "name": "page-flow-recheck",
+    "command": [
+      "node",
+      "工具链/smoke_steps.js",
+      "--node"
+    ],
+    "exit_code": 1,
+    "log": "page-flow-recheck.log"
+  }
+]

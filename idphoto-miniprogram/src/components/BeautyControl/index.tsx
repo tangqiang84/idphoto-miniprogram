@@ -16,6 +16,7 @@ interface Props {
   onChange: (v: BeautyState) => void;
   /** 应用美颜并重新生成（父组件据此对当前图重跑处理管线） */
   onApply: () => void;
+  standalone?: boolean;
 }
 
 function toPct(v: number) {
@@ -28,7 +29,7 @@ function toPct(v: number) {
  * - 仅提供 E1 允许项（磨皮/美白/亮眼，轻度滑块）。
  * - E2 禁止项（瘦脸/大眼/重塑五官）以置灰文案呈现且不可点，并说明合规原因（AC2 验收）。
  */
-export default function BeautyControl({ value, onChange, onApply }: Props) {
+export default function BeautyControl({ value, onChange, onApply, standalone }: Props) {
   const set = (patch: Partial<BeautyState>) => onChange({ ...value, ...patch });
 
   return (
@@ -85,11 +86,10 @@ export default function BeautyControl({ value, onChange, onApply }: Props) {
             </Text>
           </View>
 
-          <Button className='beauty__apply' onClick={onApply}>
-            应用美颜并重新生成
-          </Button>
+          {!standalone ? <Button className='beauty__apply' onClick={onApply}>应用美颜并重新生成</Button> : null}
         </View>
       ) : null}
+      {standalone ? <Button className='flow-confirm-beauty' onClick={onApply}>确认美颜并继续</Button> : null}
     </View>
   );
 }

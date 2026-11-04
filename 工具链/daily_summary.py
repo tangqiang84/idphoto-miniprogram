@@ -30,20 +30,22 @@ Python 3 标准库（无第三方依赖）。
 
 注意
 ----
-1. 本项目无 git（台账 #20），改动靠「文件 mtime」采集；跨零点开工时请用
-   `--date` 明确指定归属日，否则凌晨的改动会被算到第二天。
+1. 文件mtime仅作日志线索，版本证据以git及验证报告为准；跨零点开工时传入
+   YYYY-MM-DD明确指定归属日，不把凌晨的改动混入另一日。
 2. 建议每天收工时跑一次；或用 macOS launchd / 提醒事项做定时提醒。
 """
 import os
+import re
 import sys
 from datetime import datetime, timedelta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOGDIR = os.path.join(ROOT, "每日开发日志")
 
-SKIP_DIRS = {"node_modules", "dist", ".git", ".workbuddy", "测试截图"}
+SKIP_DIRS = {"node_modules", "dist", ".git", ".workbuddy", "测试截图", "验证记录", "_tmp"}
 SKIP_FILES = {".DS_Store"}
 TODO_FILE = os.path.join(ROOT, "开发任务台账.md")
+RC_TASK_FILE = os.path.join(ROOT, "docs", "整改开发任务.md")
 ISSUE_FILE = os.path.join(ROOT, "问题台账.md")
 
 
@@ -68,24 +70,39 @@ def collect_changed(day: datetime.date):
     return [(mt.strftime("%H:%M"), rel) for mt, rel in out]
 
 
+def parse_task_rows(text):
+    """按表头定位字段，兼容旧数字编号及RC整改表，避免把依赖列误当负责人。"""
+    rows, header = [], {}
+    for line in text.splitlines():
+        if not line.startswith("| "):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if cells[0] in ("#", "ID"):
+            header = {name: index for index, name in enumerate(cells)}
+            continue
+        if not re.fullmatch(r"(?:\d+[a-z]?|RC-\d{2})", cells[0]):
+            continue
+        if any(name not in header for name in ("任务", "状态")):
+            continue
+        if max(header.values()) >= len(cells):
+            continue
+        status = cells[header["状态"]]
+        pending = any(flag in status for flag in ("⬜", "⏳", "🔵", "⛔", "待办", "进行中", "阻塞", "待自动验收", "待真机", "待人工"))
+        if pending:
+            owner = cells[header["负责人"]] if "负责人" in header else "按任务依赖安排"
+            rows.append((cells[0], cells[header["任务"]], status, owner))
+    return rows
+
+
 def parse_todo():
-    """从《开发任务台账》抽取未完成条目"""
     rows, decide = [], []
-    if not os.path.exists(TODO_FILE):
-        return rows, decide
-    with open(TODO_FILE, encoding="utf-8") as f:
-        for line in f:
-            line = line.rstrip("\n")
-            if not line.startswith("| "):
-                continue
-            cells = [c.strip() for c in line.strip().strip("|").split("|")]
-            if len(cells) < 4 or not cells[0].rstrip("abcdefghijklmnopqrstuvwxyz").isdigit():
-                continue
-            tid, task, status, owner = cells[0], cells[1], cells[2], cells[3]
-            if any(s in status for s in ("⬜", "⏳", "🔵", "⛔")):
-                rows.append((tid, task, status, owner))
-                if "唐强" in owner:
-                    decide.append(f"- {task}（任务 #{tid}）")
+    for file in (TODO_FILE, RC_TASK_FILE):
+        if os.path.exists(file):
+            with open(file, encoding="utf-8") as stream:
+                rows.extend(parse_task_rows(stream.read()))
+    for tid, task, status, owner in rows:
+        if "唐强" in owner:
+            decide.append(f"- {task}（任务 #{tid}）")
     return rows, decide
 
 
@@ -127,7 +144,7 @@ def main():
     out = os.path.join(LOGDIR, f"{day}.md")
     if os.path.exists(out):
         print(f"⚠️  已存在，不覆盖（防冲掉已写内容）: {out}")
-        print("   如需重生成，先手动删除该文件。")
+        print("   如需补充，请编辑现有日志或另存新文件；删除须经用户确认。")
         return
 
     changed = collect_changed(day)
@@ -176,7 +193,7 @@ def main():
 
 | 验证项 | 命令 | 结果 |
 |---|---|---|
-| 编译 + 单测 + 类型 | `NODE_OPTIONS= bash 工具链/verify.sh` |  |
+| 开发检查：单测/类型/Lint/隔离编译 | `bash 工具链/verify.sh`（不代表发布通过） |  |
 | 模拟器冒烟 | `NODE_OPTIONS= node 工具链/smoke_auto.js` |  |
 
 ## 五、明天要做的（≤3 条，写清验收标准）

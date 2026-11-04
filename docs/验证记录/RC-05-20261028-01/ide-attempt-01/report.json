@@ -1,0 +1,15 @@
+{
+  "status": "FAIL",
+  "scope": "真实微信UI/本地图像算法，云端适配器禁用；非真实云模型/双平台真机验收",
+  "app": "/Users/tq/WorkBuddy/XiaoChengXu/docs/验证记录/t1-local-builds/run-4146fd8a696e/workspace/idphoto-miniprogram",
+  "checks": [
+    {
+      "status": "FAIL",
+      "code": "IDE_STEP_ERROR"
+    }
+  ],
+  "sample": "REAL-111",
+  "timestamp": "2026-10-28T13:33:22.514Z",
+  "artifacts": [],
+  "runtimeErrors": 0
+}

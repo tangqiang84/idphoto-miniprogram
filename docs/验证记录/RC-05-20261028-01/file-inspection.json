@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "format": "JPEG",
+  "size": [
+    295,
+    413
+  ],
+  "mode": "RGB",
+  "bytes": 37622,
+  "sha256": "99dc5c11e06e0bbd469c97c8bdb8a159f871b2b1c71e859db9ce9e629634a439",
+  "basis": "一寸300档固定参考295×413；20–200KB",
+  "metadata_dpi": null,
+  "scope": "独立读取实际SDK输出文件，不证明全规格或视觉质量"
+}

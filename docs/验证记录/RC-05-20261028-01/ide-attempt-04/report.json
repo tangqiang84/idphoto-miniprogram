@@ -1,0 +1,30 @@
+{
+  "status": "FAIL",
+  "scope": "真实微信UI/本地图像算法，云端适配器禁用；非真实云模型/双平台真机验收",
+  "app": "/Users/tq/WorkBuddy/XiaoChengXu/docs/验证记录/t1-local-builds/run-53a3105d3114/workspace/idphoto-miniprogram",
+  "checks": [
+    {
+      "status": "PASS",
+      "step": "upload"
+    },
+    {
+      "status": "PASS",
+      "step": "crop"
+    },
+    {
+      "status": "FAIL",
+      "code": "CROP_SCALE_INVALID"
+    }
+  ],
+  "sample": "REAL-111",
+  "traceId": "990ad47c-24b8-4823-a666-56f2b6afd35d",
+  "timestamp": "2026-10-28T14:07:10.627Z",
+  "artifacts": [
+    "upload-1.png",
+    "crop-2.png"
+  ],
+  "runtimeErrors": 0,
+  "sample_sha256": "ded108d285dd62f069b0d970f1477fc3aafb0c8222c2f5fac271239d69b31368",
+  "pickerApi": "chooseMedia",
+  "diagnostic": "CROP_SCALE_INVALID"
+}

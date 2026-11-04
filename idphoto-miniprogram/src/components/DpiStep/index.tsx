@@ -32,21 +32,27 @@ interface Props {
   workH?: number;
   /** 未选规格模式（T2 允许「保持原图尺寸」）：显示提示，不做像素评估 */
   noSpec?: boolean;
+  stepLabel?: string;
+  effectiveW?: number;
+  effectiveH?: number;
 }
 
-export default function DpiStep({ specId, specName, dpi, onChange, srcW, srcH, workW, workH, noSpec }: Props) {
+export default function DpiStep({ specId, specName, dpi, onChange, srcW, srcH, workW, workH, noSpec, effectiveW, effectiveH, stepLabel }: Props) {
   const spec = noSpec ? null : getSpec(specId);
   const t300 = spec ? getPixelSize(spec, DPI_STD) : null;
   const t600 = spec ? getPixelSize(spec, DPI_HD) : null;
   const target = dpi === DPI_HD ? t600 : t300;
 
+  // T1优先使用原图坐标裁剪的有效像素，不能以放大后的工作图自证清晰。
+  const inputW = effectiveW ?? workW;
+  const inputH = effectiveH ?? workH;
   // 评估：优先用裁剪后画布（贴近真实出图），没有则退回原图
   let verdict: { ok: boolean; text: string } | null = null;
-  if (target && workW && workH && srcW && srcH) {
-    const plan = planOutput(workW, workH, target.width, target.height);
+  if (target && inputW && inputH && srcW && srcH) {
+    const plan = planOutput(inputW, inputH, target.width, target.height);
     if (plan) {
       if (plan.srcTooSmall) {
-        verdict = { ok: false, text: `原图分辨率不足（${workW}×${workH}），放大到 ${dpi}dpi 不会更清晰` };
+        verdict = { ok: false, text: `原图分辨率不足（${Math.round(inputW)}×${Math.round(inputH)}），放大到 ${dpi}dpi 不会更清晰` };
       } else if (plan.upscale) {
         verdict = { ok: false, text: `像素不足，放大会降低清晰度（输出为放大结果）` };
       } else {
@@ -58,7 +64,7 @@ export default function DpiStep({ specId, specName, dpi, onChange, srcW, srcH, w
   return (
     <View className='step-dpi' data-step='dpi'>
       <View className='step-dpi__head'>
-        <Text className='step-dpi__title'>④ 输出档位</Text>
+        <Text className='step-dpi__title'>{stepLabel || '④ 输出档位'}</Text>
         <Text className='step-dpi__sub'>两档均免费 · 无水印 · 导出前最后一步</Text>
       </View>
 

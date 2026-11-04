@@ -1,0 +1,16 @@
+[
+  {
+    "stage": "home",
+    "path": "pages/home/index"
+  },
+  {
+    "stage": "same-connection",
+    "path": "pages/home/index",
+    "upload": false
+  },
+  {
+    "stage": "fresh-connection",
+    "path": "pages/home/index",
+    "upload": false
+  }
+]

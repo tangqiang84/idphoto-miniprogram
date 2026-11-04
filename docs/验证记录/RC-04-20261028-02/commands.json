@@ -1,0 +1,44 @@
+[
+  {
+    "name": "tool-tests",
+    "command": [
+      "node",
+      "--test",
+      "工具链/tests/acceptance_contracts.test.js",
+      "工具链/tests/coverage_matrix.test.js",
+      "工具链/tests/processing_session_page.test.js"
+    ],
+    "exit_code": 0,
+    "log": "tool-tests.log"
+  },
+  {
+    "name": "page-flow",
+    "command": [
+      "node",
+      "工具链/smoke_steps.js",
+      "--node"
+    ],
+    "exit_code": 1,
+    "log": "page-flow.log"
+  },
+  {
+    "name": "lint-selftest",
+    "command": [
+      "node",
+      "工具链/lint/run.cjs",
+      "--selftest"
+    ],
+    "exit_code": 0,
+    "log": "lint-selftest.log"
+  },
+  {
+    "name": "registry",
+    "command": [
+      "node",
+      "工具链/coverage_matrix.js",
+      "--validate"
+    ],
+    "exit_code": 0,
+    "log": "registry.log"
+  }
+]

@@ -1,0 +1,29 @@
+{
+  "scope": "RC-01验证实跑记录；测试输出节选不代表端到端验收",
+  "checks": [
+    {
+      "check": "core-tests",
+      "exit_code": 0,
+      "elapsed_seconds": 5.731170033,
+      "output_excerpt": "Warning: truncated output (original token count: 7393)\nTotal output lines: 376\n\n\n> idphoto-miniprogram@0.1.0 test:core\n> node --test src/core/__tests__/*.test.js\n\n✔ erase 把笔刷覆盖像素置 0，其余保持不变 (2.563742ms)\n✔ restore 把笔刷覆盖像素置 1（含从 0 恢复） (0.368944ms)\n✔ 相邻两点之间插值落点，避免断点空洞 (2.073253ms)\n✔ 越界坐标被 clamp，不污染画布 (2.177266ms)\n✔ 空笔画返回原值（不改） (0.671995ms)\n✔ 半径越大覆盖像素越多 (1.094873ms)\n✔ 缺省 mode 视为 erase (0.236331ms)\n✔ 无 alpha/尺寸 返回入参 (0.142762ms)\n✔ stamp 圆形印章边界正确 (0.186702ms)\n✔ 辅助函数 newStroke / addPoint / boundsOfStrokes (0.459956ms)\n✔ 正常 resolve：值透传、不触发超时 (2.662873ms)\n✔ 慢于超时：reject 且错误消息带原因码 (75.068773ms)\n✔ 原 Promise 先 reject：透传原错误（不被超时消息替换） (17.742467ms)\n✔ 原 Promise 成功后定时器被清理（不泄漏、不误报） (65.287101ms)\n✔ 非法入参被拒（防呆） (0.719231ms)\n✔ 超时常量档位合理（云 15s / 图 15s / 导出 20s） (0.167273ms)\n✔ 编码结果与 Buffer 一致（长度 0/1/2/3 及多字节组合） (1.567482ms)\n✔ 随机 1000 字节与 Buffer 完全一致 (0.60278ms)\n✔ 解码结果与 Buffer 一致（含 padding 变体） (0.513469ms)\n✔ 往返一致（编码→解码→原字节） (2.01467ms)\n✔ 解码能忽略换行/空白（云函数返回常带换行） (0.232642ms)\n✔ 不依赖 Buffer / btoa / atob（模拟小程序运行时） (0.214894ms)\n✔ gaussianKernel 归一化 (1.907854ms)\n✔ 纯平坦灰图 磨皮 不改变像素（无边缘） (15.377461ms)\n✔ 噪点图 磨皮 显著降低方差（平滑生效） (5.051565ms)\n✔ 美白 提升平均亮度 (4.257876ms)\n✔ 美颜 不改变 alpha 通道 (2.893743ms)\n✔…6493 tokens truncated…→ null 回退 estimate (2.364049ms)\n✔ 肩线法：侧向噪声不撑行宽（抗噪） (0.678819ms)\n✔ 肩线法：贴头皮短发（111.jpg 教训——头顶几行窄不能当中位数取样） (1.633587ms)\n✔ ① 提供人脸区域提示 → 直接用它（最可信） (2.665656ms)\n✔ ② 端侧 alpha 可信（前景占比高、bbox 不大）→ 用 alpha bbox (14.611455ms)\n✔ ③ 端侧 alpha 不可信（前景占比低）→ 回退居中区域，且不越界 (0.782193ms)\n✔ ③ 端侧 alpha 全空 → 同样回退居中区域（不是整图） (0.84495ms)\n✔ ③ bbox 过大（框不住人）→ 回退居中区域 (0.978222ms)\n✔ 阈值常量符合预期（端侧前景占比低于 0.12 视为不可信） (0.192311ms)\n✔ ② bbox 底部越过中线 → 区域延伸贴图底（躯干必然延续，不能切断） (5.11996ms)\n✔ ② bbox 仅在头部（底部未及中线）→ 不贴底 (3.722872ms)\n✔ ③ 居中回退区域：加宽且底部贴图底（证件照躯干必然到图底） (0.849593ms)\n✔ 常量：允许格式与上限 (59.744314ms)\n✔ getExt：常规 / 大小写 / 无扩展名 / query / hash / 段内无点 (0.522408ms)\n✔ checkFormat：扩展名合法即通过 (0.477295ms)\n✔ checkFormat：扩展名缺失时用 type 兜底 (0.173461ms)\n✔ checkFormat：两者都非法 → 拦截 (2.676109ms)\n✔ checkSize：边界与降级 (0.234345ms)\n✔ validateUpload：组合通过 (0.743503ms)\n✔ validateUpload：格式不符优先拦截 (0.17855ms)\n✔ validateUpload：大小超限拦截（即便格式合法） (0.457302ms)\n✔ validateUpload：格式与大小都缺失但字节无法取得 → 仍因格式拦截 (0.272613ms)\nℹ tests 363\nℹ suites 0\nℹ pass 363\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 5236.869313\n"
+    },
+    {
+      "check": "typescript",
+      "exit_code": 0,
+      "elapsed_seconds": 4.392304524,
+      "output_excerpt": ""
+    },
+    {
+      "check": "lint",
+      "exit_code": 1,
+      "elapsed_seconds": 1.819501767,
+      "output_excerpt": "npm error Missing script: \"lint\"\nnpm error\nnpm error Did you mean this?\nnpm error   npm link # Symlink a package folder\nnpm error\nnpm error To see a list of scripts, run:\nnpm error   npm run\nnpm error A complete log of this run can be found in: /Users/tq/.npm/_logs/2026-10-28T06_20_14_220Z-debug-0.log\n"
+    },
+    {
+      "check": "diff-and-syntax",
+      "exit_code": 0,
+      "elapsed_seconds": 0.061512167,
+      "output_excerpt": " ...212\\237\\350\\203\\275\\346\\270\\205\\345\\215\\225.md\" | 20 ++++++++++------\n ...274\\200\\345\\217\\221\\346\\214\\207\\345\\215\\227.md\" | 12 +++++++---\n .../prd_requirements.json\"                         | 18 +++++++--------\n ...273\\273\\345\\212\\241\\345\\217\\260\\350\\264\\246.md\" |  6 +++++\n .../2026-10-28.md\"                                 |  7 ++++++\n ...252\\214\\346\\224\\266\\346\\270\\205\\345\\215\\225.md\" | 27 +++++++++++++---------\n .../real_batch/LATEST.txt\"                         |  2 +-\n ...\\213\\345\\272\\217PRD\\346\\255\\243\\346\\226\\207.md\" | 27 ++++++++++++----------\n ...227\\256\\351\\242\\230\\345\\217\\260\\350\\264\\246.md\" |  9 ++++++++\n ...216\\237\\345\\236\\213\\350\\256\\276\\350\\256\\241.md\" | 17 +++++++++++---\n ...267\\245\\345\\205\\267\\346\\211\\213\\345\\206\\214.md\" | 12 +++++++++-\n 11 files changed, 110 insertions(+), 47 deletions(-)\nPASS 检查器Python语法与JSON格式\n"
+    }
+  ]
+}

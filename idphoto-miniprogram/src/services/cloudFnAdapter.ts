@@ -7,6 +7,7 @@ import { withTimeout, CLOUD_CALL_TIMEOUT_MS } from '../core/asyncUtils';
 export interface CloudFnAdapterOpts {
   name?: string; // 云函数名，默认 'matting'
   authToken?: string;
+  authorization?: { check(): void };
 }
 
 export function makeCloudFnAdapter(opts: CloudFnAdapterOpts = {}) {
@@ -18,6 +19,8 @@ export function makeCloudFnAdapter(opts: CloudFnAdapterOpts = {}) {
     trustedHosts: ['cloud://CN'],
     kind: 'cloudfn' as const,
     async call(req: any) {
+      if (!opts.authorization) throw { code: 'CONSENT_REQUIRED', message: '请单独同意上云增强', traceId: 'cloud-' + Date.now() };
+      opts.authorization.check();
       // #70：无超时的 callFunction 在真机上可能永悬（网络 stall / 冷启动挂起）→ 页面
       // busy 永不复位（owner 2026-10-27 真机实测「一直在处理中」）。超时抛错后
       // segment() 会捕获并降级出图，状态行带原因码，用户不再面对无限转圈。
@@ -26,6 +29,7 @@ export function makeCloudFnAdapter(opts: CloudFnAdapterOpts = {}) {
         CLOUD_CALL_TIMEOUT_MS,
         'cloudfn: 云端响应超时',
       );
+      opts.authorization.check();
       const result = (res && res.result) || {};
       if (result.error) throw new Error('cloudfn: ' + result.error);
       // provider 用于前端判断「这次结果来自真模型还是影子实现」：

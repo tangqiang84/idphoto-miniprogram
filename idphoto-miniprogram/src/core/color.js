@@ -118,7 +118,7 @@ function sampleGradient(desc, x, y, w, h) {
   const dx = Math.cos(rad);
   const dy = Math.sin(rad);
   // 投影到渐变轴：t ∈ [0,1]
-  const proj = (x + 0.5) * dx + (y + 0.5) * dy;
+  const proj = (x + 0.5) * dx + (y + 0.5) * dy - Math.min(0, dx * w) - Math.min(0, dy * h);
   const span = Math.abs(dx) * w + Math.abs(dy) * h;
   let t = span > 0 ? proj / span : 0;
   if (t < 0) t = 0;

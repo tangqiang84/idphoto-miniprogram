@@ -236,10 +236,10 @@ test('透明底合成：alpha 越界值被截断到 [0,1]', () => {
   assert.strictEqual(out[7], 255); // 1.5 → 255
 });
 
-test('隐私：T3 换装需三项同意，缺一项 ready=false', () => {
+test('隐私：T3本地入口不捆绑上云，换装动作仍需独立同意', () => {
   const need = requiredConsents('T3').map((c) => c.id);
   assert.deepStrictEqual(need, ['faceLocal', 'faceCloudEnhance', 'suitSwap']);
-  const rec = buildConsentRecord('T3', ['faceLocal', 'faceCloudEnhance']);
+  const rec = buildConsentRecord('T3', ['faceLocal', 'faceCloudEnhance'], 'suit');
   assert.strictEqual(rec.ready, false);
   assert.deepStrictEqual(rec.missing, ['suitSwap']);
 });

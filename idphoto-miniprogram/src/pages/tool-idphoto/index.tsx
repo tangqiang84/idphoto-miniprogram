@@ -1,877 +1,174 @@
 import { View, Text, Button, Image, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { useRef, useState } from 'react';
-import {
-  requiredConsents, buildConsentRecord,
-  segment, composite, check, applyPatches,
-  alphaBBox, tightBBox, estimateHeadByShoulder, suitPlacement, suitCompose,
-  fitSuitV2, checkComposition, SUIT_REASON,
-  buildCloudFnAdapter,
-  measureHeadMetrics, ratioWithinWindow,
-  // 构图与裁切：T1 已改用共享管线 services/pipeline.ts（F1），此处只保留仍在本页用到的导出
-  BG, getSpec, getPixelSize, listSpecs, specLabel,
-  DPI_STD, DPI_HD,
-  backendLabel,
-  withTimeout, IMG_LOAD_TIMEOUT_MS,
-} from '../../services';
+import { useState } from 'react';
+import { listSpecs, getPixelSize, requiredConsents, buildConsentRecord, BG } from '../../services';
+import { useT1Workflow } from '../../hooks/useT1Workflow';
 import { useImagePicker } from '../../hooks/useImagePicker';
 import { useConsentGate } from '../../hooks/useConsentGate';
-import { applyBeauty } from '../../services';
-import { requestPoseKeypoints, encodeCanvasToJpegB64 } from '../../services/poseService';
-import { prepareWorkCanvas } from '../../services/pipeline';
-import BeautyControl, { type BeautyState } from '../../components/BeautyControl';
 import StepFlow from '../../components/StepFlow';
 import CropStep from '../../components/CropStep';
 import BeautyStep from '../../components/BeautyStep';
 import DpiStep from '../../components/DpiStep';
+import MirrorCheck from '../../components/MirrorCheck';
 import AlphaPatch from '../../components/AlphaPatch';
+import './index.scss';
 
-// T1 一键证件照：完整链路（真实功能，非占位）
-// 选图 → 端侧抠图 →（置信不足且已授权则走 CloudBase 云函数增强）→ 换底
-// → 裁剪到规格尺寸 → 导出 → 合规预审 → 保存相册
-//
-// 隐私合规：授权默认【不勾选】，未集齐授权不启动处理（对应 PRD AC5）。
-//
-// 【2026-10-23 owner 决策】MVP 不设付费档，300/600dpi 两档全部免费：
-//   - 个人主体无法开通微信支付（问题台账 #14）→ 付费档无落地路径 → 暂不上付费档
-//   - 600dpi 印刷级同样免费开放，不再作为「付费才给」的能力
-//   - 官方报名系统只校验像素+KB+格式，从不校验 dpi 元数据；600dpi 的用途是印刷/冲印
-const TOOL = 'T1';
-
-// 【P1 #77】管线步骤定义（顺序固定，全工具一致；RC-9）
 export const T1_STEPS = [
-  { key: 'crop', label: '裁剪' },
-  { key: 'beauty', label: '美颜' },
-  { key: 'matting', label: '抠图换底' },
-  { key: 'suit', label: '换装(可选)' },
-  { key: 'precheck', label: '合规预审' },
-  { key: 'dpi', label: '输出档位' },
-  { key: 'export', label: '导出' },
+  { key: 'crop', label: '裁剪' }, { key: 'beauty', label: '美颜' }, { key: 'preview', label: '抠图换底' },
+  { key: 'dress', label: '换装(可选)' }, { key: 'check', label: '预审' },
+  { key: 'dpi', label: '输出档位' }, { key: 'export', label: '导出' },
 ];
-
-type BgKey = 'white' | 'blue' | 'blueLight' | 'red';
-
-// AI 换装（PRD D 章 / T1-11/12，任务 #43）：复用 T3 端侧贴图合成能力。
-// 自绘模板（AI 自绘，自有版权，PRD Q3 合规）：与 T3 同一套透明 PNG。
-const SUIT_TEMPLATES = [
+const templates = [
   { id: 'black', name: '黑西装', src: require('../../assets/suits/suit_black.png') },
   { id: 'navy', name: '深蓝西装', src: require('../../assets/suits/suit_navy.png') },
   { id: 'gray', name: '灰西装', src: require('../../assets/suits/suit_gray.png') },
 ];
-// 换装单独授权项（个保法敏感个人信息单独同意 / AC5）：取 T3 同一份 CONSENT 定义，避免文案漂移
-const SUIT_CONSENT =
-  requiredConsents('T3').find((c: any) => c.id === 'suitSwap') ||
-  { id: 'suitSwap', label: 'AI换装', desc: '合成职业装，仅换装不改五官，需单独授权' };
-
-// 读模板 PNG → RGBA 像素（离屏 canvas；与 tool-suit 同一实现）
-async function loadTemplatePixels(src: string): Promise<{ data: Uint8ClampedArray; w: number; h: number }> {
-  const anyTaro: any = Taro;
-  const canvas = anyTaro.createOffscreenCanvas({ type: '2d', width: 400, height: 400 });
-  const ctx = canvas.getContext('2d');
-  const img = canvas.createImage();
-  // #70：图片加载加超时硬闸门（真机上 onload/onerror 可能双不触发 → 永久转圈）
-  await withTimeout(
-    new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = (e: any) => reject(e || new Error('模板加载失败'));
-      img.src = src;
-    }),
-    IMG_LOAD_TIMEOUT_MS,
-    '模板加载超时',
-  );
-  ctx.drawImage(img, 0, 0, 400, 400);
-  const d = ctx.getImageData(0, 0, 400, 400);
-  return { data: d.data, w: 400, h: 400 };
-}
-
 export default function ToolIdPhoto() {
-  const consentItems = requiredConsents(TOOL);
-  const [granted, setGranted] = useState<string[]>([]);
-  const rec = buildConsentRecord(TOOL, granted);
-  // F3（P1）：协议闸门前移到选图入口（run() 内的 rec.ready 保留为兜底第二道）
-  const gate = useConsentGate(rec.ready, '一键证件照');
-  const picker = useImagePicker((img, q) => {
-    setLastPick(img);
-    run(img.path, img.width, img.height, { forceCloud: shouldForceCloud(q) });
-  });
-
-  // 背景复杂 + 已授权上云 → 强制走云端真模型（任务 #51：端侧置信高 ≠ 质量好）
-  function shouldForceCloud(q: any): boolean {
-    if (!q || !Array.isArray(q.tips)) return false;
-    const complex = q.tips.some((t: any) => t.code === 'complexbg');
-    return complex && granted.includes('faceCloudEnhance');
-  }
-
-  const specs = listSpecs();
-  const [specIndex, setSpecIndex] = useState(0);
-  const [dpi, setDpi] = useState(DPI_STD);
-  const [bg, setBg] = useState<BgKey>('white');
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState('');
-  const [preview, setPreview] = useState('');
-  const [result, setResult] = useState<any>(null);
-  // 受限美颜（PRD E 章 / AC2，任务 #38）：默认关闭，用户显式开启并调节（轻度）
-  const [beauty, setBeauty] = useState<BeautyState>({
-    enabled: false, smooth: 0.35, whiten: 0.3, brighten: 0.2,
-  });
-  // 最近一次取图（用于美颜「重新生成」时复用，无需重新选图）
-  const [lastPick, setLastPick] = useState<{ path: string; width: number; height: number } | null>(null);
-  // 【P2.5 交互式裁剪】用户手动选取的裁剪窗（原图像素坐标）；null = 用系统智能构图建议
-  const [cropWindow, setCropWindow] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
-  // 已处理结果缓存（任务 #50）：换底色时据此**只重跑合成**，不重跑抠图/裁剪/换装
-  const lastProc = useRef<{
-    exportRgba: Uint8ClampedArray; alpha: any; w: number; h: number;
-    plan: any; target: { width: number; height: number };
-    specIndex: number; dpi: number; headRatio: number | null;
-  } | null>(null);
-  // 头部占比测量结果（PRD B3 / T1-16，任务 #4）：null = 未检测到人脸
-  const [headInfo, setHeadInfo] = useState<any>(null);
-  // 输出构图提示（如「原图分辨率不足」/「已达处理分辨率上限」）
-  const [planNote, setPlanNote] = useState('');
-  // 智能裁切信息（任务 #24 / PRD B2）：
-  //   auto=false → 未检出人脸，已降级为「按宽高比居中裁剪」（与 #24 前行为一致）
-  //   degraded     → 已按占比反解裁剪，但原片构图不足，如实提示（owner 决策：不阻断导出）
-  const [cropInfo, setCropInfo] = useState<any>(null);
-  // 手动修补（PRD B1 / T1-17，任务 #42）：修补面板开关 + 修补所需的工作画布数据
-  //   patchBase = { rgba, alpha, w, h, plan, target, bg, workPreviewPath }
-  const [patching, setPatching] = useState(false);
-  const [patchBase, setPatchBase] = useState<any>(null);
-  // AI 换装（PRD D 章 / T1-11/12，任务 #43）：
-  //   suitPanelOpen = 面板展开；suitTplIndex = 模板选择；suitOn = 用户意图（应用换装）；
-  //   suitApplied = 当前预览是否已换装（决定是否强制五官自检闸门）；selfChecked = D3/AC6 自检确认。
-  const [suitPanelOpen, setSuitPanelOpen] = useState(false);
-  const [suitTplIndex, setSuitTplIndex] = useState(0);
-  const [suitOn, setSuitOn] = useState(false);
-  const [suitApplied, setSuitApplied] = useState(false);
-  const [selfChecked, setSelfChecked] = useState(false);
-  // 【P1 #77】当前管线步骤（-1=未开始，steps.length=全部完成）
-  const [stepIndex, setStepIndex] = useState(-1);
-
-  const toggleConsent = (id: string) => {
-    setGranted((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const { flow, state, authorization } = useT1Workflow();
+  const { session: snapshot, screen } = state;
+  const p = snapshot.params;
+  const busy = snapshot.status === 'processing';
+  const specs = listSpecs(); const spec = specs.find((item: any) => item.id === p.specId)!;
+  const consentItems = requiredConsents('T1');
+  const gate = useConsentGate(() => buildConsentRecord('T1', flow.getState().session.params.consents).ready, '一键证件照');
+  const [patch, setPatch] = useState<{ traceId: string } | null>(null);
+  const picker = useImagePicker(async (img, quality) => {
+    flow.selectImage({ ...img, forceCloud: !!quality?.tips?.some((tip: any) => tip.code === 'complexbg') });
+    await flow.suggest();
+  }, authorization);
+  const consent = (id: string) => {
+    const now = flow.getState().session.params.consents;
+    flow.update({ consents: now.includes(id) ? now.filter((item: string) => item !== id) : [...now, id] });
   };
-
-  // 放宽 Taro 类型（微信 canvas 2d API 在部分基础库类型不全，统一用 any 访问）
-  const anyTaro: any = Taro;
-
-  async function run(path: string, srcW: number, srcH: number, opts?: { suitOn?: boolean; specIndex?: number; dpi?: number; forceCloud?: boolean;
-          cropWindow?: { x: number; y: number; w: number; h: number } | null }) {
-    if (!rec.ready) {
-      Taro.showToast({ title: '请先勾选所需授权', icon: 'none' });
-      return;
-    }
-    // 换装意图：显式传参优先（避免 setState 异步 → 同一函数内读到旧值，见下方第 136 行同类注释）
-    const wantSuit = opts && typeof opts.suitOn === 'boolean' ? opts.suitOn : suitOn;
-    // 参数覆盖（任务 #50）：state 更新是异步的，链式操作必须显式传值，否则用到旧值（问题台账 #31 同根）
-    const specIdx = opts?.specIndex ?? specIndex;
-    const dpiVal = opts?.dpi ?? dpi;
-    setBusy(true);
-    setMsg('读取图片…');
-    setStepIndex(0); // ① 裁剪（识别人脸 + 反解裁剪框 + 取工作画布）
-    setResult(null);
-    setHeadInfo(null);
-    setPlanNote('');
-    setCropInfo(null);
-    setSelfChecked(false); // 每次重新生成都使旧自检失效（AC6：未自检不得导出）
+  const mirror = <MirrorCheck confirmed={state.mirrorConfirmed} onChange={(value) => flow.confirmMirror(value)} />;
+  const report = screen === 'export' || state.pendingSelf && screen === 'dpi' ? state.finalResult : state.preview;
+  const back = () => { setPatch(null); flow.back(); };
+  async function consume(kind: 'save' | 'print', expectedTrace: string) {
+    const allowed = flow.exportResult(expectedTrace);
+    if (!allowed.ok) return;
+    const output = allowed.output;
     try {
-      if (typeof anyTaro.createOffscreenCanvas !== 'function') {
-        throw new Error('当前基础库不支持离屏 canvas，请升级基础库到 2.16.1+');
-      }
-
-      // 取图已剥离到 useImagePicker（相册 picker.pickAlbum / 拍摄 CameraGuide，PRD A1 引导框）。
-      const spec = getSpec(specs[specIdx].id);
-      const target = getPixelSize(spec!, dpiVal)!;
-
-      // 2. 人脸检测（任务 #24 / PRD B2 智能裁切的前置）——已下沉到共享管线：
-      //    检测在【检测用图】上做（长边 ≤ DETECT_EDGE=1200）：人脸关键点需要足够像素细节，
-      //    同时避免为检测而绘制全尺寸大图（RGBA 内存 = 长边²×4）。
-      //    管线拿到的头顶/下巴/面部中心已换算回**原图坐标**（srcMetrics）。
-      // 2~4. 【F1 共享管线（P1 / 台账 #75）】识别人脸 → 反解裁剪框 → 区域化工作画布 → 取像素。
-      //      这段逻辑原在本页（任务 #24 落地），现抽到 services/pipeline.ts 由 T1/T2/T3 共用，
-      //      保证三页「先裁剪到规格、再抠图」走**同一份实现**（避免同产品两种流程）。
-      const prep = await prepareWorkCanvas({
-        path, srcW, srcH, spec: spec!, dpi: dpiVal, target, onMsg: setMsg,
-        cropWindow: opts?.cropWindow ?? null,
-      });
-      const w = prep.w;
-      const h = prep.h;
-      const plan = prep.plan;
-      const crop = prep.crop;
-      const srcMetrics = prep.srcMetrics;
-      const bgSamples = prep.bgSamples;
-      const work = { canvas: prep.canvas, rgba: prep.rgba };
-      const rgba = prep.rgba;
-      setPlanNote(prep.reason || '');
-      setCropInfo(crop
-        ? {
-          auto: true,
-          // 【P2.5】带上裁剪窗坐标：交互裁剪屏要拿它当**系统建议的初始框**
-          // （否则只能退回「整图最大窗」→ 框几乎满屏 → 用户看不到裁剪框）
-          sx: crop.sx, sy: crop.sy, sw: crop.sw, sh: crop.sh,
-          ratioTarget: crop.ratioTarget,
-          ratioAchieved: crop.ratioAchieved,
-          degraded: crop.degraded,
-          degradeReason: crop.degradeReason,
-          notes: crop.notes || [],
-        }
-        : { auto: false, notes: ['未检出人脸，已按画面居中裁剪；建议正对镜头、面部清晰的照片'] });
-
-      // 4.0 受限美颜（PRD E 章 / AC2，任务 #38）：在抠图前对原图做轻度磨皮/美白/亮眼。
-      //     仅当用户开启美颜时执行；合规模式由 core/beauty.js 内的 assertCompliance 兜底硬拦截禁止项。
-      //     异常（理论上不会触发，因 UI 仅传允许项）静默跳过，绝不阻断主流程。
-      if (beauty.enabled) {
-        setStepIndex(1); // ② 美颜（裁剪后、抠图前）
-        try {
-          applyBeauty(rgba, w, h, {
-            smooth: beauty.smooth,
-            whiten: beauty.whiten,
-            brighten: beauty.brighten,
-          });
-        } catch (e) {
-          console.warn('[T1] 美颜跳过（合规拦截或异常）:', (e && e.message) || e);
-        }
-      }
-
-      // 4.1 背景色采样集已由共享管线给出（prep.bgSamples）：
-      //     自动裁剪时工作画布四边可能压在头发/肩膀上 → 在【检测用图】上采样注入，
-      //     行为与整图抠图一致（任务 #24 口径，搬到 services/pipeline.ts 后逻辑不变）。
-
-      // 5. 抠图：端侧优先，置信不足自动走 CloudBase 云函数增强（需 faceCloudEnhance 授权）
-      setStepIndex(2); // ③ 抠图换底
-      setMsg('抠图处理中…');
-      const seg: any = await segment({
-        rgba,
-        width: w,
-        height: h,
-        bgSamples,
-        cloud: { adapter: buildCloudFnAdapter() },
-        consents: granted,
-        audit: (meta: any) => console.log('[audit]', meta),
-        tool: TOOL,
-        forceCloud: !!opts?.forceCloud, // 任务 #51：复杂背景强制云端精修
-      });
-
-      // 6. 换底合成：暂存工作画布的 RGBA 与 alpha，供「手动修补」重合成（PRD B1 / T1-17）
-      setMsg('合成底色…');
-      const workRgbaCopy = new Uint8ClampedArray(rgba);
-      // 克隆 alpha **必须按类型保留**：seg.alpha 是 Float32Array(0..1)，
-      // 用 Uint8ClampedArray 构造会按字节视图重建 → 浮点 alpha 被二值化（问题台账 #58 同根）
-      const baseAlphaCopy = seg.alpha instanceof Float32Array
-        ? Float32Array.from(seg.alpha)
-        : Uint8ClampedArray.from(seg.alpha as any);
-
-      // 6.1 AI 换装（可选，PRD D 章 / T1-11，任务 #43）：端侧贴图合成（复用 core/suit.js）。
-      //   D2：仅覆盖肩颈前景区（alpha>0.5 且模板不透明），不触碰脸部像素；D3/AC6 强制自检在页面层。
-      //   仅在「应用换装」且已勾选 suitSwap 单独授权时执行；否则使用原图 RGBA（零回归）。
-      let exportRgba: Uint8ClampedArray = workRgbaCopy;
-      let suitAppliedNow = false;
-      // P1：换装被跳过的原因（非目标构图 / 引擎拒绝）——如实上状态行，不静默
-      let suitSkipReason = '';
-      if (wantSuit && granted.includes('suitSwap')) {
-        setStepIndex(3); // ④ 换装（T1 可选）
-        setMsg('合成职业装…');
-        // #69：tightBBox 收紧（alphaBBox 的 min/max 会被云端 alpha 噪声前景撑爆，
-        // 撑爆的 bbox 把换装定位带偏 → 盖脸/变形）
-        const bbox = tightBBox(seg.alpha, w, h) || alphaBBox(seg.alpha, w, h);
-        if (bbox) {
-          const headRes = await measureHeadMetrics(workRgbaCopy, w, h, bbox);
-          // P1（#73/#74）：几何改由 suitFitV2 求解 —— 实测信号（L1 pose / L2 face）+ 规格物理标尺，
-          // 不再用 v1 的「0.30×bbox.h 估算 + 行宽突变」猜测链（四轮失败的结构性根因）。
-          const faceSig = headRes.ok && headRes.metrics ? {
-            chinY: headRes.metrics.chinY,
-            crownY: headRes.metrics.crownY,
-            headH: headRes.headLengthPx,
-            faceCenterX: headRes.metrics.faceCenterX,
-            source: headRes.source === 'landmarks' ? 'landmarks' : 'estimate',
-          } : null;
-          let poseSig: any = null;
-          let poseReason: string | null = null;
-          const jpegB64 = encodeCanvasToJpegB64(work.canvas);
-          if (jpegB64) {
-            const pr = await requestPoseKeypoints({
-              imageB64: jpegB64, width: w, height: h,
-              region: { x: 0, y: 0, w, h }, canvasW: w, canvasH: h,
-            });
-            if (pr.ok && pr.pose) poseSig = pr.pose;
-            else poseReason = pr.reason;
-          } else {
-            poseReason = 'posekey:encode_failed';
-          }
-          console.log('[audit]', {
-            stage: 'pose_signal', ok: !!poseSig, reason: poseReason,
-            model: poseSig ? poseSig.model : null, latencyMs: poseSig ? poseSig.latencyMs : null,
-          });
-
-          const comp = checkComposition({ face: faceSig, pose: poseSig, bbox });
-          const fit = comp.ok
-            ? fitSuitV2({ spec: spec as any, canvasW: w, canvasH: h, face: faceSig, pose: poseSig, bbox })
-            : { ok: false, reason: SUIT_REASON.UNSUPPORTED, message: comp.message, audit: {} } as any;
-          if (fit.ok) {
-            const tpl = await loadTemplatePixels(SUIT_TEMPLATES[suitTplIndex].src as any);
-            exportRgba = suitCompose(workRgbaCopy, seg.alpha, w, h, tpl.data, tpl.w, tpl.h, fit.place, fit.rotateDeg);
-            suitAppliedNow = true;
-            console.log('[audit]', Object.assign({ stage: 'suit_fit_v2', ok: true }, fit.audit));
-          } else {
-            // R1/契约 7：非目标构图或引擎拒绝 → 不换装，如实提示（不猜着摆、不静默出图）
-            suitSkipReason = fit.message + '（' + fit.reason + '）';
-            console.log('[audit]', { stage: 'suit_fit_v2', ok: false, reason: fit.reason, audit: fit.audit });
-          }
-        }
-      }
-      setSuitApplied(suitAppliedNow);
-
-      // 7. 头部占比测量（与 alpha 无关，复用第 2 步人脸度量，不重复检测）
-      // 口径：在【裁剪窗口】坐标系中测量 —— 头长 ÷ 成品图高，与审核员在成品图上量的口径一致。
-      // 坐标换算：检测用图坐标 → 原图坐标（÷det.scale）→ 工作图坐标（×plan.scale）。
-      const sx = plan.sx, sy = plan.sy, sw = plan.sw, sh = plan.sh;
-      setStepIndex(4); // ⑤ 合规预审
-      setMsg('测量头部占比…');
-      let headRatio: number | null = null;
-      let headExtra: any = null;
-      if (srcMetrics) {
-        const wm = {
-          ...srcMetrics,
-          crownY: srcMetrics.crownY * plan.scale,
-          chinY: srcMetrics.chinY * plan.scale,
-        };
-        const r = ratioWithinWindow(wm, { x: sx, y: sy, width: sw, height: sh });
-        if (r) {
-          headRatio = r.ratio;
-          headExtra = { source: srcMetrics.source, quality: srcMetrics.quality, notes: srcMetrics.notes || [] };
-          if (r.clamped) headExtra.notes = [...headExtra.notes, '头顶或下巴被裁切，占比按成品图可见部分计算'];
-        }
-      }
-      // 未检出人脸时降级为「未检测」，其余 4 项照常预审（不因一项缺失而阻断整张图）
-      setHeadInfo(headRatio != null ? { ratio: headRatio, ...headExtra } : null);
-
-      // 8. 合成 + 裁剪导出（提取为 composeAndExport，手动修补重合成复用同一套）
-      setStepIndex(6); // ⑦ 导出
-      setMsg('合成与导出…');
-      const exp = await composeAndExport(exportRgba, seg.alpha, w, h, plan, BG[bg], target);
-      setPreview(exp.preview);
-      // 8.1 生成工作画布修补底图（合成底色后的整图），供手动修补面板显示边缘
-      const wp = await saveWorkPreview(exportRgba, seg.alpha, w, h, BG[bg]);
-      setPatchBase({ rgba: exportRgba, alpha: baseAlphaCopy, w, h, plan, target, bg, workPreviewPath: wp });
-      // 缓存处理结果（任务 #50）：换底色时据此**只重跑合成**，不重跑抠图/裁剪
-      lastProc.current = {
-        exportRgba, alpha: seg.alpha, w, h, plan, target,
-        specIndex: specIdx, dpi: dpiVal, headRatio,
-      };
-
-      // 9. 合规预审
-      const fs = Taro.getFileSystemManager();
-      const fileInfo: any = await new Promise((resolve, reject) => {
-        fs.getFileInfo({ filePath: exp.preview, success: resolve, fail: reject });
-      });
-      const fileKb = Math.round(fileInfo.size / 1024);
-      const cr = check(specs[specIdx].id, {
-        widthPx: target.width,
-        heightPx: target.height,
-        dpi: dpiVal,
-        fileKb,
-        bg,
-        // 头部占比：仅在成功测量时传入（未检测则跳过该项，其余 4 项照常判定）
-        headHeightRatio: headRatio != null ? headRatio : undefined,
-      });
-      setResult(cr);
-      setMsg(
-        `完成（${backendLabel(seg.backend)}${seg.degraded ? `，云端不可用已降级${seg.cloudError ? '：' + String(seg.cloudError).slice(0, 60) : ''}` : ''}）` +
-        (suitSkipReason ? ` · 未换装：${suitSkipReason}` : ''),
-      );
-    } catch (e: any) {
-      const m = String((e && e.message) || e);
-      if (m.startsWith('AC5')) {
-        setMsg('该图端侧质量不足，需「上云增强」授权才能处理');
-        Taro.showToast({ title: '请先勾选上云增强授权', icon: 'none' });
-      } else {
-        setMsg('处理失败：' + m);
-      }
-      console.error('[T1]', e);
-    } finally {
-      setBusy(false);
+      if (kind === 'save') await Taro.saveImageToPhotosAlbum({ filePath: output.preview });
+      else await Taro.navigateTo({ url: `/pages/tool-print/index?src=${encodeURIComponent(output.preview)}` });
+      if (kind === 'save' && flow.exportResult(expectedTrace).ok) Taro.showToast({ title: '已保存到相册' });
+    } catch {
+      console.warn('[T1]', { code: kind === 'save' ? 'SAVE_FAILED' : 'PRINT_FAILED', traceId: expectedTrace });
+      if (flow.exportResult(expectedTrace).ok) Taro.showToast({ title: '操作失败，请检查权限后重试', icon: 'none' });
     }
   }
-
-  // 合成 + 裁剪导出（与 run 共用：把工作画布 RGBA + alpha 合成底色、按裁剪窗缩放到目标规格并导出）
-  // 返回 { preview, fileKb }。手动修补调用 regenerate 时复用本函数重合成。
-  async function composeAndExport(workRgba: Uint8ClampedArray, alpha: Uint8ClampedArray | number[], w: number, h: number, plan: any, bgHex: string, target: { width: number; height: number }) {
-    const composed = composite(workRgba, alpha, w, h, bgHex);
-    const cv = anyTaro.createOffscreenCanvas({ type: '2d', width: w, height: h });
-    const cx = cv.getContext('2d');
-    const blank: any = cx.getImageData(0, 0, w, h);
-    blank.data.set(composed);
-    cx.putImageData(blank, 0, 0);
-
-    const outCanvas = anyTaro.createOffscreenCanvas({ type: '2d', width: target.width, height: target.height });
-    const octx = outCanvas.getContext('2d');
-    octx.drawImage(cv, plan.sx, plan.sy, plan.sw, plan.sh, 0, 0, target.width, target.height);
-
-    const exported: any = await Taro.canvasToTempFilePath({
-      canvas: outCanvas,
-      x: 0, y: 0, width: target.width, height: target.height,
-      destWidth: target.width, destHeight: target.height,
-      fileType: 'jpg', quality: 0.95,
-    });
-    const fs = Taro.getFileSystemManager();
-    const fi: any = await new Promise((resolve, reject) => {
-      fs.getFileInfo({ filePath: exported.tempFilePath, success: resolve, fail: reject });
-    });
-    return { preview: exported.tempFilePath, fileKb: Math.round(fi.size / 1024) };
-  }
-
-  // 生成工作画布修补底图（合成底色后的整图，PNG），供手动修补面板显示抠图边缘
-  async function saveWorkPreview(workRgba: Uint8ClampedArray, alpha: Uint8ClampedArray | number[], w: number, h: number, bgHex: string) {
-    const composed = composite(workRgba, alpha, w, h, bgHex);
-    const cv = anyTaro.createOffscreenCanvas({ type: '2d', width: w, height: h });
-    const cx = cv.getContext('2d');
-    const blank: any = cx.getImageData(0, 0, w, h);
-    blank.data.set(composed);
-    cx.putImageData(blank, 0, 0);
-    const exported: any = await Taro.canvasToTempFilePath({
-      canvas: cv,
-      x: 0, y: 0, width: w, height: h,
-      destWidth: w, destHeight: h,
-      fileType: 'png',
-    });
-    return exported.tempFilePath;
-  }
-
-  // 手动修补：对基线 alpha 应用用户笔画，重合成并刷新预览 + 合规预审
-  async function regenerate(strokes: any[]) {
-    if (!patchBase) return;
-    try {
-      setBusy(true);
-      setMsg('应用修补并重合成…');
-      const patched = applyPatches(patchBase.alpha, patchBase.w, patchBase.h, strokes);
-      const exp = await composeAndExport(patchBase.rgba, patched, patchBase.w, patchBase.h, patchBase.plan, BG[patchBase.bg], patchBase.target);
-      setPreview(exp.preview);
-      const cr = check(specs[specIndex].id, {
-        widthPx: patchBase.target.width,
-        heightPx: patchBase.target.height,
-        dpi,
-        fileKb: exp.fileKb,
-        bg: patchBase.bg,
-        headHeightRatio: headInfo != null ? headInfo.ratio : undefined,
-      });
-      setResult(cr);
-      setPatching(false);
-      setMsg('修补完成');
-    } catch (e: any) {
-      setMsg('修补失败：' + String((e && e.message) || e));
-      console.error('[T1] regenerate', e);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  // 应用换装：需先勾选 suitSwap 单独授权；用最近一次取图重跑（避免重复选图）
-  function applySuit() {
-    if (!lastPick) { Taro.showToast({ title: '请先选择照片', icon: 'none' }); return; }
-    if (!granted.includes('suitSwap')) { Taro.showToast({ title: '请先勾选「AI换装」单独授权', icon: 'none' }); return; }
-    setSuitOn(true);
-    run(lastPick.path, lastPick.width, lastPick.height, { suitOn: true });
-  }
-  function cancelSuit() {
-    setSuitOn(false);
-    setSuitApplied(false);
-    if (lastPick) run(lastPick.path, lastPick.width, lastPick.height, { suitOn: false });
-  }
-
-  async function save() {
-    if (!preview) return;
-    // D3/AC6：换装后未完成五官自检不得导出
-    if (suitApplied && !selfChecked) {
-      Taro.showToast({ title: '请先完成五官自检', icon: 'none' });
-      return;
-    }
-    try {
-      await Taro.saveImageToPhotosAlbum({ filePath: preview });
-      Taro.showToast({ title: '已保存到相册' });
-    } catch (e) {
-      Taro.showToast({ title: '保存失败，请检查相册权限', icon: 'none' });
-    }
-  }
-
-  // 换底色 → 只重跑「合成 + 导出 + 预审」，不重跑抠图/裁剪/换装（任务 #50）
-  async function recomposeBg(bgHex: string) {
-    const p = lastProc.current;
-    if (!p) {
-      Taro.showToast({ title: '请先选择照片并处理', icon: 'none' });
-      return;
-    }
-    setBusy(true);
-    setMsg('重新合成…');
-    try {
-      const exp = await composeAndExport(p.exportRgba, p.alpha, p.w, p.h, p.plan, bgHex, p.target);
-      setPreview(exp.preview);
-      const wp = await saveWorkPreview(p.exportRgba, p.alpha, p.w, p.h, bgHex);
-      setPatchBase({ rgba: p.exportRgba, alpha: p.alpha, w: p.w, h: p.h, plan: p.plan, target: p.target, bg: bgHex, workPreviewPath: wp });
-      // 预审随底色变化（底色是 5 项预审之一），必须重算
-      const cr = check(specs[p.specIndex].id, {
-        widthPx: p.target.width,
-        heightPx: p.target.height,
-        dpi: p.dpi,
-        fileKb: exp.fileKb,
-        bg: bgHex,
-        headHeightRatio: p.headRatio != null ? p.headRatio : undefined,
-      });
-      setResult(cr);
-      setMsg('完成（底色已更新）');
-    } catch (e: any) {
-      setMsg('换底色失败：' + String((e && e.message) || e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  // 换规格 / 换 dpi → 工作画布与裁剪窗都会变，必须整条链路重跑（保留已应用的换装）
-  function reprocess(opts: { specIndex?: number; dpi?: number }) {
-    if (!lastPick) {
-      Taro.showToast({ title: '请先选择照片', icon: 'none' });
-      return;
-    }
-    run(lastPick.path, lastPick.width, lastPick.height, { suitOn: suitApplied, ...opts });
-  }
-
-  // PRD K1 入口①：从 T1 导出页「另存为排版版」进入 T6 冲印排版（承接已做好的证件照）
-  // 说明：只传导出图路径（临时文件），T6 侧读不到时自动降级为「手动从相册选择」，不阻断。
-  async function goPrintLayout() {
-    if (!preview) return;
-    try {
-      await Taro.navigateTo({
-        url: `/pages/tool-print/index?src=${encodeURIComponent(preview)}`,
-      });
-    } catch (e) {
-      Taro.showToast({ title: '打开冲印排版失败，请从首页进入', icon: 'none' });
-    }
-  }
-
-  const bgOptions: { key: BgKey; label: string; color: string }[] = [
-    { key: 'white', label: '白底', color: BG.white },
-    { key: 'blue', label: '标准深蓝', color: BG.blue },
-    { key: 'blueLight', label: '浅蓝', color: BG.blueLight },
-    { key: 'red', label: '红底', color: BG.red },
-  ];
-
   return (
-    <View className='page'>
-      <Text className='page__title'>一键证件照</Text>
-
-      {/* 【P1 #77】管线步骤指示器：顺序固定为 裁剪→美颜→抠图换底→(换装)→预审→dpi→导出（RC-9） */}
-      <StepFlow steps={T1_STEPS} current={stepIndex} />
-
-      {/* 授权（默认不勾选，未集齐不启动处理；F3：未勾选则选图入口不可点） */}
-      <View className={gate.hinted ? 'consent consent--hinted' : 'consent'}>
-        <Text className='consent__h'>需授权（{granted.length}/{consentItems.length}）</Text>
-        {gate.hinted ? (
-          <Text className='consent__hint'>
-            请先勾选下列全部授权，才能选择照片或拍照（先同意、后收集）
-          </Text>
-        ) : null}
-        {consentItems.map((c: any) => {
-          const on = granted.includes(c.id);
-          const cls =
-            'consent__item' +
-            (on ? ' consent__item--on' : '') +
-            (gate.hinted && !on ? ' consent__item--hint' : '');
-          return (
-            <View
-              key={c.id}
-              className={cls}
-              onClick={() => toggleConsent(c.id)}
-            >
-              <Text className='consent__check'>
-                {on ? '☑ ' : '☐ '}
-                {c.label}
-              </Text>
-              <Text className='consent__desc'>{c.desc}</Text>
-            </View>
-          );
-        })}
+    <View className='page t1-page' data-screen={screen}>
+      <View className='t1-nav'>
+        {screen !== 'upload' ? <Button className='flow-back' onClick={back}>‹ 上一步</Button> : null}
+        <Text className='page__title'>一键证件照</Text>
       </View>
-
-      {/* 规格与底色 */}
-      <View className='section'>
-      {/* 【P1 #77 / P2.5】裁剪步骤屏（比例锁定 + 智能构图结果透明化，RC-1） */}
-      <CropStep
-        specName={specs[specIndex].name}
-        target={getPixelSize(specs[specIndex].id, dpi)!}
-        crop={cropInfo && cropInfo.auto ? cropInfo : null}
-        imageSrc={lastPick ? lastPick.path : null}
-        srcW={lastPick ? lastPick.width : undefined}
-        srcH={lastPick ? lastPick.height : undefined}
-        cropWindow={cropWindow}
-        onCropWindowChange={setCropWindow}
-        onApplyCrop={() => {
-          if (lastPick) run(lastPick.path, lastPick.width, lastPick.height, { cropWindow });
-        }}
-      />
-
-      <BeautyStep
-        value={beauty}
-        onChange={setBeauty}
-        onApply={() => {
-          if (lastPick) run(lastPick.path, lastPick.width, lastPick.height);
-        }}
-      />
-
-        {/* 【P1 #77 / P2.7】输出档位提升为独立步骤屏（含像素不足提示，RC-3/RC-4） */}
-        <DpiStep
-          specId={specs[specIndex].id}
-          specName={specs[specIndex].name}
-          dpi={dpi}
-          onChange={(d) => {
-            setDpi(d);
-            reprocess({ dpi: d }); // 任务 #50：换 dpi 自动重跑
-          }}
-          srcW={lastPick ? lastPick.width : undefined}
-          srcH={lastPick ? lastPick.height : undefined}
-          workW={lastProc.current ? lastProc.current.w : undefined}
-          workH={lastProc.current ? lastProc.current.h : undefined}
-        />
-
-        <Text>规格：</Text>
-        <Picker
-          mode='selector'
-          range={specs.map((s: any) => specLabel(s.id, dpi))}
-          value={specIndex}
-          onChange={(e: any) => {
-            const nextIdx = Number(e.detail.value);
-            setSpecIndex(nextIdx);
-            reprocess({ specIndex: nextIdx }); // 任务 #50：换规格自动重跑（不需重新选图）
-          }}
-        >
-          <View className='picker-value'>{specs[specIndex].name} ▾</View>
+      <Text className='tag'>全部功能免费 · 无水印 · 300/600dpi均开放</Text>
+      <StepFlow steps={T1_STEPS} current={T1_STEPS.findIndex((item) => item.key === screen)} />
+        <View className={gate.hinted ? 'consent consent--hinted' : 'consent'}>
+          <Text className='tag'>授权设置（可随时取消勾选撤回）；上云增强可选，不影响本地处理</Text>
+          {consentItems.map((item: any) => <View key={item.id} className='consent__item' onClick={() => consent(item.id)}>
+            <Text>{p.consents.includes(item.id) ? '☑ ' : '☐ '}{item.label}</Text>
+            <Text className='consent__desc'>{item.desc}</Text>
+          </View>)}
+        </View>
+        {screen !== 'dress' && p.consents.includes('suitSwap') ? <Button className='flow-revoke-suit' onClick={() => consent('suitSwap')}>撤回换装授权</Button> : null}
+      {screen === 'upload' ? <View className='flow-screen screen-upload'>
+        <Text className='t1-heading'>选择照片与目标规格</Text>
+        <Picker mode='selector' value={specs.findIndex((item: any) => item.id === p.specId)} range={specs.map((item: any) => item.name)}
+          onChange={(event: any) => flow.update({ specId: specs[Number(event.detail.value)].id })}>
+          <View className='picker-value'>{spec.name} · {getPixelSize(p.specId, 300)!.width}×{getPixelSize(p.specId, 300)!.height}px ▾</View>
         </Picker>
-        <Text className='tag tag--block'>
-          {specs[specIndex].source}
-        </Text>
-        {/* 规格速览芯片：直接点选 + 展示官方像素（2026-10-23 规格数值裁决后新增） */}
-        <View className='spec-chips'>
-          {specs.map((s: any, i: number) => {
-            const px = getPixelSize(s.id, dpi)!;
-            const on = specIndex === i;
-            return (
-              <View
-                key={s.id}
-                className={on ? 'spec-chip spec-chip--sel' : 'spec-chip'}
-                onClick={() => setSpecIndex(i)}
-              >
-                <Text>{s.name} {px.width}×{px.height}</Text>
-              </View>
-            );
-          })}
+        <Text className='tag'>{spec.source}</Text>
+        <Button className='btn-primary' disabled={gate.blocked || busy} onClick={() => gate.gate(picker.pickAlbum)}>从相册选择</Button>
+        <Button className='btn-camera' disabled={gate.blocked || busy} onClick={() => gate.gate(picker.openCamera)}>拍摄照片</Button>
+        {p.source ? <Button className='flow-resume' onClick={() => flow.resumeCrop()}>继续编辑已选照片</Button> : null}
+        {picker.Guide}
+      </View> : null}
+
+      {screen === 'crop' ? <View className='flow-screen screen-crop'>
+        <Text className='t1-heading'>① 裁剪 · 选择范围</Text>
+        <CropStep key={`${snapshot.sourceId}-${p.specId}`} confirmationRequired specName={spec.name}
+          target={getPixelSize(p.specId, 300)!} imageSrc={p.source?.path} srcW={p.source?.width} srcH={p.source?.height}
+          cropWindow={p.cropWindow} onCropWindowChange={(window) => flow.update({ cropWindow: window })}
+          onApplyCrop={() => flow.confirmCrop()} />
+        {picker.QualityTip}
+      </View> : null}
+
+      {screen === 'beauty' ? <View className='flow-screen screen-beauty'>
+        <Text className='t1-heading'>② 美颜修图</Text>
+        <BeautyStep standalone value={p.beauty} onChange={(value) => flow.update({ beauty: value })} onApply={() => flow.confirmBeauty()} />
+        <Button className='flow-skip-beauty' disabled={busy} onClick={() => flow.confirmBeauty(true)}>跳过美颜并继续</Button>
+      </View> : null}
+
+      {screen === 'preview' ? <View className='flow-screen screen-preview'>
+        <Text className='t1-heading'>③ 抠图换底 · 预览</Text>
+        {state.preview ? <Image src={state.preview.preview} className='preview' mode='aspectFit' /> : null}
+        <Text className='tag'>当前为处理预览，尚未生成最终成品</Text>
+        <View className='bg-swatches'>{(['white', 'blue', 'blueLight', 'red'] as const).map((key) => <View key={key}
+          className={`bg-swatch${p.bg === key ? ' bg-swatch--sel' : ''}`} style={{ background: BG[key] }} onClick={() => flow.background(key)}>
+          <Text>{({ white: '白底', blue: '标准深蓝', blueLight: '浅蓝', red: '红底' })[key]}</Text>
+        </View>)}</View>
+        <Text className='tag'>处理来源：{state.preview?.backend || '待生成'}{state.preview?.degraded ? '（已降级，请核对边缘质量）' : ''}</Text>
+        <Button className='flow-patch' disabled={busy || !state.preview} onClick={() => setPatch({ traceId: state.preview.traceId })}>手动修补边缘</Button>
+        {patch && state.preview ? <AlphaPatch workPreviewPath={state.preview.preview} workW={state.preview.width} workH={state.preview.height}
+          onApply={(strokes: any[]) => { setPatch(null); return flow.patch(strokes, patch.traceId); }} onCancel={() => setPatch(null)} /> : null}
+        {mirror}
+        <Button className='flow-next-dress' disabled={busy} onClick={() => flow.nextDress()}>下一步：换装（可选）</Button>
+      </View> : null}
+
+      {screen === 'dress' ? <View className='flow-screen screen-dress'>
+        <Text className='t1-heading'>④ 换装（可选）</Text>
+        {state.preview ? <Image src={state.preview.preview} className='preview' mode='aspectFit' /> : null}
+        <Text className='tag'>仅换装、不改五官；模板适配与视觉效果请核对</Text>
+        <View className='suit-consent' onClick={() => consent('suitSwap')}><Text>{p.consents.includes('suitSwap') ? '☑ ' : '☐ '}单独同意AI换装（可随时撤回）</Text></View>
+        <View className='suit-tpls'>{templates.map((tpl) => <View key={tpl.id} className={`suit-tpl${p.suit.templateId === tpl.id ? ' suit-tpl--sel' : ''}`}
+          onClick={() => flow.update({ suit: { ...p.suit, templateId: tpl.id } })}>
+          <Image src={tpl.src} className='suit-tpl__img' mode='aspectFit' /><Text>{tpl.name}</Text>
+        </View>)}</View>
+        <Button className='flow-apply-suit' disabled={busy} onClick={() => flow.applySuit()}>应用换装并自检</Button>
+        <Button className='flow-skip-suit' disabled={busy} onClick={() => flow.skipSuit()}>跳过换装，进入预审</Button>
+      </View> : null}
+
+      {screen === 'check' ? <View className='flow-screen screen-check'>
+        <Text className='t1-heading'>⑤ 合规预审</Text>
+        {state.preview ? <Image src={state.preview.preview} className='preview' mode='aspectFit' /> : null}
+        <View className='precheck-results'>{state.preview?.result?.checks.map((item: any) => <View key={item.key} className='result-row'>
+          <Text>{item.pass ? '✓ ' : '⚠ '}{item.label}</Text><Text>{item.detail}</Text>
+        </View>)}</View>
+        <Text className='tag'>预审仅供参考；头部占比缺失或构图不足须人工核对。文件大小在所选最终档位再次判定。</Text>
+        <Button className='flow-next-dpi' disabled={busy} onClick={() => flow.goDpi()}>下一步：选择输出档位</Button>
+      </View> : null}
+
+      {screen === 'dpi' ? <View className='flow-screen screen-dpi'>
+        <Text className='t1-heading'>⑥ 选择输出档位</Text>
+        <DpiStep stepLabel='⑥ 输出档位' specId={p.specId} specName={spec.name} dpi={p.dpi} onChange={(dpi) => flow.setDpi(dpi)}
+          srcW={p.source?.width} srcH={p.source?.height} effectiveW={p.cropWindow?.w} effectiveH={p.cropWindow?.h} />
+        {mirror}
+        <Button className='flow-confirm-dpi' disabled={busy || state.pendingSelf} onClick={() => flow.export()}>确认档位并生成最终成品</Button>
+      </View> : null}
+
+      {state.pendingSelf && report ? <View className='t1-modal-mask'><View className='t1-selfcheck' role='dialog'>
+        <Text className='t1-heading'>请核对当前成品五官</Text>
+        <Image src={report.preview} className='preview' mode='aspectFit' />
+        <View className={`selfcheck${snapshot.selfChecked ? ' selfcheck--on' : ''}`} onClick={() => flow.confirmSelfCheck(!snapshot.selfChecked)}>
+          <Text>{snapshot.selfChecked ? '☑ ' : '☐ '}我已核对五官未被改动</Text>
         </View>
-      </View>
+        <Button className='flow-accept-selfcheck' disabled={!snapshot.selfChecked} onClick={() => flow.acceptSelfCheck()}>确认并继续</Button>
+        <Button className='flow-self-back' onClick={back}>返回修改</Button>
+      </View></View> : null}
 
-      <View className='bg-swatches'>
-        {bgOptions.map((o) => {
-          const sel = bg === o.key;
-          const light = o.key === 'white';
-          const cls = 'bg-swatch' + (light ? ' bg-swatch--light' : '') + (sel ? ' bg-swatch--sel' : '');
-          return (
-            <View
-              key={o.key}
-              className={cls}
-              style={{ background: o.color }}
-              onClick={() => {
-                setBg(o.key);
-                recomposeBg(BG[o.key]); // 任务 #50：换底色即刻重新合成（不重跑抠图）
-              }}
-            >
-              <Text>{o.label}</Text>
-            </View>
-          );
-        })}
-      </View>
+      {screen === 'export' && state.finalResult ? <View className='flow-screen screen-export'>
+        <Text className='t1-heading'>⑦ 成品已生成</Text>
+        <Image src={state.finalResult.preview} className='preview' mode='aspectFit' />
+        <Text>{state.finalResult.width}×{state.finalResult.height}px · {state.finalResult.fileKb}KB · {p.dpi}档位 · JPG</Text>
+        <Text className='tag'>免费 · 无水印；dpi表示输出像素档位，不承诺写入文件元数据。</Text>
+        <Button className='flow-save' onClick={() => consume('save', state.finalResult.traceId)}>保存到相册</Button>
+        <Button className='flow-print' onClick={() => consume('print', state.finalResult.traceId)}>去冲印排版</Button>
+      </View> : null}
 
-      {/* F3（P1 / 台账 #76）：选图前协议闸门 —— 未集齐授权，选图/拍摄入口不可达 */}
-      <Button
-        className='btn-primary'
-        loading={busy}
-        disabled={gate.blocked}
-        onClick={() => gate.gate(picker.pickAlbum)}
-      >
-        {busy ? '处理中…' : (gate.blocked ? '请先勾选授权' : '从相册选择')}
-      </Button>
-      <Button
-        className='btn-camera'
-        disabled={gate.blocked}
-        onClick={() => gate.gate(picker.openCamera)}
-      >
-        📷 拍摄（引导框）
-      </Button>
-
-      {msg ? <Text className='status-line'>{msg}</Text> : null}
-
-      {/* 智能裁切状态（任务 #24 / PRD B2）：按规格头占比自动定位裁剪框 */}
-      {cropInfo ? (
-        <View className='crop-info'>
-          <Text className='crop-info__auto'>
-            {cropInfo.auto
-              ? `智能裁切：已按目标头部占比 ${(cropInfo.ratioTarget * 100).toFixed(0)}% 自动构图`
-              : '智能裁切：未检出人脸，已按画面居中裁剪'}
-          </Text>
-          {cropInfo.notes && cropInfo.notes.length ? (
-            <Text className={cropInfo.degraded ? 'crop-info__warn crop-info__warn--bad' : 'crop-info__warn'}>
-              {cropInfo.degraded ? '⚠ ' : ''}
-              {cropInfo.notes.join('；')}
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
-
-
-      {/* 【P1 #77 / P2.6】美颜提升为管线级步骤屏（裁剪后、抠图换底前，RC-1）
-          放在参数区（出图前即可调节），与 T2/T3 的位置一致 */}
-
-      {/* 输出构图提示（分辨率不足 / 达到处理上限 → 如实告知，不静默输出糊图） */}
-      {planNote ? (
-        <Text className='plan-note'>{planNote}</Text>
-      ) : null}
-
-      {preview ? (
-        <View className='section'>
-          <Image src={preview} className='preview' mode='aspectFit' />
-          {/* 头部占比（PRD B3）：实测值 + 来源标注；未检测时说明原因 */}
-          {headInfo ? (
-            <View className='head-info'>
-              <Text className='head-info__ratio'>
-                头部占比{' '}
-                {headInfo.ratio != null
-                  ? `${(headInfo.ratio * 100).toFixed(0)}%`
-                  : '未检测到'}
-                {headInfo.source === 'estimate' ? '（估算）' : ''}
-                {headInfo.quality === 'low' ? '（可信度低）' : ''}
-              </Text>
-              {headInfo.notes && headInfo.notes.length ? (
-                <Text className='head-info__note'>
-                  {headInfo.notes.join('；')}
-                </Text>
-              ) : null}
-            </View>
-          ) : (
-            <Text className='head-info__none'>
-              头部占比：未检测到人脸，当前环境不支持人脸检测
-            </Text>
-          )}
-          {/* 手动修补（PRD B1 / T1-17，任务 #42）：低置信边缘自行涂改修正 */}
-          <Button className='btn-ghost mt-sm' onClick={() => setPatching(true)} disabled={!patchBase || busy}>
-            ✏️ 手动修补边缘
-          </Button>
-          {patching && patchBase ? (
-            <AlphaPatch
-              workPreviewPath={patchBase.workPreviewPath}
-              workW={patchBase.w}
-              workH={patchBase.h}
-              onApply={(strokes: any[]) => regenerate(strokes)}
-              onCancel={() => setPatching(false)}
-            />
-          ) : null}
-
-
-          {/* AI 换装（可选，PRD D 章 / T1-11/12，任务 #43）：端侧贴图合成 + 强制五官自检 */}
-          <View className='suit-panel'>
-            <View onClick={() => setSuitPanelOpen(!suitPanelOpen)}>
-              <Text className='suit-panel__head'>{suitPanelOpen ? '▾ ' : '▸ '}👔 AI 换装（可选）</Text>
-              <Text className='suit-panel__desc'>
-                {suitApplied ? '已换装（更换模板后请点「应用换装」）' : '点开可选职业装模板；仅换装、不改五官'}
-              </Text>
-            </View>
-            {suitPanelOpen ? (
-              <View className='mt-sm'>
-                {/* suitSwap 单独授权（个保法敏感信息单独同意 / AC5） */}
-                {!granted.includes('suitSwap') ? (
-                  <View
-                    onClick={() => toggleConsent('suitSwap')}
-                    className='consent__item'
-                  >
-                    <Text>☐ {SUIT_CONSENT.label}（需单独授权）</Text>
-                    <Text className='consent__desc'>{SUIT_CONSENT.desc}</Text>
-                  </View>
-                ) : (
-                  <Text className='suit-panel__granted'>✓ 已授权 AI 换装</Text>
-                )}
-                {/* 职业装模板（自绘素材，AI 自绘自有版权，PRD Q3 合规） */}
-                <View className='suit-tpls'>
-                  {SUIT_TEMPLATES.map((t, i) => (
-                    <View
-                      key={t.id}
-                      className={suitTplIndex === i ? 'suit-tpl suit-tpl--sel' : 'suit-tpl'}
-                      onClick={() => setSuitTplIndex(i)}
-                    >
-                      <Image src={t.src as any} className='suit-tpl__img' mode='aspectFit' />
-                      <Text className='suit-tpl__name'>{t.name}</Text>
-                    </View>
-                  ))}
-                </View>
-                <View className='btn-row'>
-                  <Button size='mini' className='btn-row__item' loading={busy} disabled={busy} onClick={applySuit}>应用换装</Button>
-                  {suitApplied ? <Button size='mini' onClick={cancelSuit}>取消换装</Button> : null}
-                </View>
-                <Text className='suit-panel__note'>
-                  端侧贴图合成，只覆盖肩颈区域、不改五官；换装后须完成五官自检方可导出。
-                </Text>
-              </View>
-            ) : null}
-          </View>
-
-          {/* D3/AC6 强制五官自检：换装后未确认不得导出 */}
-          {suitApplied ? (
-            <View
-              className={selfChecked ? 'selfcheck selfcheck--on' : 'selfcheck'}
-              onClick={() => setSelfChecked(!selfChecked)}
-            >
-              <Text className='selfcheck__h'>{selfChecked ? '☑ ' : '☐ '}五官自检（PRD D3 / AC6）</Text>
-              <Text className='selfcheck__desc'>
-                请核对：换装后的照片五官未被改动。端侧合成只覆盖肩颈区域，理论上不触碰脸部像素；如发现五官异常请勿导出，重拍或换模板。未确认自检无法导出。
-              </Text>
-            </View>
-          ) : null}
-
-          {/* AC1 镜像自查（导出前勾选，未勾选禁用保存） */}
-          {picker.MirrorCheck}
-          <Button
-            className='btn-primary mt-sm'
-            onClick={save}
-            disabled={!picker.mirrorConfirmed || (suitApplied && !selfChecked)}
-          >
-            {suitApplied && !selfChecked ? '请先完成五官自检' : '保存到相册'}
-          </Button>
-          {/* PRD K1 入口①：另存为排版版 → T6 冲印排版（纯拼版，不需要人脸授权） */}
-          <Button
-            className='btn-ghost mt-sm'
-            onClick={goPrintLayout}
-          >
-            🖨️ 另存为冲印排版（拼版打印）
-          </Button>
-        </View>
-      ) : null}
-
-      {/* 合规预审结果 */}
-      {result ? (
-        <View className='mt'>
-          <Text className='result-title'>
-            合规预审：{result.pass ? '全部通过' : '有不通过项'}
-          </Text>
-          {result.checks.map((c: any) => (
-            <View key={c.key} className='result-row'>
-              <Text
-                className={c.level === 'advisory' ? 'result__warn' : (c.pass ? 'result__ok' : 'result__bad')}
-              >
-                {c.level === 'advisory' ? 'ⓘ' : (c.pass ? '✓' : '✗')} {c.label}
-                {c.level === 'advisory' ? '（提示项）' : ''}
-              </Text>
-              <Text className='result-row__detail'>{c.detail}</Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
-
-      {/* A1 半透明人脸引导框：拍摄入口（相册走上方 .btn-primary） */}
-      {picker.Guide}
-      {/* A3 原图质量提示（非阻断，建议性） */}
-      {picker.QualityTip}
+      {busy ? <View className='t1-progress'><Text>处理中，请稍候…</Text><Button className='flow-cancel' onClick={() => flow.cancel()}>取消处理</Button></View> : null}
+      {state.error ? <View className='flow-error'><Text className='status-line'>{state.error.message}（{state.error.code}）</Text>
+        <Button className='flow-retry' disabled={busy} onClick={() => flow.retry()}>重试当前步骤</Button></View> : null}
     </View>
   );
 }

@@ -40,7 +40,9 @@ export interface PoseResult {
 /**
  * 取 pose 关键点（L1）。任何失败都以原因码返回，不抛异常给调用方（便于三级降级串联）。
  */
-export async function requestPoseKeypoints(req: PoseRequest): Promise<PoseResult> {
+export async function requestPoseKeypoints(req: PoseRequest, authorization?: { check(): void }): Promise<PoseResult> {
+  try { if (!authorization) throw new Error('consent'); authorization.check(); }
+  catch { return { ok: false, pose: null, reason: 'posekey:consent_required', message: '未同意上云姿态分析，使用本地信号' }; }
   const { imageB64, width, height, region, canvasW, canvasH } = req;
   if (!imageB64) {
     return { ok: false, pose: null, reason: REASON.CALL_FAILED, message: '人像区域编码为空' };
@@ -62,6 +64,7 @@ export async function requestPoseKeypoints(req: PoseRequest): Promise<PoseResult
       POSE_TIMEOUT_MS,
       'posekey: 云端响应超时',
     );
+    authorization.check();
     const parsed = parsePoseResult((res && res.result) || null);
     if (!parsed.ok) {
       return { ok: false, pose: null, reason: parsed.reason, message: parsed.message };
@@ -75,9 +78,10 @@ export async function requestPoseKeypoints(req: PoseRequest): Promise<PoseResult
     };
   } catch (e: any) {
     const m = String((e && e.message) || e);
+    console.warn('[pose]', { code: e?.code || 'POSE_FAILED', traceId: e?.traceId || 'pose-' + Date.now() });
     // withTimeout 的错误消息形如「posekey: 云端响应超时（超时 15s）」
     const reason = m.indexOf('超时') >= 0 ? REASON.TIMEOUT : REASON.CALL_FAILED;
-    return { ok: false, pose: null, reason, message: m };
+    return { ok: false, pose: null, reason, message: '姿态分析不可用，使用本地信号' };
   }
 }
 

@@ -1,9 +1,10 @@
-import { useState, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
 import Taro from '@tarojs/taro';
 import CameraGuide from '../components/CameraGuide';
 import QualityTip, { type QualityTipProps } from '../components/QualityTip';
 import MirrorCheck from '../components/MirrorCheck';
 import { assessQuality } from '../core/quality';
+import { selectAlbum } from '../services/imageSelection';
 import { validateUpload } from '../core/validateFile';
 
 export interface PickedImage {
@@ -40,7 +41,7 @@ const SAMPLE_SIZE = 64; // 端侧下采样尺寸，足够判断背景复杂度�
  * 取图后即时做原图质量评估（PRD A3 / AC3）：分辨率、背景复杂度、光线。
  * 评估失败（端侧取像素不可用、算法异常）一律静默降级，绝不阻断主处理流程。
  */
-async function samplePixels(path: string): Promise<Uint8ClampedArray | null> {
+async function samplePixels(path: string, token: { current(): boolean }): Promise<Uint8ClampedArray | null> {
   try {
     const anyTaro: any = Taro;
     if (typeof anyTaro.createOffscreenCanvas !== 'function') return null;
@@ -56,6 +57,7 @@ async function samplePixels(path: string): Promise<Uint8ClampedArray | null> {
       im.onerror = (e: any) => reject(e || new Error('图片加载失败'));
       im.src = path;
     });
+    if (!token.current()) return null;
     cx.drawImage(im, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
     const id = cx.getImageData(0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
     return id.data;
@@ -104,15 +106,22 @@ export function useImagePicker(
    *  为什么要传而不是让调用方读 picker.quality：setState 是异步的，
    *  回调里读到的仍是旧值（问题台账 #31 同根）——任务 #51 需要它决定是否强制上云。 */
   onImage: (img: PickedImage, quality: QualityTipProps['quality']) => void | Promise<void>,
+  authorization?: { capture(action: string): any },
 ): ImagePicker {
+  const alive = useRef(true);
+  const cameraToken = useRef<any>(null);
+  const qualityToken = useRef<any>(null);
+  useEffect(() => () => { alive.current = false; }, []);
+  const capture = () => authorization?.capture('collect') || { current: () => alive.current, check() { if (!alive.current) throw { code: 'PICK_CANCELLED' }; } };
   const [cameraOpen, setCameraOpen] = useState(false);
   const [quality, setQuality] = useState<QualityTipProps['quality']>(null);
   const [mirrorConfirmed, setMirrorConfirmed] = useState(false);
 
-  const evaluate = async (path: string, w: number, h: number) => {
+  const evaluate = async (path: string, w: number, h: number, token: any) => {
     setQuality(null);
-    const rgba = await samplePixels(path);
-    if (!rgba) return null; // 取不到像素 → 不提示
+    qualityToken.current = token;
+    const rgba = await samplePixels(path, token);
+    if (!rgba || !token.current()) return null;
     let q: QualityTipProps['quality'] = null;
     try {
       q = assessQuality(rgba, SAMPLE_SIZE, SAMPLE_SIZE, w, h);
@@ -124,64 +133,82 @@ export function useImagePicker(
   };
 
   const pickAlbum = async () => {
+    const token = capture();
+    if (!token.current()) return;
     setMirrorConfirmed(false); // 重新取图须重新自查（AC1）
     try {
-      const pick: any = await Taro.chooseImage({
-        count: 1,
-        sizeType: ['original'],
-        sourceType: ['album'],
-      });
-      const path = pick.tempFilePaths[0];
+      const pick = await selectAlbum(Taro);
+      token.check();
+      if (!pick.ok) {
+        if (!pick.error.cancelled) {
+          console.warn('[image-picker]', { code: pick.error.code, traceId: pick.error.traceId });
+          Taro.showToast({ title: pick.error.message, icon: 'none' });
+        }
+        return;
+      }
+      const path = pick.image.path;
       const info: any = await Taro.getImageInfo({ src: path });
+      token.check();
       // —— PRD A2 硬校验（格式 / 大小）：不通过则拦截，绝不进入处理链路 ——
-      const bytes = await getFileSizeBytes(Taro, path, pick.tempFiles?.[0]?.size);
+      const bytes = await getFileSizeBytes(Taro, path, pick.image.size);
+      token.check();
       const v = validateUpload(path, info.type, bytes);
       if (!v.ok) {
         Taro.showToast({ title: v.message || '图片不符合要求', icon: 'none' });
         return;
       }
-      const q = await evaluate(path, info.width, info.height);
+      const q = await evaluate(path, info.width, info.height, token);
+      token.check();
       await onImage({ path, width: info.width, height: info.height }, q);
     } catch (e: any) {
+      if (!token.current()) return;
       const m = String((e && e.message) || e);
       // 用户主动取消（cancel / 取消）不提示，其余读取失败给轻提示
       if (!/cancel|取消/.test(m)) {
+        console.warn('[image-picker]', { code: 'IMAGE_READ_FAILED', traceId: 'pick-' + Date.now() });
         Taro.showToast({ title: '读取图片失败，请重试', icon: 'none' });
       }
     }
   };
 
-  const openCamera = () => setCameraOpen(true);
+  const openCamera = () => { const token = capture(); if (!token.current()) return; cameraToken.current = token; setCameraOpen(true); };
   const closeCamera = () => setCameraOpen(false);
 
   const handleCapture = async (path: string) => {
+    const token = cameraToken.current;
+    if (!token?.current()) { setCameraOpen(false); return; }
     setCameraOpen(false);
     setMirrorConfirmed(false); // 重新取图须重新自查（AC1）
     try {
       const info: any = await Taro.getImageInfo({ src: path });
+      token.check();
       // —— PRD A2 硬校验（格式 / 大小）：不通过则拦截，绝不进入处理链路 ——
       const bytes = await getFileSizeBytes(Taro, path);
+      token.check();
       const v = validateUpload(path, info.type, bytes);
       if (!v.ok) {
         Taro.showToast({ title: v.message || '图片不符合要求', icon: 'none' });
         return;
       }
-      const q = await evaluate(path, info.width, info.height);
+      const q = await evaluate(path, info.width, info.height, token);
+      token.check();
       await onImage({ path, width: info.width, height: info.height }, q);
     } catch (e) {
+      if (!token.current()) return;
       Taro.showToast({ title: '读取照片失败，请重试', icon: 'none' });
     }
   };
 
   const Guide = (
     <CameraGuide
-      visible={cameraOpen}
+      visible={cameraOpen && !!cameraToken.current?.current()}
       onCapture={handleCapture}
       onCancel={closeCamera}
     />
   );
 
-  const QualityTipEl = <QualityTip quality={quality} />;
+  const currentQuality = qualityToken.current?.current() ? quality : null;
+  const QualityTipEl = <QualityTip quality={currentQuality} />;
 
   const MirrorCheckEl = (
     <MirrorCheck confirmed={mirrorConfirmed} onChange={setMirrorConfirmed} />
@@ -193,7 +220,7 @@ export function useImagePicker(
     closeCamera,
     cameraOpen,
     Guide,
-    quality,
+    quality: currentQuality,
     QualityTip: QualityTipEl,
     mirrorConfirmed,
     setMirrorConfirmed,

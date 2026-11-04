@@ -48,7 +48,9 @@ async function segment({ rgba, width, height, session, cloud, consents, audit, t
   };
 
   // 端侧已足够（置信≥阈值），或未注入上云能力 → 直接返回端侧结果
-  if (route === 'edge' || !cloud || !cloud.adapter) return base;
+  if (route === 'edge') return base;
+  if (!(consents || []).includes('faceCloudEnhance')) return { ...base, degraded: true, cloudError: 'cloud_consent_missing', reason: 'cloud_consent_missing' };
+  if (!cloud || !cloud.adapter) return { ...base, degraded: true, cloudError: 'cloud_unavailable' };
 
   // 路由上云增强
   let cloudRes;

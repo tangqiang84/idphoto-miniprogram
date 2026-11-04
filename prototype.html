@@ -112,14 +112,14 @@
     <div class="nav"><span class="back" onclick="go('s_home')">‹ 首页</span> 一键证件照 · 上传</div>
     <div class="body">
       <div class="card" style="border:1px solid #e6a23c;">
-        <label class="check" style="margin:0;"><input type="checkbox" id="t1-gate" onchange="gateToggle(this)"> <span><b>已阅读并勾选《人脸处理协议》</b><br><span class="tag">人脸仅在设备本地处理，不上云训练；精度不足时才上传裁剪后的人像区域（境内，百度智能云）</span></span></label>
+        <label class="check" style="margin:0;"><input type="checkbox" id="t1-gate" onchange="gateToggle(this)"> <span><b>单独同意人脸本地处理</b><br><span class="tag">本地授权只用于设备端处理；上云增强与换装分别取得同意，可随时取消对应授权</span></span></label>
       </div>
       <div class="upload-box" style="margin-top:12px;"><div class="guide"></div><div style="position:absolute;bottom:14px;">正脸平视 · 光线均匀</div></div>
       <div class="card">
         <div class="row pickrow" onclick="pickBlocked(this)"><span>📷 拍摄</span><span class="tag">调用相机</span></div>
         <div class="row pickrow" onclick="pickBlocked(this)"><span>🖼 从相册选择</span><span class="tag">JPG/PNG/WebP ≤10MB</span></div>
       </div>
-      <div class="card"><h3>目标规格（先裁剪，后处理）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">小一寸 260×378</span><span class="chip" onclick="selChip(this)">驾驶证 260×378</span><span class="chip" onclick="selChip(this)">大二寸 413×626</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div><p class="tag" style="margin-top:6px;">选图后先按规格裁剪，再抠图换底（可后改，改后自动重跑）</p></div>
+      <div class="card"><h3>目标规格（先裁剪，后处理）</h3><div><span class="chip sel" onclick="selChip(this)">一寸 295×413</span><span class="chip" onclick="selChip(this)">二寸 413×579</span><span class="chip" onclick="selChip(this)">小二寸 413×531</span><span class="chip" onclick="selChip(this)">大一寸 390×567</span><span class="chip" onclick="selChip(this)">小一寸 260×378</span><span class="chip" onclick="selChip(this)">驾驶证 260×378</span><span class="chip" onclick="selChip(this)">大二寸 413×626</span><span class="chip" onclick="selChip(this)">护照 390×567</span><span class="chip" onclick="selChip(this)">美国签证 600×600</span></div><p class="tag" style="margin-top:6px;">选图后先按规格裁剪，再抠图换底（可后改，改后重新确认裁剪）</p></div>
       <button class="btn" onclick="startProcess()">下一步：开始处理</button>
     </div>
   </div>
@@ -142,7 +142,7 @@
       <div class="card">
         <div class="row"><span>缩放裁剪框</span><span class="tag" id="cropscale-val">70%</span></div>
         <input type="range" id="cropscale" min="35" max="100" value="70" oninput="cropScale(this.value)" style="width:100%;">
-        <p class="tag" style="margin-top:8px;">移动裁剪框选取合适的面部与肩部范围；比例锁定为目标规格，避免拉伸变形。确认后进入抠图换底。</p>
+        <p class="tag" style="margin-top:8px;">移动裁剪框选取合适的面部与肩部范围；比例锁定为目标规格，避免拉伸变形。确认后进入美颜，确认或跳过美颜后再抠图换底。</p>
       </div>
       <button class="btn" onclick="cropConfirm()">确认裁剪</button>
     </div>
@@ -172,7 +172,7 @@
 
   <!-- T1 处理/预览 -->
   <div class="screen" id="s_preview">
-    <div class="nav"><span class="back" onclick="go('s_crop')">‹ 返回</span> 抠图换底（已按规格裁剪）</div>
+    <div class="nav"><span class="back" onclick="go('s_beauty')">‹ 返回</span> 抠图换底（已按规格裁剪）</div>
     <div class="body">
       <div class="preview">人像预览</div>
       <div class="colors">
@@ -183,7 +183,8 @@
         <div class="sw" style="background:#C0C0C0" onclick="selColor(this,'#C0C0C0')" title="灰底"></div>
         <div class="sw sw-transparent" onclick="selColor(this,'transparent')" title="透明底（导出 PNG）"></div>
       </div>
-      <div class="row" style="margin-top:10px;align-items:center;"><span style="font-size:13px;">自定义底色</span><input id="custom-hex" placeholder="#RRGGBB" style="width:92px;margin:0 8px;padding:5px;border:1px solid #d8dee6;border-radius:6px;font-size:12px;" oninput="selCustomHex(this.value)"><span class="chip" onclick="applyCustomHex()">应用</span></div>
+      <div class="row" style="margin-top:10px;align-items:center;"><span style="font-size:13px;">自定义底色</span><input id="custom-hex" placeholder="#RRGGBB / R,G,B" style="width:92px;margin:0 8px;padding:5px;border:1px solid #d8dee6;border-radius:6px;font-size:12px;" oninput="selCustomHex(this.value)"><span class="chip" onclick="applyCustomHex()">应用</span></div>
+      <div class="card"><b>T2渐变素材</b><input id="gradient-from" value="#FFFFFF" aria-label="渐变起点"><input id="gradient-to" value="#438EDB" aria-label="渐变终点"><input id="gradient-angle" type="number" value="90" aria-label="渐变角度"><button class="btn ghost" onclick="applyGradientPreview()">应用渐变</button><p class="tag">角度0°从左到右，90°从上到下。自定义/渐变/透明可作为素材输出，不表示符合目标证件底色要求；其他硬指标仍检查。</p></div>
       <div class="card">
         <div class="row"><span>智能裁切</span><span class="ok" id="crop-status">✓ 已按头部占比 66% 自动构图</span></div>
         <div class="row" id="beauty-row"><span>美颜修图</span><span>未启用（默认关闭，可在上一步开启）</span></div>
@@ -397,8 +398,9 @@
     <div class="sheet">
       <h3>🔒 人脸处理单独授权</h3>
       <p>我们需在您的设备端处理人脸以完成抠图换底。<strong>人脸属于敏感个人信息</strong>，处理完即本地销毁，不上云训练。</p>
-      <p>若精度不足将启用<strong>境内</strong>云端增强，仅上传裁剪后的人像区域，处理完即删除、不做训练留存。</p>
-      <div class="check"><input type="checkbox" id="agree"> 我已阅读并单独同意上述处理方式</div>
+      <p>本地质量不足时会提示。仅当另行同意上云增强，才可上传裁剪人像区域；拒绝上云仍可使用可用本地路径。换装需另行同意，云端姿态分析同时要求换装与上云授权。</p>
+      <div class="check"><input type="checkbox" id="agree"> 单独同意人脸本地处理</div>
+      <div class="check"><input type="checkbox" id="agree-cloud"> 可选：单独同意境内上云增强（百度智能云抠图/云函数姿态分析）</div>
       <button class="btn" onclick="doAuth()">同意并继续</button>
       <button class="btn ghost" onclick="closeModal('m_auth')">暂不同意</button>
     </div>
@@ -426,10 +428,18 @@
     var prev = document.querySelector('#s_preview .preview');
     if(prev){ prev.style.background = (color==='transparent') ? 'repeating-conic-gradient(#c9c9c9 0% 25%, #fff 0% 50%) 50% / 14px 14px' : color; }
   }
+  function applyGradientPreview(){
+    var a=document.getElementById('gradient-from').value.trim(),b=document.getElementById('gradient-to').value.trim(),raw=document.getElementById('gradient-angle').value;
+    if(!/^#[0-9a-f]{6}$/i.test(a)||!/^#[0-9a-f]{6}$/i.test(b)||!raw.trim()||!Number.isFinite(Number(raw))){alert('渐变两端须为HEX，角度须为有效数值');return;}
+    window.curBg={type:'gradient',from:a,to:b,angle:Number(raw)};
+    var preview=document.querySelector('#s_preview .preview');if(preview)preview.style.background='linear-gradient('+(90+Number(raw))+'deg,'+a+','+b+')';
+  }
   function selCustomHex(v){ window._customHex = v; }
   function applyCustomHex(){
     var hex = (window._customHex||'').trim();
-    if(!/^#?[0-9a-fA-F]{6}$/.test(hex)){ alert('色值格式应为 #RRGGBB'); return; }
+    var rgb=hex.match(/^(?:rgb\()?\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)?$/i);
+    if(rgb){ var values=rgb.slice(1).map(Number); if(values.some(function(v){return v>255;})){alert('RGB须为0–255');return;} hex='#'+values.map(function(v){return v.toString(16).padStart(2,'0');}).join(''); }
+    if(!/^#?[0-9a-fA-F]{6}$/.test(hex)){ alert('请输入HEX或RGB，RGB须为0–255'); return; }
     if(hex[0] !== '#') hex = '#'+hex;
     window.curBg = hex;
     document.querySelectorAll('.colors .sw').forEach(c=>c.classList.remove('sel'));
@@ -494,7 +504,7 @@
   function startProcess(){ openModal('m_auth'); }
   function openModal(id){ document.getElementById(id).classList.add('show'); }
   function closeModal(id){ document.getElementById(id).classList.remove('show'); }
-  function doAuth(){ if(!document.getElementById('agree').checked){ alert('请先勾选同意'); return; } closeModal('m_auth'); openCrop('s_upload'); }
+  function doAuth(){ if(!document.getElementById('agree').checked){ alert('请先同意本地处理'); return; } window.prototypeCloudAllowed=document.getElementById('agree-cloud').checked; closeModal('m_auth'); openCrop('s_upload'); }
   function openSelfCheck(){ openModal('m_self'); }
   function doSelfCheck(){ if(!document.getElementById('selfok').checked){ alert('请确认未改动五官'); return; } closeModal('m_self'); go('s_check'); }
   function showReport(){ document.getElementById('t4report').style.display='block'; }

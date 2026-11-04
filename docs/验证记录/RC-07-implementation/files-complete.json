@@ -1,0 +1,75 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "tool": "T1",
+      "status": "PASS"
+    },
+    {
+      "tool": "T2",
+      "status": "PASS"
+    },
+    {
+      "tool": "T3",
+      "status": "PASS"
+    },
+    {
+      "tool": "T5",
+      "status": "PASS"
+    },
+    {
+      "name": "HEX/RGB实际文件等价",
+      "status": "PASS"
+    },
+    {
+      "name": "渐变90度向下与最终照片坐标一致",
+      "status": "PASS",
+      "background_samples": 186,
+      "mean_max_channel_error": 1.2365591397849462,
+      "basis": "独立线性白→(67,142,219)，按PNG连续Alpha混合；低Alpha平滑区域、JPEG容差16，不假定二值mask"
+    }
+  ],
+  "files": {
+    "T1": {
+      "size": [
+        295,
+        413
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 37622,
+      "sha256": "99dc5c11e06e0bbd469c97c8bdb8a159f871b2b1c71e859db9ce9e629634a439"
+    },
+    "T2": {
+      "size": [
+        591,
+        827
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "bytes": 935082,
+      "sha256": "8317f332f85371b19da01f71bd9b28cc81936e94ce6721cd7ece5b54871f6ca8"
+    },
+    "T3": {
+      "size": [
+        295,
+        413
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 33550,
+      "sha256": "5e2e88feda5152a2f23c7e46da1bfa365174af86cfeb23bd85390f5729485507"
+    },
+    "T5": {
+      "size": [
+        295,
+        413
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 39327,
+      "sha256": "90a7d0cd47405ea3f310f82995fe88ba7d2b6bc63f6f69db1994b07fb62ff8f9"
+    }
+  },
+  "scope": "仅固定样本的实际格式/尺寸/颜色/Alpha，非全规格或换装视觉质量验收"
+}

@@ -1,0 +1,63 @@
+{
+  "timestamp": "2026-10-28T07:49:40.097176+00:00",
+  "task": "RC-03",
+  "task_status": "完成",
+  "product_status": "BLOCKED",
+  "tool_files_unchanged_since_checks": true,
+  "assertions": {
+    "pass": 16,
+    "fail": 0
+  },
+  "core": {
+    "pass": 363
+  },
+  "lint": {
+    "files": 137,
+    "errors": 0,
+    "selftest_pass": 6
+  },
+  "types": "PASS",
+  "isolated_build": "PASS",
+  "rc02_fixture_tests": 15,
+  "baseline_final": {
+    "status": "PASS",
+    "scope": "RC-01文档基线，不代表业务验收",
+    "requirements": 76,
+    "historical_tasks": 62,
+    "negative_cases": 11,
+    "errors": []
+  },
+  "coverage": {
+    "requirements": 76,
+    "cases": 86,
+    "implemented_partial_cases": 10,
+    "missing_primary": 41,
+    "partial_but_primary_missing": 24,
+    "pending_manual_external": 11
+  },
+  "page_flow": {
+    "status": "FAIL",
+    "tools": [
+      "T1",
+      "T2",
+      "T3",
+      "T5"
+    ],
+    "followup": [
+      "RC-04",
+      "RC-05",
+      "RC-07"
+    ]
+  },
+  "reports": {
+    "development": "../verify-runs/run-20261028-154358-f0e30b8f/report.json",
+    "milestone": "../verify-runs/run-20261028-154534-111d21b1/report.json"
+  },
+  "not_executed": [
+    "微信IDE交互",
+    "真实照片批验",
+    "真机",
+    "部署与服务承诺审计"
+  ],
+  "notes": "checks.json中的初次baseline因报告尚未生成导致链接失败；baseline-final.log与本文件记录补齐后通过，旧失败日志保留"
+}

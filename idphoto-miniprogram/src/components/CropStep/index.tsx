@@ -23,6 +23,7 @@ import './index.scss';
  */
 
 interface Props {
+  key?: string;
   /** 规格显示名 */
   specName: string;
   /** 目标像素 */
@@ -42,6 +43,7 @@ interface Props {
   onApplyCrop?: () => void;
   /** 缩略显示宽度（px，默认 屏宽−40） */
   stageWidth?: number;
+  confirmationRequired?: boolean;
 }
 
 export default function CropStep(props: Props) {
@@ -59,7 +61,7 @@ export default function CropStep(props: Props) {
       return 375;
     }
   }, []);
-  const dispW = props.stageWidth || Math.max(220, screenW - 40);
+  const dispW = props.stageWidth || Math.max(220, screenW - (props.confirmationRequired ? 72 : 40));
   const ratio = target && target.height ? target.width / target.height : 3 / 4;
   const dispH = srcW && srcH ? Math.round(dispW * srcH / srcW) : Math.round(dispW / ratio);
   const k = srcW ? dispW / srcW : 1; // 显示 → 原图 的比例系数
@@ -77,10 +79,12 @@ export default function CropStep(props: Props) {
     return null;
   }, [cropWindow, crop, srcW, srcH, ratio]);
 
+  const reference = srcW && srcH ? centerCropWindow(srcW, srcH, ratio) : null;
   // movable-view 拖动位置（显示坐标左上角）
   const [mv, setMv] = useState<{ x: number; y: number } | null>(null);
   // 缩放系数（相对系统建议框）
   const [zoom, setZoom] = useState(1);
+  const scale = props.confirmationRequired && active && reference ? active.w / reference.w : zoom;
 
   if (!target) {
     return (
@@ -108,12 +112,13 @@ export default function CropStep(props: Props) {
   const canInteract = !!(imageSrc && srcW && srcH && active);
 
   // 显示坐标：裁剪框左上角（movable-view 位置）
-  const boxX = mv ? mv.x : (active ? Math.round(active.x * k) : 0);
-  const boxY = mv ? mv.y : (active ? Math.round(active.y * k) : 0);
-  const boxW = active ? Math.max(24, Math.round(active.w * k * zoom)) : 0;
-  const boxH = active ? Math.max(24, Math.round(active.h * k * zoom)) : 0;
+  const boxX = !props.confirmationRequired && mv ? mv.x : (active ? Math.round(active.x * k) : 0);
+  const boxY = !props.confirmationRequired && mv ? mv.y : (active ? Math.round(active.y * k) : 0);
+  const boxW = active ? Math.max(24, Math.round(active.w * k * (props.confirmationRequired ? 1 : zoom))) : 0;
+  const boxH = active ? Math.max(24, Math.round(active.h * k * (props.confirmationRequired ? 1 : zoom))) : 0;
 
   const handleMove = (e: any) => {
+    if (props.confirmationRequired && !['touch', 'touch-out-of-bounds', 'friction', 'inertia'].includes(e.detail?.source)) return;
     const x = e.detail.x;
     const y = e.detail.y;
     setMv({ x, y });
@@ -132,8 +137,8 @@ export default function CropStep(props: Props) {
     // 以框中心为基准等比缩放
     const cx = active.x + active.w / 2;
     const cy = active.y + active.h / 2;
-    const nw = active.w * z;
-    const nh = active.h * z;
+    const nw = (props.confirmationRequired && reference ? reference.w : active.w) * z;
+    const nh = (props.confirmationRequired && reference ? reference.h : active.h) * z;
     const fixed = clampCropWindow({ x: cx - nw / 2, y: cy - nh / 2, w: nw, h: nh }, srcW, srcH, ratio);
     if (fixed) onCropWindowChange({ x: fixed.x, y: fixed.y, w: fixed.w, h: fixed.h });
   };
@@ -161,8 +166,8 @@ export default function CropStep(props: Props) {
               x={boxX}
               y={boxY}
               style={{ width: boxW + 'px', height: boxH + 'px' }}
-              onMove={handleMove}
-              onChange={(e: any) => { if (e.detail && typeof e.detail.x === 'number') setMv({ x: e.detail.x, y: e.detail.y }); }}
+              onMove={props.confirmationRequired ? undefined : handleMove}
+              onChange={(e: any) => { if (props.confirmationRequired) handleMove(e); else if (e.detail && typeof e.detail.x === 'number') setMv({ x: e.detail.x, y: e.detail.y }); }}
             >
               <View className='crop-box__mask'>
                 {/* 四角手柄：即使裁剪框接近满屏，也能一眼看出「可拖动的裁剪范围」 */}
@@ -179,19 +184,19 @@ export default function CropStep(props: Props) {
               className='crop-zoom__slider'
               min={30}
               max={100}
-              value={Math.round(zoom * 100)}
+              value={Math.round(scale * 100)}
               onChanging={(e: any) => handleZoom(e.detail.value || 100)}
               onChange={(e: any) => handleZoom(e.detail.value || 100)}
             />
-            <Text className='crop-zoom__val'>{Math.round(zoom * 100)}%</Text>
+            <Text className='crop-zoom__val'>{Math.round(scale * 100)}%</Text>
           </View>
           {onApplyCrop ? (
             <Button
               className='crop-apply'
               onClick={onApplyCrop}
-              disabled={!changed}
+              disabled={!props.confirmationRequired && !changed}
             >
-              {changed ? '应用这个范围并重新出图' : '（未改动范围，当前用系统建议构图）'}
+              {props.confirmationRequired ? '确认裁剪范围并继续' : changed ? '应用这个范围并重新出图' : '（未改动范围，当前用系统建议构图）'}
             </Button>
           ) : null}
         </View>

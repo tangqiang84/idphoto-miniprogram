@@ -1,0 +1,62 @@
+{
+  "timestamp": "2026-10-28T07:58:47.842167+00:00",
+  "head": "f4d94b1de354fce7af90ac73540c2d536af385e3",
+  "scope": "RC-03完成性复核及漏项修复，不代表业务发布通过",
+  "status": "PASS",
+  "workspace": "已有未提交改动保留；本轮未提交/暂存/回退",
+  "files_sha256": {
+    "工具链/coverage_matrix.js": "0e214ff5bd29a4929bea02f69720af1781cb0add951b94fd5544940a09fc7ddd",
+    "工具链/tests/coverage_matrix.test.js": "6a71139dbdd1160ed69a37252fd2f4e43d723413259193196ceb8419932c0969",
+    "工具链/verify_runner.py": "1e71792db6c4ac2fb31d38070dc96a902f10d5540d5c90f23a0f7d902ae21405",
+    "工具链/test_verify_runner.py": "1cea09254c1fbc5b06e34cbcb16042ad8e726172ebcfae268cdeaacf8ad2b49b",
+    "工具链/prd_requirements.json": "f287d45c3288a43bd1c771f5edf2f5d1ab0250bec8183c07e2bd8807d7a4a33e",
+    "工具链/coverage_cases.json": "f4db0dcf88b0dff7c6e3a029b159317c6bf5dfbb50a182d7edb7162731c7d7ba",
+    "工具链/page_flow_probe.js": "0bf8d177707142202c02451bbfddd82e1809bb8f70bd561ee8b1cab3d9bec153",
+    "工具链/smoke_steps.js": "57fbd4d1ce46320e3540805edf1226180356173ff77ecf58297ab7943f87bc1c",
+    "工具链/acceptance_oracles.js": "7607b0344a004d83095d7696e0ce51d3e45822ace113a0f66554c777fbd26921",
+    "docs/rc01-baseline.json": "01601401d0a21a1902145cf17918107293c53a1bd579ce1dffa11bdb9931f0fc"
+  },
+  "snapshot_inputs_match": true,
+  "baseline_copied_and_hashed": true,
+  "assertions": {
+    "pass": 18,
+    "fail": 0
+  },
+  "runner_fixtures": 16,
+  "lint": {
+    "files": 137,
+    "errors": 0,
+    "selftest": 6
+  },
+  "types": "PASS",
+  "core_pass": 363,
+  "build_id": "6346c1096f6d2eadf822181c0491acdae422eda690ff0650f1da756e24a06eae",
+  "milestone": {
+    "status": "BLOCKED",
+    "exit_code": 3,
+    "counts": {
+      "PASS": 4,
+      "FAIL": 0,
+      "BLOCKED": 1,
+      "SKIPPED": 7,
+      "N/A": 0
+    },
+    "report": "docs/验证记录/verify-runs/run-20261028-155402-5f630740/report.json"
+  },
+  "page_flow": {
+    "status": "FAIL",
+    "tools": [
+      "T1",
+      "T2",
+      "T3",
+      "T5"
+    ],
+    "report": "docs/验证记录/step-flow/step-ebab6bed-3584-4dc7-a2df-65878bce4aa3/report.json"
+  },
+  "not_executed": [
+    "微信IDE",
+    "真实照片批验",
+    "真机",
+    "部署审计"
+  ]
+}

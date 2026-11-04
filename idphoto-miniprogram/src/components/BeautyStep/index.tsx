@@ -18,16 +18,17 @@ interface Props {
   onChange: (v: BeautyState) => void;
   /** 应用美颜并重跑管线 */
   onApply: () => void;
+  standalone?: boolean;
 }
 
-export default function BeautyStep({ value, onChange, onApply }: Props) {
+export default function BeautyStep({ value, onChange, onApply, standalone }: Props) {
   return (
     <View className='step-beauty' data-step='beauty'>
       <View className='step-beauty__head'>
         <Text className='step-beauty__title'>② 美颜修图（合规模式）</Text>
         <Text className='step-beauty__sub'>位于裁剪之后、抠图换底之前 · 仅轻度皮肤优化，不改脸型五官</Text>
       </View>
-      <BeautyControl value={value} onChange={onChange} onApply={onApply} />
+      <BeautyControl standalone={standalone} value={value} onChange={onChange} onApply={onApply} />
     </View>
   );
 }

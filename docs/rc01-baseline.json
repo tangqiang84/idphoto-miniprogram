@@ -1,0 +1,3632 @@
+{
+  "version": "RC-01-v1.8",
+  "date": "2026-10-28",
+  "git_head": "f4d94b1de354fce7af90ac73540c2d536af385e3",
+  "scope": "需求/现状文档审查；未运行本轮业务端到端或真机验收",
+  "decisions": [
+    {
+      "id": "D-01",
+      "status": "用户确认",
+      "source": "2026-10-28 本会话用户“好的，采用你的建议，需要验证，同时更新相关文档”",
+      "text": "镜像首版拍摄提示＋人工自查，不承诺自动识别。"
+    },
+    {
+      "id": "D-02",
+      "status": "用户确认",
+      "source": "同D-01",
+      "text": "低分辨率只提示，最终硬指标另验；格式非法/>10MB硬拒绝。"
+    },
+    {
+      "id": "D-03",
+      "status": "用户确认",
+      "source": "同D-01",
+      "text": "渐变和RGB纳入本轮整改，业务实现归RC-07。"
+    },
+    {
+      "id": "D-04",
+      "status": "用户确认",
+      "source": "2026-11-04本会话用户回复“采用，开始”并再次要求继续RC-07",
+      "text": "T2透明PNG可作为素材导出，醒目提示不符合证件底色要求；保留其他检查，不放宽T1/T3。"
+    }
+  ],
+  "code_sha256": {
+    "idphoto-miniprogram/cloudfunctions/matting/index.js": "409f34bc07e849851bf6b867ad226957f9a3c4cdb43a89f2eb243f42eaa1c26a",
+    "idphoto-miniprogram/package.json": "28243c283f85bf593ed4135fa7371dc16f50008ef9ec7cd6d7748dd3106f8756",
+    "idphoto-miniprogram/src/app.config.ts": "29002b88b52f32bfda44a68c5951898078396b6b9ee790224d3395a90324d4b3",
+    "idphoto-miniprogram/src/components/BeautyStep/index.tsx": "7c9f3b48dd0480783f21b8cc7368815023726530566a69da06520c01fd5d8bf6",
+    "idphoto-miniprogram/src/components/CameraGuide/index.tsx": "386e64797630314e907629cdc5e0503c82c7591f5ebea9234e3e8c8bcb145678",
+    "idphoto-miniprogram/src/components/CropStep/index.tsx": "8e84757c24e1226a58d5bf420c89930242e0fe2274df132f9b2dbe7c9c736a82",
+    "idphoto-miniprogram/src/components/DpiStep/index.tsx": "a3296e86907774fc3acedef8beee5da0c5734076a7f4994d9f14c0248f306bd3",
+    "idphoto-miniprogram/src/components/QualityTip/index.tsx": "f2007b8bbfadd6c24dfcd65709ece6854e579c804e6ecbd36a0eba0abdeccf93",
+    "idphoto-miniprogram/src/components/StepFlow/index.tsx": "8346a538a96f6f52fd2d3d5cf30c92c856d448b11f2523981a6521daaf4b53fa",
+    "idphoto-miniprogram/src/core/beauty.js": "12c56cb8349a21bb479f1ea64b7c023ebd66365ec1d8191b4e2074a52df0d38f",
+    "idphoto-miniprogram/src/core/color.js": "31f691c6e8ebf665cf781ad0a7e524d62c759ed067fab693dceba0cace7325eb",
+    "idphoto-miniprogram/src/core/compliance.js": "7436a1d0f5eb469f99a8b008d06ff7898181fc7e4041ba5f7c85a84d330f1984",
+    "idphoto-miniprogram/src/core/compose.js": "dfb0ba60b977a26fdc4565268fe8e7fb89b98de18f7b29acffdc750814c35091",
+    "idphoto-miniprogram/src/core/cropWindow.js": "ae59c53b6531aab0855dc38f6bf4760427e143c0bc044ae4ec757c91c156f0f9",
+    "idphoto-miniprogram/src/core/face.js": "cf9dcdd83b63173602999680291252bc1cc5f7eb6f9634d730af9d239769fa54",
+    "idphoto-miniprogram/src/core/headCrop.js": "179f2b61a8c8d5031a7ea2c04ec029223b82e0af1436a790f7a4b0acf438190a",
+    "idphoto-miniprogram/src/core/localPurge.js": "f227033deeb67ab4ee83b07cdf5edc34efbf41a6b5c81ce106335933dedeab66",
+    "idphoto-miniprogram/src/core/matting.js": "cd7db09131db8c0b61e2868e1caec8056bc13bcb11fd3699dfa88054d292d7e3",
+    "idphoto-miniprogram/src/core/mattingCloud.js": "727e21039d76febbac77f39dd4afd90838bfb98e96f02b2c49833f9eb8a97d43",
+    "idphoto-miniprogram/src/core/mattingLocal.js": "d54b1676ff753ed4b87d50deb40ec03bd7008cfe504c768f4d014704ebedd25a",
+    "idphoto-miniprogram/src/core/paperLibrary.js": "4bab064efdbaf5b161e17fe8e02a8b71d5a96b21d3cdb2366c92652e1828c52c",
+    "idphoto-miniprogram/src/core/printHandoff.js": "efca04058b6c6db40c7f401c0036fa054da9748d53dfb15823efd384326f4393",
+    "idphoto-miniprogram/src/core/privacy.js": "345ea891c4d8de05adcb017d385eda24679b5f27110c8c1a34ffacc021dbb62d",
+    "idphoto-miniprogram/src/core/quality.js": "7a45d49ab568325193360b452e8caa6d596f73fd74b744680d2feb723f3cda00",
+    "idphoto-miniprogram/src/core/specLibrary.js": "860d7bfae2dfcdc8ce690199e63203d9ba76ff54286e4c95d2640b95e51b71a6",
+    "idphoto-miniprogram/src/core/suitDiff.js": "0923a42487f78c1f2bf526181aca04de75c5840aab573a07940c697d47bd3ded",
+    "idphoto-miniprogram/src/core/suitFitV2.js": "50f71806acda7962564440c96d537bc5ba112784a2a16b7aa490a4c3827bcf2f",
+    "idphoto-miniprogram/src/core/validateFile.js": "1948b3b99c06f6af67a24bd0e8e0d6ad0bfd4d03a046d42c3f780d0a4e0ca457",
+    "idphoto-miniprogram/src/hooks/useConsentGate.ts": "df474606820ead889f7f866de8cb76d724b401dc81353d1e9664833beb1f467d",
+    "idphoto-miniprogram/src/hooks/useImagePicker.tsx": "c0d12deb9d4835844649ae297ab1f2ac3b48dbc50c14ffd5a3c128706f87ce48",
+    "idphoto-miniprogram/src/pages/home/index.tsx": "98816dfb84ad52ccb4e4f24a8130539be8aa8d969454017def65a1c76f78e7b5",
+    "idphoto-miniprogram/src/pages/privacy/index.tsx": "fcda8d8d85731e0506952373157f97d1330b4a0e1097095d8c6d66f6328f826f",
+    "idphoto-miniprogram/src/pages/tool-bg/index.tsx": "0c07c14b922d83a50aaae392f4928c164b90771131be04a6256f02f7c2ef3c1b",
+    "idphoto-miniprogram/src/pages/tool-check/index.tsx": "32c9a9bbef2781490cbdca04e5ae5fcf737e1b9e4a35b74063f7464795396a45",
+    "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx": "28bf7b371117297e91380f9cfab3b4307810000cc3fef6878e16c9610fa27305",
+    "idphoto-miniprogram/src/pages/tool-print/index.tsx": "ba15490327f8846aa3e405f9ab92ec4c0f18fabcc6058ced7581ceeae3167241",
+    "idphoto-miniprogram/src/pages/tool-spec/index.tsx": "f1d54d02836b8d6c3d8aeeaca08598bd571bb395ed0371c42f7071e269579098",
+    "idphoto-miniprogram/src/pages/tool-suit/index.tsx": "95665a0a40ab054e0d16a7d60c8751ee4d79b851ff2324c45a730e371e9b4a90",
+    "idphoto-miniprogram/src/services/faceService.ts": "632ced63daf622c715113dcb309856cce020699c50724ed352837a681418845e",
+    "idphoto-miniprogram/src/services/modelService.ts": "ebd993acc2dbb70a18bb5ed7c67dd98e0d5232e18770006cd21e36382727659b",
+    "idphoto-miniprogram/src/services/pipeline.ts": "29b9851b25eec8d891adb9b6357e09b724e7017847c0aa859b5a77bcc0c2a50c",
+    "idphoto-miniprogram/src/services/poseService.ts": "78837c4d614b8877fca41e072f932f93d294db7d969b8505ac6ca3199bc39e7c",
+    "idphoto-miniprogram/src/services/renderService.ts": "46f8c6560521f3c336f148ac247867f8c8a00ccc9d380592d7e77c6f332cc7d8",
+    "idphoto-miniprogram/src/core/t1Workflow.js": "a8b919c79bb93f7f84d8085cd6685283e9fa4537095b128b3ac630d12adddd34",
+    "idphoto-miniprogram/src/services/t1Processing.ts": "f905efd244f0be2f2ce4ca2c509c63b09a983bbf0acc8f88a158e5c2f42cbc00",
+    "idphoto-miniprogram/src/hooks/useT1Workflow.ts": "b3462372b3baeaf6817635868d7ea284eb283d06fe5ecf24127cf6f716d819ff",
+    "idphoto-miniprogram/src/core/consentSession.js": "d845f57a1cc64ece5ef04b777bb2297c63a25f75ad1256518a6ea31c3e67bfc7",
+    "idphoto-miniprogram/src/hooks/useActionConsent.ts": "b59bb14462123218b7b439b1e936e25d8c7a43c89b0e19c0f43049c9c3b8f930",
+    "idphoto-miniprogram/src/services/cloudFnAdapter.ts": "b7f792b026a4edb83032b5140c1793cdd39199f1ab14f8a3195745eee451f6c5",
+    "idphoto-miniprogram/src/services/index.ts": "84a00bfba0fe241ba9f060043c8f9fd4fe63b76c3ea5e3f70fcb3cf0d8bc976c",
+    "idphoto-miniprogram/src/components/BackgroundControl/index.tsx": "0a5e684dd3a8c9facbe665cc83beb21c5c368656150daaa2ea45f320b1726c3d",
+    "idphoto-miniprogram/src/components/PhotoTool/index.tsx": "1bcf8026856b4c56731d2363ad655952546779ea2b16d81a5f8a95b41513336c"
+  },
+  "requirements": [
+    {
+      "id": "A0",
+      "source": "§4-A",
+      "prototype": [
+        "s_upload",
+        "s_t2",
+        "s_t3",
+        "s_t4"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ],
+      "requirement": "协议前置闸门：未勾选人脸处理协议时，拍摄/相册选择入口不可点，点击提示并高亮勾选区",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/hooks/useImagePicker.tsx",
+        "idphoto-miniprogram/src/core/validateFile.js",
+        "idphoto-miniprogram/src/components/CameraGuide/index.tsx",
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+        "idphoto-miniprogram/src/core/localPurge.js",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx",
+        "idphoto-miniprogram/src/core/consentSession.js",
+        "idphoto-miniprogram/src/hooks/useActionConsent.ts",
+        "idphoto-miniprogram/src/services/cloudFnAdapter.ts",
+        "idphoto-miniprogram/src/services/poseService.ts"
+      ],
+      "gap": "已按动作拆分：仅faceLocal即可选图/拍摄，本地拒绝时调用为零；相册/拍摄回传核验授权版本。Node覆盖T1至T4，T1微信本地路径已实测；双平台完整入口待RC-12。 RC-06复核补齐质量评估报告的授权绑定，撤回/重新授权不恢复，迟到采样不继续读像素或回写。",
+      "acceptance": "未授权 picker/camera 调用为零；仅本地授权可选图，未同意云端上传为零。",
+      "tasks": [
+        "RC-06"
+      ]
+    },
+    {
+      "id": "A1",
+      "source": "§4-A",
+      "prototype": [
+        "s_upload"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "相机拍摄提供半透明人脸轮廓引导框，提示正脸、平视、光线均匀",
+      "status": "待真机验收",
+      "evidence": [
+        "idphoto-miniprogram/src/hooks/useImagePicker.tsx",
+        "idphoto-miniprogram/src/core/validateFile.js",
+        "idphoto-miniprogram/src/components/CameraGuide/index.tsx"
+      ],
+      "gap": "相机与轮廓组件存在，真实相机层级和取图未在本轮验证。",
+      "acceptance": "双平台拍照、引导框显示、取消、前后摄像头与权限拒绝实测。",
+      "tasks": [
+        "RC-12"
+      ]
+    },
+    {
+      "id": "A2",
+      "source": "§4-A",
+      "prototype": [
+        "s_upload",
+        "s_t2",
+        "s_t3",
+        "s_t5",
+        "s_t6"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "requirement": "相册上传支持 JPG/PNG/WebP，单张 ≤10MB；非法格式与超大文件被拦截",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/hooks/useImagePicker.tsx",
+        "idphoto-miniprogram/src/core/validateFile.js",
+        "idphoto-miniprogram/src/components/CameraGuide/index.tsx"
+      ],
+      "gap": "共享取图已接格式/大小校验；实际各入口边界待复跑。",
+      "acceptance": "JPG/PNG/WebP 与 10MB 边界；非法格式/超限后下游调用为零。",
+      "tasks": [
+        "RC-03",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "A3",
+      "source": "§4-A",
+      "prototype": [
+        "s_upload"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ],
+      "requirement": "质量检测提示重拍；低分辨率只提示不单独阻断，最终硬指标另验；格式非法/>10MB硬拒绝。",
+      "status": "待真机验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/quality.js",
+        "idphoto-miniprogram/src/components/QualityTip/index.tsx"
+      ],
+      "gap": "质量提示存在；按本次决策低分辨率非阻断，阈值未真机校准。",
+      "acceptance": "低像素/复杂背景/过暗过曝显示建议；低像素可继续，硬指标单独判定。",
+      "tasks": [
+        "RC-08",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "B1",
+      "source": "§4-B",
+      "prototype": [
+        "s_preview"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "端侧优先自动抠图；端侧置信不足时触发上云增强（境内闭环）；模型许可须可商用",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/matting.js",
+        "idphoto-miniprogram/src/core/mattingLocal.js",
+        "idphoto-miniprogram/src/core/mattingCloud.js",
+        "idphoto-miniprogram/src/services/modelService.ts",
+        "idphoto-miniprogram/cloudfunctions/matting/index.js"
+      ],
+      "gap": "端侧模型默认关闭，传统算法与云端 provider 路由存在；骨架不等于模型启用。",
+      "acceptance": "固定图集目视与边缘评估；真实/传统/影子分别统计，失败不冒充模型成功。",
+      "tasks": [
+        "RC-09"
+      ]
+    },
+    {
+      "id": "B2",
+      "source": "§4-B",
+      "prototype": [
+        "s_crop"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T5"
+      ],
+      "requirement": "智能裁切：按所选规格的头占比区间反解裁剪框，面部水平居中，构图不足时出图+醒目提示不阻断",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/services/pipeline.ts",
+        "idphoto-miniprogram/src/core/headCrop.js",
+        "idphoto-miniprogram/src/core/cropWindow.js",
+        "idphoto-miniprogram/src/components/CropStep/index.tsx",
+        "idphoto-miniprogram/src/components/StepFlow/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
+        "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+        "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts"
+      ],
+      "gap": "T1/T2/T3/T5现用统一会话和独立裁剪确认；原图坐标窗持续传入处理。控制回归及微信样例通过，全规格像素/构图质量仍归RC-08/09/12。",
+      "acceptance": "四工具锁定目标比例、拖缩确认；确认前不抠图；后续改参数保持裁剪窗。",
+      "tasks": [
+        "RC-04",
+        "RC-05",
+        "RC-07"
+      ]
+    },
+    {
+      "id": "B3",
+      "source": "§4-B",
+      "prototype": [
+        "s_crop",
+        "s_check",
+        "s_t4"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ],
+      "requirement": "头部占比校验：实时计算并提示是否落入规格合规区间",
+      "status": "待真机验收",
+      "evidence": [
+        "idphoto-miniprogram/src/services/faceService.ts",
+        "idphoto-miniprogram/src/core/face.js",
+        "idphoto-miniprogram/src/core/compliance.js",
+        "idphoto-miniprogram/src/pages/tool-check/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "存在关键点/估算/未检测分支；头顶外推不能称精确实测。",
+      "acceptance": "在最终裁剪坐标量头占比；固定标注对照，来源/未知状态明确，不假报通过。",
+      "tasks": [
+        "RC-09",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "C1",
+      "source": "§4-C",
+      "prototype": [
+        "s_preview",
+        "s_t2"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "标准纯色与渐变选项，渐变纳入本轮整改。",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/color.js",
+        "idphoto-miniprogram/src/core/matting.js",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+        "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts"
+      ],
+      "gap": "T2已接纯色/渐变控件及真实合成，负角度投影已修正；预览与成品共用同一参数。颜色图集及全部规格质量仍待RC-08/12。",
+      "acceptance": "渐变方向/端点在预览与落盘一致，切回纯色无残留，纯色按参考色采样。",
+      "tasks": [
+        "RC-07",
+        "RC-08"
+      ]
+    },
+    {
+      "id": "C2",
+      "source": "§4-C",
+      "prototype": [
+        "s_preview",
+        "s_t2"
+      ],
+      "tools": [
+        "T2"
+      ],
+      "requirement": "HEX/RGB输入校验、等价色预览与实际导出。",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/color.js",
+        "idphoto-miniprogram/src/core/matting.js",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+        "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts"
+      ],
+      "gap": "T2真实颜色控件支持HEX/RGB并拒绝越界；Node控制与真实微信同色JPEG文件哈希一致，不据单样本证明所有规格。",
+      "acceptance": "HEX/RGB 等价色成品一致，RGB 越界拒绝；修改原型与真实入口同步。",
+      "tasks": [
+        "RC-07"
+      ]
+    },
+    {
+      "id": "C3",
+      "source": "§4-C",
+      "prototype": [
+        "s_preview",
+        "s_export"
+      ],
+      "tools": [
+        "T2"
+      ],
+      "requirement": "透明底导出 PNG 且保留 Alpha 通道",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/color.js",
+        "idphoto-miniprogram/src/core/matting.js",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/services/renderService.ts",
+        "idphoto-miniprogram/src/core/compose.js",
+        "idphoto-miniprogram/src/components/DpiStep/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+        "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts"
+      ],
+      "gap": "T2透明PNG已接新流程；按D-04底色不符提示风险，但300档大小等其余硬指标仍阻断，600档按既有提示例外执行。",
+      "acceptance": "读取成品 PNG alpha；透明区域不变黑/白，切换背景后旧结果失效。",
+      "tasks": [
+        "RC-07",
+        "RC-08"
+      ]
+    },
+    {
+      "id": "D1",
+      "source": "§4-D",
+      "prototype": [
+        "s_dress",
+        "s_t3"
+      ],
+      "tools": [
+        "T1",
+        "T3"
+      ],
+      "requirement": "职业装模板库：提供模板并标注「仅换装、不改五官」",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/suitFitV2.js",
+        "idphoto-miniprogram/src/core/suitDiff.js",
+        "idphoto-miniprogram/src/services/poseService.ts",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "现有三套过渡模板；质量、授权档案及九规格适配未完成验收。",
+      "acceptance": "按九规格×领型检查透明底、像素、元数据、书面许可和自然度；数量建议不当硬指标。",
+      "tasks": [
+        "RC-10"
+      ]
+    },
+    {
+      "id": "D2",
+      "source": "§4-D",
+      "prototype": [
+        "s_dress",
+        "s_t3"
+      ],
+      "tools": [
+        "T1",
+        "T3"
+      ],
+      "requirement": "五官不变：换装不得改动脸型/五官像素，脸部区域像素差异在阈值内",
+      "status": "待质量验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/suitFitV2.js",
+        "idphoto-miniprogram/src/core/suitDiff.js",
+        "idphoto-miniprogram/src/services/poseService.ts",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "差分与几何代码存在，历史盖脸问题不能仅靠仿真结论关闭。",
+      "acceptance": "同图同裁剪同底色前后比较脸部像素，并用人工标注脸框和目视交叉验证。",
+      "tasks": [
+        "RC-10"
+      ]
+    },
+    {
+      "id": "D3",
+      "source": "§4-D",
+      "prototype": [
+        "m_self"
+      ],
+      "tools": [
+        "T1",
+        "T3"
+      ],
+      "requirement": "强制自检：换装完成后未确认五官自检不得导出",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/suitFitV2.js",
+        "idphoto-miniprogram/src/core/suitDiff.js",
+        "idphoto-miniprogram/src/services/poseService.ts",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+        "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts"
+      ],
+      "gap": "T3换装无跳过，预览及最终新结果分别自检，未实际换装不能导出；Node及本地微信流程验证，模板质量仍归RC-10。",
+      "acceptance": "未确认不可导出，确认后可保存；换图/重生成确认失效，不能绕过弹层。",
+      "tasks": [
+        "RC-05",
+        "RC-07",
+        "RC-10"
+      ]
+    },
+    {
+      "id": "D4",
+      "source": "§4-D",
+      "prototype": [
+        "s_dress",
+        "s_t3"
+      ],
+      "tools": [
+        "T1",
+        "T3"
+      ],
+      "requirement": "规格锚定与构图拒绝：非目标构图（无人脸/双肩）明确拒绝并提示，不静默出图",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/suitFitV2.js",
+        "idphoto-miniprogram/src/core/suitDiff.js",
+        "idphoto-miniprogram/src/services/poseService.ts",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "有构图检查但 estimate 可参与成功；无可靠双肩时拒绝链路待核实。",
+      "acceptance": "无人脸/双肩/多人/横图等非目标明确原因码拒绝，九规格合法图不盖脸。",
+      "tasks": [
+        "RC-10"
+      ]
+    },
+    {
+      "id": "E1",
+      "source": "§4-E",
+      "prototype": [
+        "s_beauty"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "允许项磨皮/美白/亮眼为轻度，可正常生效",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/beauty.js",
+        "idphoto-miniprogram/src/components/BeautyStep/index.tsx",
+        "idphoto-miniprogram/src/components/StepFlow/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
+        "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+        "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts"
+      ],
+      "gap": "T1/T2/T3裁剪后均进入独立美颜确认/跳过，之后才抠图；T5无美颜节点。实际轻度效果质量另验。",
+      "acceptance": "确认裁剪后显示美颜，确认或跳过后才 segment；原图/裁剪保持一致。",
+      "tasks": [
+        "RC-05",
+        "RC-07"
+      ]
+    },
+    {
+      "id": "E2",
+      "source": "§4-E",
+      "prototype": [
+        "s_beauty"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "禁止项瘦脸/大眼/重塑五官在合规模式下硬拦截并提示",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/beauty.js",
+        "idphoto-miniprogram/src/components/BeautyStep/index.tsx"
+      ],
+      "gap": "存在合规硬拦截与禁用控件，本轮不视作全链验收。",
+      "acceptance": "控件置灰；直接传入禁项也被拒绝并给可读原因。",
+      "tasks": [
+        "RC-03",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "F1",
+      "source": "§4-F",
+      "prototype": [
+        "s_spec"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "requirement": "9 种内置规格参数与官方口径一致（含驾驶证 260×378 白底、中国护照 390×567 白底、美国签证 600×600）",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/specLibrary.js",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
+        "证件照规格官方口径对照表.md"
+      ],
+      "gap": "九规格和 source 存在；禁止只用同一个产品函数自证数值。",
+      "acceptance": "与参考表固定像素/物理尺寸/底色/头占比对照；300/600分别舍入。",
+      "tasks": [
+        "RC-08"
+      ]
+    },
+    {
+      "id": "F2",
+      "source": "§4-F",
+      "prototype": [
+        "s_spec",
+        "s_t5"
+      ],
+      "tools": [
+        "T5"
+      ],
+      "requirement": "自定义目标像素、300/600档位及KB上限，校验边界与预览。",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/specLibrary.js",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
+        "证件照规格官方口径对照表.md",
+        "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+        "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts"
+      ],
+      "gap": "T5保留九标准规格、自定义1–5000整数像素和KB压缩上限，裁剪/档位/最终输出独立；全部规格及元数据一致性归RC-08。",
+      "acceptance": "像素1–5000边界及非法输入、KB上限可测；自定义目标比例参与裁剪。",
+      "tasks": [
+        "RC-07",
+        "RC-08"
+      ]
+    },
+    {
+      "id": "G1",
+      "source": "§4-G",
+      "prototype": [
+        "s_check",
+        "s_t4"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ],
+      "requirement": "实时校验头部占比/像素/文件大小/底色色值；底色区分标准深蓝 #438EDB 与浅蓝 #00BFF3",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/compliance.js",
+        "idphoto-miniprogram/src/pages/tool-check/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "有五项检查；需要区分真实/估算/未知，以及600dpi KB例外。",
+      "acceptance": "逐项制造失败，深蓝/浅蓝不可混用；未知不假判通过，例外有来源。",
+      "tasks": [
+        "RC-08",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "G2",
+      "source": "§4-G",
+      "prototype": [
+        "s_check"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ],
+      "requirement": "模拟审核提示：给出预计通过/风险点与改进建议",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/compliance.js",
+        "idphoto-miniprogram/src/pages/tool-check/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/services/renderService.ts",
+        "idphoto-miniprogram/src/core/compose.js",
+        "idphoto-miniprogram/src/components/DpiStep/index.tsx"
+      ],
+      "gap": "T1独立预审后选档位，最终文件实测尺寸/大小再次检查；像素/底色/300档KB硬失败不提供保存；构图不足与600KB为明确例外。全图集/真机仍待验。",
+      "acceptance": "像素/受限底色硬失败须定位并阻止保存；构图不足明确例外不被总闸门误伤。",
+      "tasks": [
+        "RC-05",
+        "RC-07",
+        "RC-08"
+      ]
+    },
+    {
+      "id": "H1",
+      "source": "§4-H",
+      "prototype": [
+        "s_export"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T5"
+      ],
+      "requirement": "300dpi JPG/PNG 导出：像素符合规格、KB ≤ 上限、无水印、免费",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/services/renderService.ts",
+        "idphoto-miniprogram/src/core/compose.js",
+        "idphoto-miniprogram/src/components/DpiStep/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "T1默认JPG，完整JPG/PNG选择与硬指标门控待补验。",
+      "acceptance": "读取实际文件格式/像素/KB与底色；无水印免费；不能只看页面参数。",
+      "tasks": [
+        "RC-08",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "H2",
+      "source": "§4-H",
+      "prototype": [
+        "s_dpi",
+        "s_export"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T5"
+      ],
+      "requirement": "600dpi对应像素档位免费无水印，有效像素不足明确降质；不承诺dpi元数据。",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/services/renderService.ts",
+        "idphoto-miniprogram/src/core/compose.js",
+        "idphoto-miniprogram/src/components/DpiStep/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "已有600档，工作画布可能放大后用于像素评估。",
+      "acceptance": "用原图裁剪区域真实像素判断；不足警示；核对目标像素，不要求dpi标签。",
+      "tasks": [
+        "RC-08"
+      ]
+    },
+    {
+      "id": "H2.1",
+      "source": "§4-H",
+      "prototype": [
+        "s_check",
+        "s_dpi"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "600dpi 的文件大小项降级为提示（不阻断、不计入整改建议）",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/compliance.js",
+        "idphoto-miniprogram/src/pages/tool-check/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "core 有 advisory；页面更新档位后旧报告是否失效需验。",
+      "acceptance": "600dpi仅KB超限不阻断/不计建议；300dpi同图按对应规则判定。",
+      "tasks": [
+        "RC-08"
+      ]
+    },
+    {
+      "id": "I1",
+      "source": "§4-I",
+      "prototype": [
+        "m_auth",
+        "s_upload",
+        "s_t4"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ],
+      "requirement": "人脸处理前取得单独授权，未授权不得启动处理链路",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+        "idphoto-miniprogram/src/core/localPurge.js",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx",
+        "idphoto-miniprogram/src/core/consentSession.js",
+        "idphoto-miniprogram/src/hooks/useActionConsent.ts",
+        "idphoto-miniprogram/src/services/cloudFnAdapter.ts",
+        "idphoto-miniprogram/src/services/poseService.ts",
+        "idphoto-miniprogram/src/services/index.ts"
+      ],
+      "gap": "本地/上云/换装/姿态分别检查，授权变化取消或丢弃在途结果；重新授权不恢复旧任务。未据此证明云端部署与真机全链。 RC-06复核补齐质量评估报告的授权绑定，撤回/重新授权不恢复，迟到采样不继续读像素或回写。",
+      "acceptance": "按动作分别授权，拒绝云端不妨碍选图；撤回阻止新操作与后续上传。",
+      "tasks": [
+        "RC-06"
+      ]
+    },
+    {
+      "id": "I2",
+      "source": "§4-I",
+      "prototype": [
+        "m_auth"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ],
+      "requirement": "人像在端侧处理，处理完本地销毁，不上云训练",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+        "idphoto-miniprogram/src/core/localPurge.js",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx",
+        "idphoto-miniprogram/src/core/consentSession.js",
+        "idphoto-miniprogram/src/hooks/useActionConsent.ts",
+        "idphoto-miniprogram/src/services/cloudFnAdapter.ts",
+        "idphoto-miniprogram/src/services/poseService.ts"
+      ],
+      "gap": "页面撤回已接授权版本控制及结果失效；已发出的请求不能撤回。完整本地清理与云端销毁/留存仍需RC-11及部署证据。",
+      "acceptance": "隔离文件生命周期测试+真机沙盒检查，预览返回不破坏；不能承诺不可恢复物理擦除。",
+      "tasks": [
+        "RC-11",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "I3",
+      "source": "§4-I",
+      "prototype": [
+        "m_auth"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "上云增强境内闭环，仅上传裁剪后人像区域，处理完即销毁",
+      "status": "待外部证据",
+      "evidence": [
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+        "idphoto-miniprogram/src/core/localPurge.js",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx",
+        "idphoto-miniprogram/src/core/matting.js",
+        "idphoto-miniprogram/src/core/mattingLocal.js",
+        "idphoto-miniprogram/src/core/mattingCloud.js",
+        "idphoto-miniprogram/src/services/modelService.ts",
+        "idphoto-miniprogram/cloudfunctions/matting/index.js"
+      ],
+      "gap": "裁剪上传/region字段存在；地域、留存和不训练不能由代码字段或图片证明。",
+      "acceptance": "核验部署地域、接收方与适用条款/配置，审计载荷最小化和销毁过程。",
+      "tasks": [
+        "RC-09",
+        "RC-11",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "I4",
+      "source": "§4-I",
+      "prototype": [
+        "s_home"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "requirement": "仅展示证据支持的备案/资质；等保未核实不得冒充已获证。",
+      "status": "待外部证据",
+      "evidence": [
+        "idphoto-miniprogram/src/pages/home/index.tsx",
+        "idphoto-miniprogram/src/app.config.ts",
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+        "idphoto-miniprogram/src/core/localPurge.js",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx"
+      ],
+      "gap": "首页已有ICP备案文字（纠正旧矩阵“全库无备案”），等保资质证据未核实。",
+      "acceptance": "只展示有证据的备案/资质；等保申请未获证不得以徽章暗示已通过。",
+      "tasks": [
+        "RC-12"
+      ]
+    },
+    {
+      "id": "J1",
+      "source": "§4-J",
+      "prototype": [
+        "s_home"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "requirement": "首页首屏为工具箱，集中展示 T1~T6 独立入口",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/pages/home/index.tsx",
+        "idphoto-miniprogram/src/app.config.ts"
+      ],
+      "gap": "六卡片及路由存在，视觉与独立入口待当前构建验。",
+      "acceptance": "首页逐个进入六工具，免费文案及用途可见。",
+      "tasks": [
+        "RC-12"
+      ]
+    },
+    {
+      "id": "J2",
+      "source": "§4-J",
+      "prototype": [
+        "s_home",
+        "s_t2",
+        "s_t3",
+        "s_t4",
+        "s_t5",
+        "s_t6"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "requirement": "T1~T6 各工具可独立使用，不依赖完整流程（T6 无需人脸授权）",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/pages/home/index.tsx",
+        "idphoto-miniprogram/src/app.config.ts",
+        "idphoto-miniprogram/src/components/StepFlow/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
+        "idphoto-miniprogram/src/core/paperLibrary.js",
+        "idphoto-miniprogram/src/core/printHandoff.js",
+        "idphoto-miniprogram/src/pages/tool-print/index.tsx",
+        "相纸尺寸口径对照表.md"
+      ],
+      "gap": "独立入口有代码；独立完成不等于入口可达。",
+      "acceptance": "分别冷启动工具完成所需功能，T4只读，T5/T6无需人脸授权。",
+      "tasks": [
+        "RC-07",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "J3",
+      "source": "§4-J",
+      "prototype": [
+        "s_home"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "requirement": "共享能力复用：抠图/规格库/预审引擎跨工具复用；T3 换装需独立授权",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/services/pipeline.ts",
+        "idphoto-miniprogram/src/core/headCrop.js",
+        "idphoto-miniprogram/src/core/cropWindow.js",
+        "idphoto-miniprogram/src/components/CropStep/index.tsx",
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+        "idphoto-miniprogram/src/core/localPurge.js",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx",
+        "idphoto-miniprogram/src/components/StepFlow/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
+        "idphoto-miniprogram/src/core/consentSession.js",
+        "idphoto-miniprogram/src/hooks/useActionConsent.ts",
+        "idphoto-miniprogram/src/services/cloudFnAdapter.ts",
+        "idphoto-miniprogram/src/services/poseService.ts",
+        "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+        "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts"
+      ],
+      "gap": "T1至T5照片处理策略按工具配置，T2/T3/T5复用共享会话/页面/平台处理；T4只读和T6独立拼版由隔离控制回归，真实质量/双平台仍待后续。",
+      "acceptance": "同一共享节点修改对应工具全测；差异仅按工具配置，不复制完整链路。",
+      "tasks": [
+        "RC-04",
+        "RC-07"
+      ]
+    },
+    {
+      "id": "K1",
+      "source": "§4-K",
+      "prototype": [
+        "s_export",
+        "s_t6"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T5",
+        "T6"
+      ],
+      "requirement": "T6 入口可达：首页卡片 + T1「另存为冲印排版」承接入口",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/paperLibrary.js",
+        "idphoto-miniprogram/src/core/printHandoff.js",
+        "idphoto-miniprogram/src/pages/tool-print/index.tsx",
+        "相纸尺寸口径对照表.md",
+        "idphoto-miniprogram/src/pages/home/index.tsx",
+        "idphoto-miniprogram/src/app.config.ts"
+      ],
+      "gap": "首页及T1承接有实现，PRD提出T2/T5成品承接需核查。",
+      "acceptance": "独立上传及T1/T2/T5成品承接正确，交接后规格与像素不串会话。",
+      "tasks": [
+        "RC-07",
+        "RC-08"
+      ]
+    },
+    {
+      "id": "K3",
+      "source": "§4-K",
+      "prototype": [
+        "s_t6"
+      ],
+      "tools": [
+        "T6"
+      ],
+      "requirement": "排版算法：按可打印区算 tiling 张数与居中，单张保持原规格像素/占比/底色",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/paperLibrary.js",
+        "idphoto-miniprogram/src/core/printHandoff.js",
+        "idphoto-miniprogram/src/pages/tool-print/index.tsx",
+        "相纸尺寸口径对照表.md"
+      ],
+      "gap": "平铺算法存在；输出真实几何待复验。",
+      "acceptance": "固定纸/照片尺寸独立算张数、朝向、边距；每张无拉伸越界。",
+      "tasks": [
+        "RC-08"
+      ]
+    },
+    {
+      "id": "K4",
+      "source": "§4-K",
+      "prototype": [
+        "s_t6"
+      ],
+      "tools": [
+        "T6"
+      ],
+      "requirement": "输出分辨率 = 相纸 mm × 输出 dpi（误差 ≤1px），排版图无水印",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/paperLibrary.js",
+        "idphoto-miniprogram/src/core/printHandoff.js",
+        "idphoto-miniprogram/src/pages/tool-print/index.tsx",
+        "相纸尺寸口径对照表.md"
+      ],
+      "gap": "相纸像素规划与合成存在；元数据按已确认档位语义。",
+      "acceptance": "按物理尺寸独立算像素，误差≤1px，PNG/JPG实际可读无水印。",
+      "tasks": [
+        "RC-08",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "K5",
+      "source": "§4-K",
+      "prototype": [
+        "s_t6"
+      ],
+      "tools": [
+        "T6"
+      ],
+      "requirement": "instax 等不可拼版机型仅出 1 张并提示白边不可拼版",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/paperLibrary.js",
+        "idphoto-miniprogram/src/core/printHandoff.js",
+        "idphoto-miniprogram/src/pages/tool-print/index.tsx",
+        "相纸尺寸口径对照表.md"
+      ],
+      "gap": "不可拼版数据与提示存在，需验真实导出。",
+      "acceptance": "instax仅一张，无法容纳时拒绝，不静默缩小规格或忽略白边。",
+      "tasks": [
+        "RC-08"
+      ]
+    },
+    {
+      "id": "AC1",
+      "source": "§11",
+      "prototype": [
+        "s_upload",
+        "s_preview",
+        "s_export"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ],
+      "requirement": "首版拍摄镜像提示＋人工镜像自查，未确认不得保存；不承诺自动识别。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/hooks/useImagePicker.tsx",
+        "idphoto-miniprogram/src/core/validateFile.js",
+        "idphoto-miniprogram/src/components/CameraGuide/index.tsx",
+        "idphoto-miniprogram/src/components/StepFlow/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx"
+      ],
+      "gap": "用户已批准人工自查，当前有组件/门控；不再要求自动识别。",
+      "acceptance": "T1/T2/T3/T5未勾不可保存，换图重置；T4仅提示；相机显示镜像警示。",
+      "tasks": [
+        "RC-03",
+        "RC-07",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "AC2",
+      "source": "§11",
+      "prototype": [
+        "s_beauty"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "合规模式下开启瘦脸/大眼被硬拦截并提示",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/beauty.js",
+        "idphoto-miniprogram/src/components/BeautyStep/index.tsx"
+      ],
+      "gap": "沿E2核验，不用页面存在证明算法拒绝。",
+      "acceptance": "控件与绕过调用双重拒绝瘦脸/大眼/重塑。",
+      "tasks": [
+        "RC-03",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "AC3",
+      "source": "§11",
+      "prototype": [
+        "s_upload"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ],
+      "requirement": "质量检测提示重拍；低分辨率只提示不单独阻断，最终硬指标另验；格式非法/>10MB硬拒绝。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/quality.js",
+        "idphoto-miniprogram/src/components/QualityTip/index.tsx",
+        "idphoto-miniprogram/src/hooks/useImagePicker.tsx",
+        "idphoto-miniprogram/src/core/validateFile.js",
+        "idphoto-miniprogram/src/components/CameraGuide/index.tsx"
+      ],
+      "gap": "用户已批准低分辨率只提示；旧阻断要求作废。",
+      "acceptance": "低像素可继续且提示，非法格式/>10MB硬拒绝，成品硬指标另验。",
+      "tasks": [
+        "RC-03",
+        "RC-08",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "AC4",
+      "source": "§11",
+      "prototype": [
+        "s_check",
+        "s_export"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T5"
+      ],
+      "requirement": "导出文件满足所选规格的像素/dpi/底色/头部占比硬性指标（600dpi 的 KB 项仅提示）",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/compliance.js",
+        "idphoto-miniprogram/src/pages/tool-check/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/services/renderService.ts",
+        "idphoto-miniprogram/src/core/compose.js",
+        "idphoto-miniprogram/src/components/DpiStep/index.tsx",
+        "idphoto-miniprogram/src/core/specLibrary.js",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
+        "证件照规格官方口径对照表.md"
+      ],
+      "gap": "档位指对应像素不承诺dpi标签；硬指标门控/构图例外仍需落实。",
+      "acceptance": "固定参考尺寸、底色、KB/头占比逐项验；600KB例外，构图例外显式记录。",
+      "tasks": [
+        "RC-08",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "AC5",
+      "source": "§11",
+      "prototype": [
+        "m_auth",
+        "s_upload",
+        "s_t4"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ],
+      "requirement": "未获人脸单独授权时处理链路不得启动（协议闸门前移至选图前）",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+        "idphoto-miniprogram/src/core/localPurge.js",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx",
+        "idphoto-miniprogram/src/hooks/useImagePicker.tsx",
+        "idphoto-miniprogram/src/core/validateFile.js",
+        "idphoto-miniprogram/src/components/CameraGuide/index.tsx",
+        "idphoto-miniprogram/src/core/consentSession.js",
+        "idphoto-miniprogram/src/hooks/useActionConsent.ts",
+        "idphoto-miniprogram/src/services/cloudFnAdapter.ts",
+        "idphoto-miniprogram/src/services/poseService.ts"
+      ],
+      "gap": "基础授权控制选图/拍摄，上云/换装/姿态分别在动作边界检查；撤回使旧结果失效。本轮Node正反例与T1禁云SDK实际操作，不代替双平台全链。 RC-06复核补齐质量评估报告的授权绑定，撤回/重新授权不恢复，迟到采样不继续读像素或回写。",
+      "acceptance": "未基础同意不调用选图/相机；未云端同意不上传；换装单独同意。",
+      "tasks": [
+        "RC-06"
+      ]
+    },
+    {
+      "id": "AC6",
+      "source": "§11",
+      "prototype": [
+        "m_self",
+        "s_dress",
+        "s_t3"
+      ],
+      "tools": [
+        "T1",
+        "T3"
+      ],
+      "requirement": "换装后五官像素差异超阈值应提示，且未通过自检不得导出",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/suitFitV2.js",
+        "idphoto-miniprogram/src/core/suitDiff.js",
+        "idphoto-miniprogram/src/services/poseService.ts",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "自检门控与差分模块存在，质量证据不足。",
+      "acceptance": "真实前后脸区差分超阈值提示，未自检不可保存，重跑使自检失效。",
+      "tasks": [
+        "RC-10"
+      ]
+    },
+    {
+      "id": "AC7",
+      "source": "§11",
+      "prototype": [
+        "s_home",
+        "s_dpi",
+        "s_export"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T5",
+        "T6"
+      ],
+      "requirement": "全部档位（300/600dpi）导出均无水印、无强制广告、均可免费导出",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/pages/home/index.tsx",
+        "idphoto-miniprogram/src/app.config.ts",
+        "idphoto-miniprogram/src/services/renderService.ts",
+        "idphoto-miniprogram/src/core/compose.js",
+        "idphoto-miniprogram/src/components/DpiStep/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "免费文案与路径存在；水印启发式不等于最终人工确认。",
+      "acceptance": "两档实际保存无收费/强制广告，成品目视及像素检查无平台水印。",
+      "tasks": [
+        "RC-12"
+      ]
+    },
+    {
+      "id": "AC8",
+      "source": "§11",
+      "prototype": [
+        "m_auth"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "上云增强链路可审计且境内，日志不含人脸原始数据",
+      "status": "待外部证据",
+      "evidence": [
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+        "idphoto-miniprogram/src/core/localPurge.js",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx",
+        "idphoto-miniprogram/src/core/matting.js",
+        "idphoto-miniprogram/src/core/mattingLocal.js",
+        "idphoto-miniprogram/src/core/mattingCloud.js",
+        "idphoto-miniprogram/src/services/modelService.ts",
+        "idphoto-miniprogram/cloudfunctions/matting/index.js",
+        "idphoto-miniprogram/src/core/suitFitV2.js",
+        "idphoto-miniprogram/src/core/suitDiff.js",
+        "idphoto-miniprogram/src/services/poseService.ts",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "审计字段存在；CN声明不是地域证明，姿态服务也需纳入。",
+      "acceptance": "部署/接收方证据+日志脱敏核验，禁止像素与密钥；串联TraceID。",
+      "tasks": [
+        "RC-09",
+        "RC-11",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "AC9",
+      "source": "§11",
+      "prototype": [
+        "s_home"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "requirement": "首页提供 T1~T6 独立入口，任一工具可单独使用",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/pages/home/index.tsx",
+        "idphoto-miniprogram/src/app.config.ts",
+        "idphoto-miniprogram/src/components/StepFlow/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx"
+      ],
+      "gap": "六入口已有，当前全链尚未验收。",
+      "acceptance": "各工具独立进出和完成，失败状态可恢复。",
+      "tasks": [
+        "RC-07",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "AC10",
+      "source": "§11",
+      "prototype": [
+        "s_t4"
+      ],
+      "tools": [
+        "T4"
+      ],
+      "requirement": "T4 合规检测仅出报告、不生成、不改动原图",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/compliance.js",
+        "idphoto-miniprogram/src/pages/tool-check/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "检测页面有实现；无保存按钮不能单独证明不改原图。",
+      "acceptance": "输入文件前后哈希一致、无导出/写相册调用，报告未知项如实显示。",
+      "tasks": [
+        "RC-03",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "AC11",
+      "source": "§11",
+      "prototype": [
+        "s_t6"
+      ],
+      "tools": [
+        "T6"
+      ],
+      "requirement": "冲印排版按可打印区计算 tiling 并合成；输出像素误差 ≤1px；排版图无水印",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/paperLibrary.js",
+        "idphoto-miniprogram/src/core/printHandoff.js",
+        "idphoto-miniprogram/src/pages/tool-print/index.tsx",
+        "相纸尺寸口径对照表.md"
+      ],
+      "gap": "PRD AC11是冲印排版；测试文档旧同号隐私条目改为PRIV-01。",
+      "acceptance": "按可打印区算张数/像素/instax单张，无水印且无需脸授权。",
+      "tasks": [
+        "RC-08",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "AC12",
+      "source": "§11",
+      "prototype": [
+        "s_crop",
+        "s_t2"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "T1/T2/T3 上传后必须先裁剪到目标规格再换装/换色；T2 无「保持原图尺寸」选项",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/services/pipeline.ts",
+        "idphoto-miniprogram/src/core/headCrop.js",
+        "idphoto-miniprogram/src/core/cropWindow.js",
+        "idphoto-miniprogram/src/components/CropStep/index.tsx",
+        "idphoto-miniprogram/src/components/StepFlow/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx"
+      ],
+      "gap": "T1裁剪确认前已阻止下游；T2仍默认specIndex=-1并保留原图分支，T3/T5尚待迁移。",
+      "acceptance": "T2无原图模式；裁剪确认后才美颜/抠图/换底，四工具裁剪关联回归。",
+      "tasks": [
+        "RC-04",
+        "RC-05",
+        "RC-07"
+      ]
+    },
+    {
+      "id": "AC13",
+      "source": "§11",
+      "prototype": [
+        "s_dress",
+        "s_t3"
+      ],
+      "tools": [
+        "T1",
+        "T3"
+      ],
+      "requirement": "换装只覆盖 9 个标准规格，逐一回归不出画布/不盖脸；非目标构图明确拒绝",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/suitFitV2.js",
+        "idphoto-miniprogram/src/core/suitDiff.js",
+        "idphoto-miniprogram/src/services/poseService.ts",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/core/specLibrary.js",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
+        "证件照规格官方口径对照表.md"
+      ],
+      "gap": "九规格几何有代码，估算信号与真实负例的拒绝仍需验。",
+      "acceptance": "九规格逐一不盖脸，非目标明确拒绝，实测与估算分栏。",
+      "tasks": [
+        "RC-10"
+      ]
+    },
+    {
+      "id": "NFR-1",
+      "source": "§9",
+      "prototype": [
+        "s_preview"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "端侧处理性能：选图到出图 5 秒内（含上云 8 秒内）",
+      "status": "待真机验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/matting.js",
+        "idphoto-miniprogram/src/core/mattingLocal.js",
+        "idphoto-miniprogram/src/core/mattingCloud.js",
+        "idphoto-miniprogram/src/services/modelService.ts",
+        "idphoto-miniprogram/cloudfunctions/matting/index.js",
+        "idphoto-miniprogram/src/components/StepFlow/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx"
+      ],
+      "gap": "历史5/8秒目标与逐步人工操作时长混杂，计时起止需制定。",
+      "acceptance": "记录机器处理段端侧≤3s、含云≤8s；用户思考/操作时间单列，不伪造选图5s。",
+      "tasks": [
+        "RC-09",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "NFR-2",
+      "source": "§9",
+      "prototype": [
+        "s_home",
+        "s_export"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T5",
+        "T6"
+      ],
+      "requirement": "成品无强制广告、无付费入口（MVP 全部功能免费）",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/pages/home/index.tsx",
+        "idphoto-miniprogram/src/app.config.ts",
+        "idphoto-miniprogram/src/services/renderService.ts",
+        "idphoto-miniprogram/src/core/compose.js",
+        "idphoto-miniprogram/src/components/DpiStep/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "沿免费承诺验收，静态检索不是成品验收。",
+      "acceptance": "无付费/强制广告入口，两档可实际保存。",
+      "tasks": [
+        "RC-12"
+      ]
+    },
+    {
+      "id": "NFR-3",
+      "source": "§9",
+      "prototype": [
+        "s_export"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T5",
+        "T6"
+      ],
+      "requirement": "导出文件格式为 JPG/PNG，无异常元数据泄漏",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/services/renderService.ts",
+        "idphoto-miniprogram/src/core/compose.js",
+        "idphoto-miniprogram/src/components/DpiStep/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+        "idphoto-miniprogram/src/core/localPurge.js",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx"
+      ],
+      "gap": "格式与元数据脱敏需读成品确认。",
+      "acceptance": "读取magic/header，透明PNG的alpha正确，元数据不泄漏敏感信息。",
+      "tasks": [
+        "RC-08",
+        "RC-11"
+      ]
+    },
+    {
+      "id": "K0",
+      "source": "§4-K",
+      "prototype": [
+        "s_t6"
+      ],
+      "tools": [
+        "T6"
+      ],
+      "requirement": "只导出拼版图，不做打印/邮寄/相纸售卖。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/paperLibrary.js",
+        "idphoto-miniprogram/src/core/printHandoff.js",
+        "idphoto-miniprogram/src/pages/tool-print/index.tsx",
+        "相纸尺寸口径对照表.md"
+      ],
+      "gap": "代码为拼版，需回归无供应链入口。",
+      "acceptance": "检查入口与实际操作均为文件导出。",
+      "tasks": [
+        "RC-12"
+      ]
+    },
+    {
+      "id": "K2",
+      "source": "§4-K",
+      "prototype": [
+        "s_t6"
+      ],
+      "tools": [
+        "T6"
+      ],
+      "requirement": "常规纸5/6/7/8/10/12寸及instax/SELPHY/ZINK，展示可打印区。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/paperLibrary.js",
+        "idphoto-miniprogram/src/core/printHandoff.js",
+        "idphoto-miniprogram/src/pages/tool-print/index.tsx",
+        "相纸尺寸口径对照表.md"
+      ],
+      "gap": "已有相纸库，参数须与已确认参考表独立比对。",
+      "acceptance": "纸张/成像区/原生dpi/朝向逐项对照。",
+      "tasks": [
+        "RC-08"
+      ]
+    },
+    {
+      "id": "H2.2",
+      "source": "§4-H",
+      "prototype": [
+        "s_dpi"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T5"
+      ],
+      "requirement": "有效原图裁剪像素决定降质提示，不能用放大后画布自证清晰。",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/services/renderService.ts",
+        "idphoto-miniprogram/src/core/compose.js",
+        "idphoto-miniprogram/src/components/DpiStep/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "现DpiStep优先工作图，真实像素追踪不足。",
+      "acceptance": "大原图小裁剪、低像素放大工作图均能揭示警告。",
+      "tasks": [
+        "RC-08"
+      ]
+    },
+    {
+      "id": "FLOW-1",
+      "source": "§5、§15.3",
+      "prototype": [
+        "s_upload",
+        "s_crop",
+        "s_beauty",
+        "s_preview",
+        "s_dress",
+        "s_check",
+        "s_dpi",
+        "s_export"
+      ],
+      "tools": [
+        "T1"
+      ],
+      "requirement": "目标规格→基础授权/选图→裁剪确认→美颜→抠图换底→可选换装/自检→预审→档位→保存。",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/components/StepFlow/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
+        "idphoto-miniprogram/src/services/pipeline.ts",
+        "idphoto-miniprogram/src/core/headCrop.js",
+        "idphoto-miniprogram/src/core/cropWindow.js",
+        "idphoto-miniprogram/src/components/CropStep/index.tsx",
+        "idphoto-miniprogram/src/core/t1Workflow.js",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts"
+      ],
+      "gap": "T1按裁剪/美颜/预览/可选换装与自检/预审/档位/成品逐步展示，SDK本地禁云样板实际操作有截图与落盘文件；真实云模型/换装质量与真机不据此通过。",
+      "acceptance": "确认前禁止下游；返回改参数保留裁剪；无旧异步结果覆盖。",
+      "tasks": [
+        "RC-04",
+        "RC-05"
+      ]
+    },
+    {
+      "id": "FLOW-2",
+      "source": "§5",
+      "prototype": [
+        "s_t2",
+        "s_crop",
+        "s_beauty",
+        "s_preview",
+        "s_check",
+        "s_dpi",
+        "s_export"
+      ],
+      "tools": [
+        "T2"
+      ],
+      "requirement": "与T1共享流程，必选规格、无换装，底色在处理步骤选择。",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/components/StepFlow/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
+        "idphoto-miniprogram/src/core/color.js",
+        "idphoto-miniprogram/src/core/matting.js",
+        "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+        "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts"
+      ],
+      "gap": "T2已强制规格、独立裁剪/美颜/换底预览/预审/档位/最终输出，无换装；控制与微信样例验证，不以此认领全规格质量。",
+      "acceptance": "移除原图分支并验证独立工具全链。",
+      "tasks": [
+        "RC-07"
+      ]
+    },
+    {
+      "id": "FLOW-3",
+      "source": "§5",
+      "prototype": [
+        "s_t3",
+        "s_crop",
+        "s_beauty",
+        "s_dress",
+        "m_self",
+        "s_check",
+        "s_dpi",
+        "s_export"
+      ],
+      "tools": [
+        "T3"
+      ],
+      "requirement": "九规格、必选换装、独立授权及自检。",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/components/StepFlow/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
+        "idphoto-miniprogram/src/core/suitFitV2.js",
+        "idphoto-miniprogram/src/core/suitDiff.js",
+        "idphoto-miniprogram/src/services/poseService.ts",
+        "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+        "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts"
+      ],
+      "gap": "T3九规格、换装必选、两次当前结果自检；控制和微信本地链路验证，实际模板质量待RC-10。",
+      "acceptance": "不可跳过换装/自检导出，拒绝非目标输入。",
+      "tasks": [
+        "RC-07",
+        "RC-10"
+      ]
+    },
+    {
+      "id": "FLOW-4",
+      "source": "§5",
+      "prototype": [
+        "s_t4"
+      ],
+      "tools": [
+        "T4"
+      ],
+      "requirement": "本地授权后只读检测并出报告。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/compliance.js",
+        "idphoto-miniprogram/src/pages/tool-check/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+        "idphoto-miniprogram/src/core/localPurge.js",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx"
+      ],
+      "gap": "独立检测与协议闸门有实现。",
+      "acceptance": "对输入文件做哈希前后对照，无写相册或成品输出。",
+      "tasks": [
+        "RC-06",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "FLOW-5",
+      "source": "§5、§15.3",
+      "prototype": [
+        "s_t5",
+        "s_crop",
+        "s_dpi",
+        "s_export"
+      ],
+      "tools": [
+        "T5"
+      ],
+      "requirement": "先确定目标规格/自定义尺寸，在裁剪确认后选档位并导出；纯图像变换。",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/specLibrary.js",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
+        "证件照规格官方口径对照表.md",
+        "idphoto-miniprogram/src/components/StepFlow/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+        "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts"
+      ],
+      "gap": "T5选图仅进入裁剪、确认后档位，最终纯图像缩放/压缩不调用人脸检测/抠图/美颜/姿态；控制和微信样例验证。",
+      "acceptance": "锁目标比例拖缩，无美颜/抠图/姿态调用。",
+      "tasks": [
+        "RC-07",
+        "RC-08"
+      ]
+    },
+    {
+      "id": "FLOW-6",
+      "source": "§5",
+      "prototype": [
+        "s_t6"
+      ],
+      "tools": [
+        "T6"
+      ],
+      "requirement": "已有成品→规格→相纸→预览→拼版导出，无人脸授权。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/paperLibrary.js",
+        "idphoto-miniprogram/src/core/printHandoff.js",
+        "idphoto-miniprogram/src/pages/tool-print/index.tsx",
+        "相纸尺寸口径对照表.md"
+      ],
+      "gap": "有拼版实现，实际导出与承接待验。",
+      "acceptance": "独立运行/承接均正确，未授权可使用。",
+      "tasks": [
+        "RC-07",
+        "RC-08"
+      ]
+    },
+    {
+      "id": "NFR-QUALITY",
+      "source": "§9 精度",
+      "prototype": [
+        "s_preview",
+        "s_dress"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "发丝级边缘、复杂背景可用；不把置信度当自然度。",
+      "status": "待质量验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/matting.js",
+        "idphoto-miniprogram/src/core/mattingLocal.js",
+        "idphoto-miniprogram/src/core/mattingCloud.js",
+        "idphoto-miniprogram/src/services/modelService.ts",
+        "idphoto-miniprogram/cloudfunctions/matting/index.js",
+        "idphoto-miniprogram/src/core/suitFitV2.js",
+        "idphoto-miniprogram/src/core/suitDiff.js",
+        "idphoto-miniprogram/src/services/poseService.ts",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "传统/云端路由存在，视觉质量需固定集。",
+      "acceptance": "分层报告和原图/成品配对目视评审。",
+      "tasks": [
+        "RC-09",
+        "RC-10"
+      ]
+    },
+    {
+      "id": "NFR-COMPAT",
+      "source": "§9 兼容",
+      "prototype": [
+        "s_upload",
+        "s_export"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "requirement": "iOS/Android 微信、≤10MB、三种输入格式。",
+      "status": "待真机验收",
+      "evidence": [
+        "idphoto-miniprogram/src/hooks/useImagePicker.tsx",
+        "idphoto-miniprogram/src/core/validateFile.js",
+        "idphoto-miniprogram/src/components/CameraGuide/index.tsx",
+        "idphoto-miniprogram/src/services/renderService.ts",
+        "idphoto-miniprogram/src/core/compose.js",
+        "idphoto-miniprogram/src/components/DpiStep/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "模拟器证据不能替代双平台触控/相机/权限。",
+      "acceptance": "双平台记录基础库/机型/版本，覆盖输入/保存/返回。",
+      "tasks": [
+        "RC-12"
+      ]
+    },
+    {
+      "id": "NFR-SECURITY",
+      "source": "§7、§9 安全",
+      "prototype": [
+        "m_auth"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ],
+      "requirement": "单独授权、境内最小化、销毁及资质声明必须有证据。",
+      "status": "待外部证据",
+      "evidence": [
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+        "idphoto-miniprogram/src/core/localPurge.js",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx",
+        "idphoto-miniprogram/src/core/matting.js",
+        "idphoto-miniprogram/src/core/mattingLocal.js",
+        "idphoto-miniprogram/src/core/mattingCloud.js",
+        "idphoto-miniprogram/src/services/modelService.ts",
+        "idphoto-miniprogram/cloudfunctions/matting/index.js"
+      ],
+      "gap": "部署和资质未在本轮核实；日志留存不能与照片留存混淆。",
+      "acceptance": "权限与日志验证+部署/服务条款/资质审查，证据不足标未验。",
+      "tasks": [
+        "RC-06",
+        "RC-11",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "NFR-OFFLINE",
+      "source": "§9 可用",
+      "prototype": [
+        "s_preview"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "断网本地可用；云失败降级明示，无法换装不得盲合成。",
+      "status": "部分实现",
+      "evidence": [
+        "idphoto-miniprogram/src/core/matting.js",
+        "idphoto-miniprogram/src/core/mattingLocal.js",
+        "idphoto-miniprogram/src/core/mattingCloud.js",
+        "idphoto-miniprogram/src/services/modelService.ts",
+        "idphoto-miniprogram/cloudfunctions/matting/index.js",
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+        "idphoto-miniprogram/src/core/localPurge.js",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx"
+      ],
+      "gap": "本地模型未启用，传统算法可用性和授权耦合待验。",
+      "acceptance": "断网、云超时/额度/模型缺失分别测试，区分失败和受限结果。",
+      "tasks": [
+        "RC-06",
+        "RC-09",
+        "RC-10"
+      ]
+    },
+    {
+      "id": "METRIC-01",
+      "source": "§2.3、§10",
+      "prototype": [],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "requirement": "成功率≥95%、外部审核≥92%、导出≥70%、留存/投诉/换装/上云/阻断分布为建议观测指标。",
+      "status": "待外部证据",
+      "evidence": [
+        "工具链/verify.sh",
+        "工具链/verify_all.sh",
+        "工具链/smoke_steps.js",
+        "工具链/coverage_matrix.js",
+        "idphoto-miniprogram/package.json"
+      ],
+      "gap": "缺真实用户样本与统计口径，不能由11张图外推。",
+      "acceptance": "建立分母/采样期/最小化数据方案；无数据标未观测，不作为本轮已达成。",
+      "tasks": [
+        "RC-12"
+      ]
+    },
+    {
+      "id": "PRIV-01",
+      "source": "§7、§6",
+      "prototype": [
+        "s_home"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "requirement": "隐私政策全文可达、处理方/用途/撤回方式可读。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/pages/home/index.tsx",
+        "idphoto-miniprogram/src/app.config.ts",
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+        "idphoto-miniprogram/src/core/localPurge.js",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx"
+      ],
+      "gap": "页面与入口存在，原测试误用AC11已改号。",
+      "acceptance": "实际点击可达，显示内容与启用provider一致，不把政策文本等同兑现承诺。",
+      "tasks": [
+        "RC-06",
+        "RC-11",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "REG-01",
+      "source": "§15",
+      "prototype": [],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "requirement": "节点变化须关联流程回归，连通性/业务/真机证据区分。",
+      "status": "部分实现",
+      "evidence": [
+        "工具链/verify.sh",
+        "工具链/verify_all.sh",
+        "工具链/smoke_steps.js",
+        "工具链/coverage_matrix.js",
+        "idphoto-miniprogram/package.json"
+      ],
+      "gap": "RC-02已修真实退出码、必需未验阻断与隔离证据；覆盖映射语义和业务/真机关联回归仍待RC-03/RC-12。",
+      "acceptance": "失败夹具证明闸门有效；必要未验不得全量通过。",
+      "tasks": [
+        "RC-02",
+        "RC-03"
+      ]
+    },
+    {
+      "id": "EC-01",
+      "source": "§12",
+      "prototype": [
+        "s_preview"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ],
+      "requirement": "镜像按人工自查处理，不自动识别。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/hooks/useImagePicker.tsx",
+        "idphoto-miniprogram/src/core/validateFile.js",
+        "idphoto-miniprogram/src/components/CameraGuide/index.tsx"
+      ],
+      "gap": "旧自动识别文案已裁决。",
+      "acceptance": "与AC1同测；换图后确认清空。",
+      "tasks": [
+        "RC-12"
+      ]
+    },
+    {
+      "id": "EC-02",
+      "source": "§12",
+      "prototype": [
+        "s_check"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ],
+      "requirement": "反光/遮耳眉仅给风险提示，不伪装权威识别。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/quality.js",
+        "idphoto-miniprogram/src/components/QualityTip/index.tsx"
+      ],
+      "gap": "quality启发式已存在，阈值未经真实图集校准。",
+      "acceptance": "反光/遮挡正负例评估，未知如实显示。",
+      "tasks": [
+        "RC-09",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "EC-03",
+      "source": "§12",
+      "prototype": [
+        "s_preview"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "复杂背景瑕疵提示重拍/修补或独立授权增强。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/matting.js",
+        "idphoto-miniprogram/src/core/mattingLocal.js",
+        "idphoto-miniprogram/src/core/mattingCloud.js",
+        "idphoto-miniprogram/src/services/modelService.ts",
+        "idphoto-miniprogram/cloudfunctions/matting/index.js"
+      ],
+      "gap": "T1有AlphaPatch，其他工具可走重拍或增强，不强加新修补界面。",
+      "acceptance": "触控修补与云增强后成品比较，未授权不上传。",
+      "tasks": [
+        "RC-06",
+        "RC-09"
+      ]
+    },
+    {
+      "id": "EC-04",
+      "source": "§12",
+      "prototype": [
+        "s_upload"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5"
+      ],
+      "requirement": "低分辨率只提示；最终硬指标另验。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/quality.js",
+        "idphoto-miniprogram/src/components/QualityTip/index.tsx"
+      ],
+      "gap": "本次用户已裁决旧阻断描述。",
+      "acceptance": "输入低像素能继续，失败不归咎于质量提示门控。",
+      "tasks": [
+        "RC-08",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "EC-05",
+      "source": "§12",
+      "prototype": [
+        "s_upload"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "requirement": ">10MB或非法格式硬拒绝。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/hooks/useImagePicker.tsx",
+        "idphoto-miniprogram/src/core/validateFile.js",
+        "idphoto-miniprogram/src/components/CameraGuide/index.tsx"
+      ],
+      "gap": "已有校验入口，各工具须复验。",
+      "acceptance": "边界样本且处理调用为零。",
+      "tasks": [
+        "RC-03",
+        "RC-12"
+      ]
+    },
+    {
+      "id": "EC-06",
+      "source": "§12",
+      "prototype": [
+        "s_preview"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "网络中断降级明示，不无限忙。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/matting.js",
+        "idphoto-miniprogram/src/core/mattingLocal.js",
+        "idphoto-miniprogram/src/core/mattingCloud.js",
+        "idphoto-miniprogram/src/services/modelService.ts",
+        "idphoto-miniprogram/cloudfunctions/matting/index.js"
+      ],
+      "gap": "已有超时常量，平台回调与界面仍须真机。",
+      "acceptance": "断网/超时后可重试，受限结果不宣称精修成功。",
+      "tasks": [
+        "RC-09",
+        "RC-11"
+      ]
+    },
+    {
+      "id": "EC-07",
+      "source": "§12",
+      "prototype": [
+        "s_t6"
+      ],
+      "tools": [
+        "T6"
+      ],
+      "requirement": "纸张成像区放不下规格须拒绝。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/paperLibrary.js",
+        "idphoto-miniprogram/src/core/printHandoff.js",
+        "idphoto-miniprogram/src/pages/tool-print/index.tsx",
+        "相纸尺寸口径对照表.md"
+      ],
+      "gap": "算法支持不足状态，页面行为待验。",
+      "acceptance": "不静默缩小照片尺寸出废图。",
+      "tasks": [
+        "RC-08"
+      ]
+    },
+    {
+      "id": "EC-08",
+      "source": "§12",
+      "prototype": [
+        "s_upload",
+        "s_t4"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ],
+      "requirement": "未基础授权点击入口提示并高亮，不进入picker。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+        "idphoto-miniprogram/src/core/localPurge.js",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx"
+      ],
+      "gap": "入口耦合所有授权的问题尚在。",
+      "acceptance": "分别统计picker/camera/upload调用次数。",
+      "tasks": [
+        "RC-06"
+      ]
+    },
+    {
+      "id": "EC-09",
+      "source": "§12",
+      "prototype": [
+        "s_t3"
+      ],
+      "tools": [
+        "T1",
+        "T3"
+      ],
+      "requirement": "换装非目标构图明确拒绝并原因码提示。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/core/suitFitV2.js",
+        "idphoto-miniprogram/src/core/suitDiff.js",
+        "idphoto-miniprogram/src/services/poseService.ts",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "gap": "估算退化路径是否误放行待验。",
+      "acceptance": "全身/多人/横图/无双肩负例按预期拒绝单列。",
+      "tasks": [
+        "RC-10"
+      ]
+    },
+    {
+      "id": "EC-10",
+      "source": "§12",
+      "prototype": [
+        "s_crop",
+        "s_check"
+      ],
+      "tools": [
+        "T1",
+        "T2",
+        "T3"
+      ],
+      "requirement": "裁剪构图不足可出图，醒目提示；不等于全部合规。",
+      "status": "待功能验收",
+      "evidence": [
+        "idphoto-miniprogram/src/services/pipeline.ts",
+        "idphoto-miniprogram/src/core/headCrop.js",
+        "idphoto-miniprogram/src/core/cropWindow.js",
+        "idphoto-miniprogram/src/components/CropStep/index.tsx"
+      ],
+      "gap": "G模块总硬阻断与B2例外需在实现中分级。",
+      "acceptance": "构图例外可保存，其他硬失败仍阻断，未知不标通过。",
+      "tasks": [
+        "RC-05",
+        "RC-08"
+      ]
+    }
+  ],
+  "historical_tasks": [
+    {
+      "id": "1",
+      "title": "验证 T1 主链路（重编译 + 选图跑通）",
+      "previous_status": "✅ 完成",
+      "review_status": "部分实现，待交互回归",
+      "reason": "T1选图回调直接run到成品，步骤组件并未阻止用户确认前执行；历史跑通只支持连通性。",
+      "tasks": [
+        "RC-05",
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "工具链/smoke_auto.js"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "2a",
+      "title": "**T2 单独换底色**：用户已有照片，只做「抠图 + 换底色 + 导出」，不强制选规格/预审",
+      "previous_status": "✅ 完成",
+      "review_status": "部分实现",
+      "reason": "T2仍默认原图模式；渐变/RGB未接界面。",
+      "tasks": [
+        "RC-07"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "idphoto-miniprogram/src/core/color.js"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "2b",
+      "title": "**T3 单独 AI 换装**：已有照片，只做「换装 + 导出」（需换装独立授权 + 强制五官自检）",
+      "previous_status": "✅ 完成",
+      "review_status": "待质量验收",
+      "reason": "有模板合成与自检，不能据链路成功确认自然度。",
+      "tasks": [
+        "RC-10"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "2c",
+      "title": "**T4 合规检测**：已有证件照，只「检测头部占比/像素/KB/底色」出报告，**不生成新图、不改原图**",
+      "previous_status": "✅ 完成",
+      "review_status": "只读实现存在，待真机报告复验",
+      "reason": "T4有像素/底色/人脸度量报告；检测失败分支须标未知，文件哈希不变及无保存调用仍需动态验证。",
+      "tasks": [
+        "RC-03",
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/pages/tool-check/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "2d",
+      "title": "**T5 规格转换**：已有照片，按所选规格「裁剪 / 改 dpi / 压 KB」后导出",
+      "previous_status": "✅ 完成",
+      "review_status": "部分实现",
+      "reason": "T5有内置/自定义像素、dpi和KB压缩，但未接比例锁定的交互裁剪流程，不能按完整需求标完成。",
+      "tasks": [
+        "RC-07",
+        "RC-08"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "2e",
+      "title": "**首页工具箱**：首屏展示 **T1–T6 六个入口卡片** + 隐私承诺与合规标识（入口枢纽）",
+      "previous_status": "✅ 完成",
+      "review_status": "待功能验收",
+      "reason": "六入口和备案文字已存在，等保证据待核实。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/pages/home/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "3",
+      "title": "**接入真 AI 抠图模型**（端侧轻量模型 / 云端 BiRefNet）",
+      "previous_status": "✅ 完成（接入骨架 + 部署包交付）",
+      "review_status": "骨架交付，待资源/部署",
+      "reason": "端侧默认关闭，无GPU自部署证据，不能标模型上线完成。",
+      "tasks": [
+        "RC-09"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/services/modelService.ts",
+        "部署/birefnet/README.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "4",
+      "title": "补人脸定位（合规预审「头部占比」项）",
+      "previous_status": "✅ 完成",
+      "review_status": "度量实现存在，待真机精度复验",
+      "reason": "faceService与face纯逻辑有双轨检测/估算/未检测；头顶外推及无关键点降级不能当精确头部实测。",
+      "tasks": [
+        "RC-09",
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/services/faceService.ts",
+        "idphoto-miniprogram/src/core/face.js"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "5",
+      "title": "等 ICP 备案号 → 提审发布",
+      "previous_status": "✅ 已通过（2026-10-27）",
+      "review_status": "历史备案记录存在，当前后台待核实",
+      "reason": "首页与政策含备案号，旧台账记录2026-10-27通过；本轮未访问后台，备案通过不能替代代码发布/等保。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/pages/home/index.tsx",
+        "idphoto-miniprogram/src/pages/privacy/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "6",
+      "title": "维护任务列表与问题台账 + **文档同步**（登记纪律：每次任务结束按《项目资产与工具手册》\"文档更新映射表\"回写对应文档）",
+      "previous_status": "🔵 持续",
+      "review_status": "持续维护，本轮已有同步",
+      "reason": "台账/问题/当日日志和RC-01基线已落盘，持续任务不能以一次更新永久标完成；后续依任务影响面同步。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        "开发任务台账.md",
+        "问题台账.md",
+        "每日开发日志/2026-10-28.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "7",
+      "title": "补齐项目文档资产（技术架构/API/原型/功能清单/目录结构/开发指南）",
+      "previous_status": "✅ 完成",
+      "review_status": "文档资产存在，历史状态需按新基线解释",
+      "reason": "架构、原型、功能、指南均存在；其旧已实现/100%声明不再作为当前验收依据，三项决策已通过RC-01同步。",
+      "tasks": [
+        "RC-03",
+        "RC-12"
+      ],
+      "evidence": [
+        "技术架构说明.md",
+        "页面原型设计.md",
+        "产品功能清单.md",
+        "小程序开发指南.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "8",
+      "title": "裁决规格数值偏差（PRD vs 代码：护照/驾照/头占比）",
+      "previous_status": "✅ 完成",
+      "review_status": "历史决策沿用，待数值复验",
+      "reason": "保留已确认规格参考口径，当前代码仍需独立固定期望验证。",
+      "tasks": [
+        "RC-08"
+      ],
+      "evidence": [
+        "证件照规格官方口径对照表.md",
+        "idphoto-miniprogram/src/core/specLibrary.js"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "24",
+      "title": "**T1 按规格头部占比自动裁剪**（PRD B2「自动裁切至该规格的头部占比区间」）：原按宽高比居中裁剪 → 改为按该规格头占比反解裁剪框",
+      "previous_status": "✅ 完成",
+      "review_status": "部分实现",
+      "reason": "智能裁剪可建议，但交互确认/回退保留和T5接入未完成。",
+      "tasks": [
+        "RC-04",
+        "RC-07"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/services/pipeline.ts",
+        "idphoto-miniprogram/src/components/CropStep/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "9",
+      "title": "决策付费档形态（个人主体无微信支付）",
+      "previous_status": "✅ 完成",
+      "review_status": "产品决策已记录，免费行为待回归",
+      "reason": "PRD明确MVP全免费、无支付档；首页已有免费承诺。决策可沿用，但不能仅靠文本证明真实保存无收费。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        "证件照小程序PRD正文.md",
+        "idphoto-miniprogram/src/pages/home/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "33",
+      "title": "**600dpi 全工具免费开放落地**（任务 #9 的执行拆项）",
+      "previous_status": "✅ 完成",
+      "review_status": "部分实现",
+      "reason": "档位免费已决策，原始裁剪像素追踪和最终文件检查待验。",
+      "tasks": [
+        "RC-08"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/components/DpiStep/index.tsx",
+        "idphoto-miniprogram/src/core/compose.js"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "10",
+      "title": "补提审合规文档三件套（隐私指引与政策 / 提审清单 / 测试用例）",
+      "previous_status": "✅ 完成",
+      "review_status": "材料已交付，内容与运行一致性待验",
+      "reason": "隐私政策/提审清单/测试文档齐全；测试AC11已纠正，实际provider/数据销毁等仍需证据，材料齐不等于合规兑现。",
+      "tasks": [
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence": [
+        "用户隐私保护指引与隐私政策.md",
+        "提审发布清单与审核应对.md",
+        "测试用例与验收清单.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "11",
+      "title": "填隐私政策占位信息（主体姓名、邮箱、备案号、留存天数）",
+      "previous_status": "✅ 完成（2026-10-27）",
+      "review_status": "政策字段已填写，真实性待外部核验",
+      "reason": "政策页面已有主体、联系方式、备案及日志留存描述；文字存在不证明后台配置与云端照片留存一致，二者须分开核验。",
+      "tasks": [
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/pages/privacy/index.tsx",
+        "用户隐私保护指引与隐私政策.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "12",
+      "title": "决策：T2–T5 是接功能还是提审前临时下架",
+      "previous_status": "✅ 已消解",
+      "review_status": "已按保留六工具落实入口，功能仍有缺口",
+      "reason": "app.config注册首页、六工具和隐私页，已有独立工具页面；不再等待是否下架决策，但不能据路由齐全报告各功能完成。",
+      "tasks": [
+        "RC-07",
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/app.config.ts",
+        "idphoto-miniprogram/src/pages/home/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "13",
+      "title": "配置微信后台《用户隐私保护指引》并提交审核",
+      "previous_status": "✅ **已完成（2026-10-27 审核通过）**",
+      "review_status": "历史审核通过记录存在，后台当前状态未核实",
+      "reason": "台账与政策文档记载微信隐私指引审核通过；本轮不登录后台或代提交，后续须确认与启用第三方及实际处理方式一致。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        "开发任务台账.md",
+        "用户隐私保护指引与隐私政策.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "15",
+      "title": "**微信认证材料被打回，需在 2026-11-21 15:22:56 前重提**（订单 15054335870443484830，30 元，剩 2 次重填机会，逾期认证失败且费用不退）",
+      "previous_status": "⬜ 待办（⚠️ 有 deadline）",
+      "review_status": "待用户处理的外部事项",
+      "reason": "历史台账明确名称认证补料与2026-11-21截止时间；未获取后台当前状态，不能视作已补交或认证成功，也不自动发送/提醒。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        "开发任务台账.md",
+        "小程序发布准备包.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "14",
+      "title": "执行提审前冒烟 S1–S8 并登记结果",
+      "previous_status": "🔵 进行中（2026-10-27 起真机实测中）",
+      "review_status": "真机清单已交付，当前构建未验",
+      "reason": "S1–S8操作清单和结果模板存在，但本轮无双平台设备记录；模拟器截图不能补足真机验收。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        "真机冒烟S1-S8操作清单.md",
+        "测试用例与验收清单.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "46",
+      "title": "开启微信开发者工具「服务端口」（一次性），使 AI 能自动跑模拟器冒烟",
+      "previous_status": "✅ 完成",
+      "review_status": "自动化连接工具存在，当前IDE未探测",
+      "reason": "有连接助手与历史服务端口开启记录；本轮没有启动IDE会话，不能保证当前端口/页面栈可用。",
+      "tasks": [
+        "RC-02",
+        "RC-12"
+      ],
+      "evidence": [
+        "工具链/automator_connect.js",
+        "项目资产与工具手册.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "16",
+      "title": "AI 自跑验证已打通：编译 + 单测 + 类型检查（`工具链/verify.sh`），**无需用户代跑**",
+      "previous_status": "✅ 完成",
+      "review_status": "RC-02验证入口已补齐，业务里程碑仍有阻塞",
+      "reason": "统一调度器已实跑单测/类型/Lint/隔离构建；里程碑覆盖缺口返回3，故障夹具防止未知退出码和未验假绿；不是业务全量通过。",
+      "tasks": [
+        "RC-02"
+      ],
+      "evidence": [
+        "工具链/verify_runner.py",
+        "工具链/verify.sh",
+        "工具链/verify_all.sh",
+        "工具链/lint/run.cjs",
+        "idphoto-miniprogram/package.json"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "17",
+      "title": "沉淀五维度避坑文档《微信小程序开发实战避坑指南》（流程/配置/代码/工具/沟通）",
+      "previous_status": "✅ 完成",
+      "review_status": "经验文档已交付，历史结论不当现行规则",
+      "reason": "避坑指南存在，内容包含早期环境与事件；接手先遵循AGENTS和RC-01，不将历史经验自动升级成需求或已验证事实。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        "微信小程序开发实战避坑指南.md",
+        "AGENTS.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "18",
+      "title": "**建立每日总结机制**：`工具链/daily_summary.py` + 《每日开发日志/》目录",
+      "previous_status": "✅ 完成",
+      "review_status": "日志工具与RC表头解析已补齐",
+      "reason": "RC-02已按表头兼容数字/RC任务，排除验证快照目录并移除先删除日志的建议；独立解析用例验证已完成任务不进入待办。",
+      "tasks": [
+        "RC-02"
+      ],
+      "evidence": [
+        "工具链/daily_summary.py",
+        "每日开发日志/2026-10-28.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "19",
+      "title": "🔴 **版本控制补齐**：`git init` + `.gitignore` + 首次提交 + 基线标签",
+      "previous_status": "✅ 完成",
+      "review_status": "本地仓库与标签存在，未提交交付未保存到提交",
+      "reason": "本轮git rev-parse成功，存在v0.1至v0.6等本地标签；当前RC-01资产仍有未提交文件，未核实远程备份，也未代提交。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        ".gitignore",
+        "开发任务台账.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "34",
+      "title": "**接入商用抠图 API：百度智能云「人像分割」**（端侧置信不足且已授权时的云端真模型）",
+      "previous_status": "✅ 完成（链路+降级+文档，凭据待 owner 填）",
+      "review_status": "历史部署有记录，当前未复验",
+      "reason": "历史provider=baidu证据不等于当前部署健康，禁止读取密钥验证。",
+      "tasks": [
+        "RC-09"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/cloudfunctions/matting/index.js",
+        "开发任务台账.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "36",
+      "title": "**AC3 原图质量提示**（PRD A3/AC3）：上传后即时检测分辨率(<600×800)、背景复杂度、光线，不达标引导重拍",
+      "previous_status": "✅ 完成",
+      "review_status": "需求已批准仅提示，待真机",
+      "reason": "现有质量提示方向一致，阈值及独立硬指标待验。",
+      "tasks": [
+        "RC-08",
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/core/quality.js"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "37",
+      "title": "**A1 半透明人脸引导框**（PRD A1）：相机预览叠加人像轮廓引导框 + 正脸/平视/光线提示",
+      "previous_status": "✅ 完成",
+      "review_status": "相机组件存在，待真机",
+      "reason": "CameraGuide定义原生相机与轮廓提示；双平台覆盖层、拍照权限、前后摄像头和取图需真实设备复验。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/components/CameraGuide/index.tsx",
+        "idphoto-miniprogram/src/hooks/useImagePicker.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "38",
+      "title": "**AC2 受限美颜模块**（PRD E1/E2/AC2）：轻度磨皮/美白/亮眼 + 合规模式硬拦截瘦脸/大眼",
+      "previous_status": "✅ 完成",
+      "review_status": "算法/禁项存在，独立步骤与视觉效果待验",
+      "reason": "beauty纯逻辑与BeautyStep存在；磨皮/美白/亮眼及禁止变形可测，不能以算法单测证明独立美颜确认或自然度。",
+      "tasks": [
+        "RC-05",
+        "RC-07",
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/core/beauty.js",
+        "idphoto-miniprogram/src/components/BeautyStep/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "39",
+      "title": "**T6 冲印排版骨架**（相纸 SSOT + planLayout 平铺算法 + PRD/原型/相纸对照表）",
+      "previous_status": "✅ 完成（已提交+打标）",
+      "review_status": "相纸算法/参考表已交付，成品待验",
+      "reason": "paperLibrary与相纸对照表存在；原骨架交付成立，但当前拼版张数、朝向和输出像素须按参考值独立复验。",
+      "tasks": [
+        "RC-08"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/core/paperLibrary.js",
+        "相纸尺寸口径对照表.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "40",
+      "title": "**T6 冲印排版页面落地**（pages/tool-print/index + canvas 合成导出）",
+      "previous_status": "✅ 完成（2026-10-26）",
+      "review_status": "待功能验收",
+      "reason": "有拼版实现，实物尺寸/成品/承接当前未验。",
+      "tasks": [
+        "RC-08"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/pages/tool-print/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "41",
+      "title": "**T1-3 格式/大小硬校验**（PRD A2）：把 #36 的「非阻断提示」升级为**硬拦截**",
+      "previous_status": "✅ 完成",
+      "review_status": "格式/大小校验实现存在，待入口边界回归",
+      "reason": "validateFile与useImagePicker已有格式和10MB校验；该硬拒绝不能推广为低分辨率阻断，需覆盖全部使用入口。",
+      "tasks": [
+        "RC-03",
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/core/validateFile.js",
+        "idphoto-miniprogram/src/hooks/useImagePicker.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "42",
+      "title": "**T1-17 手动修补**（低置信/边缘手动涂改修正 alpha）",
+      "previous_status": "✅ 完成",
+      "review_status": "修补算法/面板存在，待真机触控与重合成",
+      "reason": "alphaPatch提供擦除/恢复与笔画逻辑，AlphaPatch组件存在；像素坐标映射、撤销/重置、应用后成品仍需真机验证。",
+      "tasks": [
+        "RC-09",
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/core/alphaPatch.js",
+        "idphoto-miniprogram/src/components/AlphaPatch/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "43",
+      "title": "**T1-11/12 向导内换装入口**（T1 向导集成换装步骤 + 五官自检闸门）",
+      "previous_status": "✅ 完成（2026-10-27）",
+      "review_status": "部分实现",
+      "reason": "T1有换装门控，真实质量和强制弹层仍待验。",
+      "tasks": [
+        "RC-10"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "44",
+      "title": "**.gitignore 排除 `.workbuddy/`**（内部数据永不入库）",
+      "previous_status": "✅ 完成（提交 c7fdc88）",
+      "review_status": "忽略规则当前可验证，历史远程清理未重验",
+      "reason": ".gitignore有.workbuddy/规则，本轮git check-ignore可命中虚拟路径（未创建文件）；未复核远程历史是否含旧内部文件。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        ".gitignore"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "50",
+      "title": "**真机反馈：换底色/换规格/换 dpi 后成品不跟着变**（owner 2026-10-27 真机截图）",
+      "previous_status": "✅ 完成（2026-10-27）",
+      "review_status": "重合成/重跑实现存在，会话参数仍可能丢失",
+      "reason": "页面与renderService有recompose/reprocess，但美颜/换装/档位重跑未统一传入已确认cropWindow，旧修复不能认定会话一致性达标。",
+      "tasks": [
+        "RC-04",
+        "RC-08"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/services/renderService.ts",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "51",
+      "title": "**复杂背景下端侧抠图质量差**（owner 真机截图：原图 414×834 浅色背景，端侧 classical 抠图后背景残留条纹、发丝破损）",
+      "previous_status": "✅ 完成（2026-10-27）",
+      "review_status": "复杂背景增强路由存在，画质仍待验",
+      "reason": "T1选图质量回调有forceCloud，matting路由也检查云端授权；传统算法自信值不等于视觉质量，需真实背景图成品配对。",
+      "tasks": [
+        "RC-09"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/core/matting.js"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "52",
+      "title": "**上云增强链路在小程序端从未跑通**（真机排障连带修，2026-10-27）",
+      "previous_status": "✅ 完成（2026-10-27）",
+      "review_status": "云函数适配已接，当前云端未联调",
+      "reason": "cloudFnAdapter与matting云函数代码存在，历史日志有成功记录；本轮无真实请求，不把旧成功当当前部署/额度健康。",
+      "tasks": [
+        "RC-09"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/services/cloudFnAdapter.ts",
+        "idphoto-miniprogram/cloudfunctions/matting/index.js"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "53",
+      "title": "**真机反馈第三轮：云端精修成品有矩形接缝 + 区域外原背景残留 + 区域内斑驳**（owner 2026-10-27 三次截图「还是有问题」）",
+      "previous_status": "✅ 完成（2026-10-27）",
+      "review_status": "区域拼接修复实现存在，最终视觉待回归",
+      "reason": "mattingCloud有裁剪上传/回贴及质量守门，旧成品证据仅证明当时样本；当前接缝、墙面残留与发丝仍应在固定图集验证。",
+      "tasks": [
+        "RC-09"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/core/mattingCloud.js",
+        "工具链/batch_real.js"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "45",
+      "title": "**首页等保标识**（PRD I4）",
+      "previous_status": "⬜ 待办（依赖等保申请）",
+      "review_status": "待外部证据",
+      "reason": "等保未核实；不以ICP备案替代等保证据。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        "开发任务台账.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "54",
+      "title": "**真实头像批量验收自动化 + 守门偏移门误杀修复**（owner 2026-10-27 第 4 次真机反馈「还是不行」，状态行 = cloud->edge 降级）",
+      "previous_status": "✅ 完成（2026-10-27）",
+      "review_status": "批验工具存在，旧统计不能当质量门槛",
+      "reason": "batch_acceptance/batch_real可产生报告，但估算肩线和旧断言映射会造成假绿；保留连通性与业务失败分别统计。",
+      "tasks": [
+        "RC-02",
+        "RC-03",
+        "RC-10"
+      ],
+      "evidence": [
+        "工具链/batch_acceptance.js",
+        "工具链/batch_real.js"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "47",
+      "title": "**统一小程序内标题文案与注册名称**（原「证件照工具箱」→「标准照裁剪」）",
+      "previous_status": "✅ 完成（2026-10-27）",
+      "review_status": "源码标题一致，当前产物与后台名称未复验",
+      "reason": "app.config导航标题及首页hero均写标准照裁剪；本轮未重建dist或访问后台，源码一致性不等于当前体验版已更新。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/app.config.ts",
+        "idphoto-miniprogram/src/pages/home/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "55",
+      "title": "**AI 换装成品「西装盖脸」修复**（owner 2026-10-27 真机截图反馈「AI换装也有问题」）",
+      "previous_status": "⏳ 代码已修复提交，待真机复验",
+      "review_status": "盖脸风险待质量验收，不继承修复完成",
+      "reason": "suitFitV2与suitDiff存在；估算头长/下巴及未部署pose分支仍须用历史失败图和负例验证，不能再仅调系数后看状态完成。",
+      "tasks": [
+        "RC-10"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/core/suitFitV2.js",
+        "idphoto-miniprogram/src/core/suitDiff.js"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "56",
+      "title": "**真机「一直在处理中」无限转圈修复**（owner 2026-10-27 16:4x 真机反馈）",
+      "previous_status": "⏳ 已加固提交，待真机复验",
+      "review_status": "超时助手已接，异常流程待真机",
+      "reason": "asyncUtils有超时常量与withTimeout，渲染/图像/姿态调用有使用；超时退出busy、取消与过期结果处理还需流程测试。",
+      "tasks": [
+        "RC-04",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/core/asyncUtils.js",
+        "idphoto-miniprogram/src/services/renderService.ts",
+        "idphoto-miniprogram/src/services/poseService.ts"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "57",
+      "title": "**T3 换装重新选型与重构方案**（owner 2026-10-27 17:1x 指令：「还是不行，不相信你了。重新选型，给出重构方案」）",
+      "previous_status": "📋 方案已出（含修订 1/2），待 owner 拍板",
+      "review_status": "重构方案已交付并有后续启动记录，质量未交付",
+      "reason": "T3重构方案与P1#71已记载启动，原“待拍板”不能遮盖已启动事实；几何/模板/部署/真机仍分别是后续交付。",
+      "tasks": [
+        "RC-09",
+        "RC-10"
+      ],
+      "evidence": [
+        "T3换装重新选型与重构方案.md",
+        "开发任务台账.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "58",
+      "title": "**PRD 与原型 v0.2 修订**（owner 2026-10-27 20:3x 指令：根据换装方案补充重新修订 PRD 与原型）",
+      "previous_status": "✅ 完成（2026-10-27）",
+      "review_status": "旧文档版本已交付，现以v0.3及原型补充为准",
+      "reason": "PRD v0.3和原型说明已合并三项确认；HTML仍未补RGB/渐变，不能把文档同步算作该界面开发完成。",
+      "tasks": [
+        "RC-07"
+      ],
+      "evidence": [
+        "证件照小程序PRD正文.md",
+        "页面原型设计.md",
+        "prototype.html"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "49",
+      "title": "**T6 冲印排版缺首页入口卡片**（页面可用但用户不可达）",
+      "previous_status": "✅ 完成（2026-10-27）",
+      "review_status": "首页和T1承接代码存在，当前点击与传图待验",
+      "reason": "首页有T6卡片，T1调用printHandoff并有排版跳转，T6接参数；实际成品路径、规格继承与失效须复跑。",
+      "tasks": [
+        "RC-07",
+        "RC-08",
+        "RC-12"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/pages/home/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/core/printHandoff.js",
+        "idphoto-miniprogram/src/pages/tool-print/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "48",
+      "title": "**后台配置服务类目 + 小程序简介**（提审前置项 3/4）",
+      "previous_status": "✅ 完成（2026-10-27）",
+      "review_status": "后台类目/简介仅有历史记录，当前待核实",
+      "reason": "发布准备与台账记录工具图片处理类目及简介；本轮未操作公众平台，不重新认证平台类目或替用户提交。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        "开发任务台账.md",
+        "小程序发布准备包.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "71",
+      "title": "**P1 启动决策与范围冻结**",
+      "previous_status": "✅ 完成（2026-10-27 深夜 owner 指令启动）",
+      "review_status": "历史范围沿用",
+      "reason": "已明确启动范围，无需重新请求强制规格决策。",
+      "tasks": [
+        "RC-07"
+      ],
+      "evidence": [
+        "开发任务台账.md",
+        "T3换装重新选型与重构方案.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "73",
+      "title": "**P1 suitFitV2 几何引擎（纯函数契约单测）**",
+      "previous_status": "✅ 完成（2026-10-27）",
+      "review_status": "待质量验收",
+      "reason": "几何单测不能证明不同人物领口和双肩自然。",
+      "tasks": [
+        "RC-10"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/core/suitFitV2.js"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "72",
+      "title": "**P1 云函数 posekey（MoveNet 关键点）**",
+      "previous_status": "✅ 代码与契约完成（**部署待 owner**）",
+      "review_status": "代码交付，部署未核实",
+      "reason": "源码/契约不能证明pose模型可运行。",
+      "tasks": [
+        "RC-10"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/cloudfunctions/posekey/README.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "74",
+      "title": "**P1 L1/L2/L3 三级降级同权**",
+      "previous_status": "✅ 完成（2026-10-27）",
+      "review_status": "部分实现",
+      "reason": "降级来源已有，但未知构图不能盲合成。",
+      "tasks": [
+        "RC-10"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/services/poseService.ts"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "75",
+      "title": "**P1 管线重排（F1）**",
+      "previous_status": "✅ 完成（2026-10-27，待冒烟回归）",
+      "review_status": "部分实现",
+      "reason": "共享准备层已有，T2未选规格仍走旧路径。",
+      "tasks": [
+        "RC-04",
+        "RC-07"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/services/pipeline.ts",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "76",
+      "title": "**P1 协议闸门前移（F3）**",
+      "previous_status": "✅ 完成（2026-10-27）",
+      "review_status": "部分实现",
+      "reason": "前置闸门存在，但捆绑云端必选需修正。",
+      "tasks": [
+        "RC-06"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/core/privacy.js",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "77",
+      "title": "**P2.5/P2.6/P2.7 步骤屏代码接入**",
+      "previous_status": "✅ 完成（2026-10-28）",
+      "review_status": "部分实现",
+      "reason": "步骤组件存在不等于独立确认，T5缺交互裁剪。",
+      "tasks": [
+        "RC-05",
+        "RC-07"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/components/StepFlow/index.tsx",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "78",
+      "title": "**P2 批量验收 + 肩线夹角 ≤8° 指标**",
+      "previous_status": "✅ 完成（2026-10-28 03:3x 实跑 11 张）",
+      "review_status": "指标代码有记录，质量未验",
+      "reason": "estimate默认0°不得计入肩线实测达标率。",
+      "tasks": [
+        "RC-10"
+      ],
+      "evidence": [
+        "工具链/verify_shoulder_metric.js",
+        "每日开发日志/2026-10-28.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "82",
+      "title": "**posekey 云函数部署（owner 操作）**",
+      "previous_status": "⬜ 待办（阻塞于 owner）",
+      "review_status": "待外部部署证据",
+      "reason": "模型文件、运行时、部署版本未核实。",
+      "tasks": [
+        "RC-10"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/cloudfunctions/posekey/README.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "83",
+      "title": "**P1 冒烟回归（smoke_t1/t2/t3）**",
+      "previous_status": "✅ 完成（2026-10-28 00:5x 实跑）",
+      "review_status": "仅保留历史连通性证据",
+      "reason": "成品尺寸与状态成功不证明F1交互/质量符合。",
+      "tasks": [
+        "RC-03",
+        "RC-12"
+      ],
+      "evidence": [
+        "开发任务台账.md",
+        "工具链/smoke_auto.js"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "79",
+      "title": "**P3 真机四步验收（#67 口径）**",
+      "previous_status": "⬜ 待办",
+      "review_status": "待双平台真机四步验收",
+      "reason": "真机清单可执行，但无本轮同图复现/同环境复跑/成品落盘/既有图集全链证据，P3未完成。",
+      "tasks": [
+        "RC-12"
+      ],
+      "evidence": [
+        "真机冒烟S1-S8操作清单.md",
+        "测试用例与验收清单.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "80",
+      "title": "**P4 换装素材重寻源（F2）**",
+      "previous_status": "⬜ 待办",
+      "review_status": "待素材方案/采购确认与验收",
+      "reason": "现有自绘模板不等于已重寻源；九规格×领型及商用书面授权门槛保留，未替用户采购或联系供应方。",
+      "tasks": [
+        "RC-10"
+      ],
+      "evidence": [
+        "T3换装重新选型与重构方案.md",
+        "证件照小程序PRD正文.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    },
+    {
+      "id": "81",
+      "title": "**T2/T3 强制规格落地（依赖 #2 待拍板）**",
+      "previous_status": "⬜ 待办（阻塞于 owner 决策）",
+      "review_status": "已有需求决策，待代码落实",
+      "reason": "先前待拍板已被最新流程需求覆盖；T2代码仍须修。",
+      "tasks": [
+        "RC-07"
+      ],
+      "evidence": [
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+        "证件照小程序PRD正文.md"
+      ],
+      "review_basis": "当前源码/文件静态核对；不替代本轮未执行的业务/后台/真机验收"
+    }
+  ],
+  "evidence_revisions": [
+    {
+      "task": "RC-02",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/package.json",
+      "previous_sha256": "428a254812848f82982c4004c35cf809885299401aebe77ce8433a416c5d1fdc",
+      "sha256": "28243c283f85bf593ed4135fa7371dc16f50008ef9ec7cd6d7748dd3106f8756",
+      "reason": "仅新增lint/test脚本；已逐字段确认dependencies/devDependencies和小程序lock不变。不据此重新认定76条业务需求通过。"
+    },
+    {
+      "task": "RC-04",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/components/CropStep/index.tsx",
+      "previous_sha256": "71f42cfa4f9bc13cc2bd074c13febc636de74fc8a0ad1ed4fb9fc9729739ba30",
+      "sha256": "3227ecf05aaeb6a4eca513d8aff3d83a08bab9428dc37fe9587badc0cf54f663",
+      "reason": "T1接入统一参数与任务版本；对应当前现状已更新，完整逐步界面/其他工具/质量与部署仍未完成，不认定业务全量通过。"
+    },
+    {
+      "task": "RC-04",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+      "previous_sha256": "6145626b7306078ceeb3090ea5db758c1da5b0445f83aec484a17e8fcdd3cd67",
+      "sha256": "f94ea6f099044b2726659e5393ae1572e93429398116a46a9a04ea520d440340",
+      "reason": "T1接入统一参数与任务版本；对应当前现状已更新，完整逐步界面/其他工具/质量与部署仍未完成，不认定业务全量通过。"
+    },
+    {
+      "task": "RC-04",
+      "review": "完成性复核",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+      "previous_sha256": "f94ea6f099044b2726659e5393ae1572e93429398116a46a9a04ea520d440340",
+      "sha256": "92ccf015d8a70ed660a17285bd05aec88edc2b3e52cb39aaa2bdf01eaf0dc460",
+      "reason": "保存/冲印消费绑定当前revision、traceId与具体输出；使用当前结果的换装标志和自检状态，拒绝旧回调/旧自检。需求承诺不变，非完整逐步UI或发布验收。旧修补回调也须绑定当前结果后才能使用画布。"
+    },
+    {
+      "task": "RC-05",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/hooks/useImagePicker.tsx",
+      "previous_sha256": "5f9ce98453cdc870b51a7ae9b813755465ebf9f537ee1e82d54851714415e32e",
+      "sha256": "92a81b7eab8ac2b54dd5e3e76b8d478e3e71e9090c0dd9af0fc3c91bf4105920",
+      "reason": "T1逐步流程/图像适配分层及实际SDK兼容；需求不变，本地UI样板不替代云模型/全图集/真机。"
+    },
+    {
+      "task": "RC-05",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/components/CropStep/index.tsx",
+      "previous_sha256": "3227ecf05aaeb6a4eca513d8aff3d83a08bab9428dc37fe9587badc0cf54f663",
+      "sha256": "8e84757c24e1226a58d5bf420c89930242e0fe2274df132f9b2dbe7c9c736a82",
+      "reason": "T1逐步流程/图像适配分层及实际SDK兼容；需求不变，本地UI样板不替代云模型/全图集/真机。"
+    },
+    {
+      "task": "RC-05",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+      "previous_sha256": "92ccf015d8a70ed660a17285bd05aec88edc2b3e52cb39aaa2bdf01eaf0dc460",
+      "sha256": "b7cc00042cafc12eaee04428bfcd3f0e05a3acba82156f0990b277ada43b87a6",
+      "reason": "T1逐步流程/图像适配分层及实际SDK兼容；需求不变，本地UI样板不替代云模型/全图集/真机。"
+    },
+    {
+      "task": "RC-05",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/components/DpiStep/index.tsx",
+      "previous_sha256": "dbbde4f7f86beb5a44b865484da85d0b10fccf56e817684d3dd13f427db00427",
+      "sha256": "a3296e86907774fc3acedef8beee5da0c5734076a7f4994d9f14c0248f306bd3",
+      "reason": "T1逐步流程/图像适配分层及实际SDK兼容；需求不变，本地UI样板不替代云模型/全图集/真机。"
+    },
+    {
+      "task": "RC-05",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/components/BeautyStep/index.tsx",
+      "previous_sha256": "bc5b7ae37ea4760304e139adb845134a4a7e5772d62242d0aec4ff6b9062cf63",
+      "sha256": "7c9f3b48dd0480783f21b8cc7368815023726530566a69da06520c01fd5d8bf6",
+      "reason": "T1逐步流程/图像适配分层及实际SDK兼容；需求不变，本地UI样板不替代云模型/全图集/真机。"
+    },
+    {
+      "task": "RC-05",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/core/t1Workflow.js",
+      "previous_sha256": null,
+      "sha256": "d68a8dcc6f88b4805744bf148c4599618d9656dbf36c91a60e5c409a0f7f813e",
+      "reason": "T1逐步流程/图像适配分层及实际SDK兼容；需求不变，本地UI样板不替代云模型/全图集/真机。"
+    },
+    {
+      "task": "RC-05",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/services/t1Processing.ts",
+      "previous_sha256": null,
+      "sha256": "a6365ed187f7280f1a78869c8a3e0420e92d5e0451d93d124f564db902cfe493",
+      "reason": "T1逐步流程/图像适配分层及实际SDK兼容；需求不变，本地UI样板不替代云模型/全图集/真机。"
+    },
+    {
+      "task": "RC-05",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/hooks/useT1Workflow.ts",
+      "previous_sha256": null,
+      "sha256": "78017efe98cd2beeee3f078c23cc5052c7d49077f7d093034144f34213ae73ba",
+      "reason": "T1逐步流程/图像适配分层及实际SDK兼容；需求不变，本地UI样板不替代云模型/全图集/真机。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/core/consentSession.js",
+      "previous_sha256": null,
+      "sha256": "d845f57a1cc64ece5ef04b777bb2297c63a25f75ad1256518a6ea31c3e67bfc7",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/core/matting.js",
+      "previous_sha256": "3cd563cecfcb5a9a6c34549d271f2d0d9667ded8c4ef762c0afb563eb71f6038",
+      "sha256": "cd7db09131db8c0b61e2868e1caec8056bc13bcb11fd3699dfa88054d292d7e3",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/core/privacy.js",
+      "previous_sha256": "e67dbe910b73ce364c31e0910288fe9aedd3e5ac73e8d5f25cb0d09838e42278",
+      "sha256": "345ea891c4d8de05adcb017d385eda24679b5f27110c8c1a34ffacc021dbb62d",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/core/t1Workflow.js",
+      "previous_sha256": "d68a8dcc6f88b4805744bf148c4599618d9656dbf36c91a60e5c409a0f7f813e",
+      "sha256": "8c0a6c9ced530651a5fa23fd08d6ef94323a592cd94cbda06c9931c4d83c66d6",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/hooks/useActionConsent.ts",
+      "previous_sha256": null,
+      "sha256": "b59bb14462123218b7b439b1e936e25d8c7a43c89b0e19c0f43049c9c3b8f930",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/hooks/useConsentGate.ts",
+      "previous_sha256": "143cce12da76d0fd731aa5dcf07ec1c67c4d475f8a160b53c92d8fa26cdcbd3a",
+      "sha256": "df474606820ead889f7f866de8cb76d724b401dc81353d1e9664833beb1f467d",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/hooks/useImagePicker.tsx",
+      "previous_sha256": "92a81b7eab8ac2b54dd5e3e76b8d478e3e71e9090c0dd9af0fc3c91bf4105920",
+      "sha256": "04a4f7d6ad7867456755494aa985bd78cd6196a15af3d4ca71899c069ed97f63",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/pages/privacy/index.tsx",
+      "previous_sha256": "4de2737a90bf658ed60810ea3a92bdd631a28887ae21e53ddcf540bc240c6f56",
+      "sha256": "fcda8d8d85731e0506952373157f97d1330b4a0e1097095d8c6d66f6328f826f",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+      "previous_sha256": "3ed1deca1f64507b1d38d633637338dd136fc29d8b3dc011a526bb509aa9f973",
+      "sha256": "ceb9837e30c484d4d8675ff7893e66c6af74bcabb98f9f5c0aa9b8b3d4465f16",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/pages/tool-check/index.tsx",
+      "previous_sha256": "85d9c05636cea5d42609f89fcdb9606b478d26847c28227fb613c882802081c5",
+      "sha256": "32c9a9bbef2781490cbdca04e5ae5fcf737e1b9e4a35b74063f7464795396a45",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+      "previous_sha256": "b7cc00042cafc12eaee04428bfcd3f0e05a3acba82156f0990b277ada43b87a6",
+      "sha256": "b1484978ff53468361d3f860e30d840abb0ad8b8bc350fe76d3f9d4c676dba43",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+      "previous_sha256": "acb89643f12e0e56c1501e500e74a67fcf389faa6ef749e8e852b9cd46db7e98",
+      "sha256": "bae57ffd866a15937b05285b1b8b08a6ad1768830a9b69a4f111ff3ea01e3be0",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/services/cloudFnAdapter.ts",
+      "previous_sha256": null,
+      "sha256": "b7f792b026a4edb83032b5140c1793cdd39199f1ab14f8a3195745eee451f6c5",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/services/poseService.ts",
+      "previous_sha256": "fad10ce7422fb60020185b1a2ff5004f7d628e89c1b056e8781a2757583b385a",
+      "sha256": "78837c4d614b8877fca41e072f932f93d294db7d969b8505ac6ca3199bc39e7c",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/services/t1Processing.ts",
+      "previous_sha256": "a6365ed187f7280f1a78869c8a3e0420e92d5e0451d93d124f564db902cfe493",
+      "sha256": "98c211be367282215ca0163073642aa9b3934cc4f8b5284ad8a2c2bde43e8af3",
+      "reason": "按动作授权/撤回、选图异步保护与云请求检查；需求不变，云端部署/完整真机证据仍待后续。"
+    },
+    {
+      "task": "RC-06",
+      "date": "2026-10-28",
+      "file": "idphoto-miniprogram/src/services/index.ts",
+      "previous_sha256": null,
+      "sha256": "84a00bfba0fe241ba9f060043c8f9fd4fe63b76c3ea5e3f70fcb3cf0d8bc976c",
+      "reason": "保留HTTP云工厂也默认拒绝无授权上下文的调用，发出前后核验版本；无真实网络调用。"
+    },
+    {
+      "task": "RC-06复核",
+      "date": "2026-10-29",
+      "file": "idphoto-miniprogram/src/hooks/useImagePicker.tsx",
+      "previous_sha256": "04a4f7d6ad7867456755494aa985bd78cd6196a15af3d4ca71899c069ed97f63",
+      "sha256": "c0d12deb9d4835844649ae297ab1f2ac3b48dbc50c14ffd5a3c128706f87ce48",
+      "reason": "质量报告/迟到采样绑定授权版本；T1取图授权与图像处理revision分离，正常本地评估保留。"
+    },
+    {
+      "task": "RC-06复核",
+      "date": "2026-10-29",
+      "file": "idphoto-miniprogram/src/hooks/useT1Workflow.ts",
+      "previous_sha256": "78017efe98cd2beeee3f078c23cc5052c7d49077f7d093034144f34213ae73ba",
+      "sha256": "71eefb120906289eab01bb0930e43860748e6d92d649d09ab4bd5a68fffeac45",
+      "reason": "质量报告/迟到采样绑定授权版本；T1取图授权与图像处理revision分离，正常本地评估保留。"
+    },
+    {
+      "task": "RC-06复核",
+      "date": "2026-10-29",
+      "file": "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+      "previous_sha256": "b1484978ff53468361d3f860e30d840abb0ad8b8bc350fe76d3f9d4c676dba43",
+      "sha256": "28bf7b371117297e91380f9cfab3b4307810000cc3fef6878e16c9610fa27305",
+      "reason": "质量报告/迟到采样绑定授权版本；T1取图授权与图像处理revision分离，正常本地评估保留。"
+    },
+    {
+      "task": "RC-07开发中",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/t1Workflow.js",
+      "previous_sha256": "8c0a6c9ced530651a5fa23fd08d6ef94323a592cd94cbda06c9931c4d83c66d6",
+      "sha256": "a2b37b49764a83f4315b5b88e6b518416e3133a1b2c88ba9e3c91abd2b14f9c8",
+      "reason": "新增可选工具流程策略，默认T1；其他页面未迁移，RC-07仍进行中，不认领业务完成。"
+    },
+    {
+      "task": "RC-07",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
+      "previous_sha256": null,
+      "sha256": "27db8d82f0365199238d0626f8e57a610ecc665725130008dd40d907e14dbba7",
+      "reason": "T2/T3/T5共享流程/页面/处理迁移及颜色/纯变换接线，需求不缩减，质量/真机独立待验。"
+    },
+    {
+      "task": "RC-07",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+      "previous_sha256": null,
+      "sha256": "1bcf8026856b4c56731d2363ad655952546779ea2b16d81a5f8a95b41513336c",
+      "reason": "T2/T3/T5共享流程/页面/处理迁移及颜色/纯变换接线，需求不缩减，质量/真机独立待验。"
+    },
+    {
+      "task": "RC-07",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/color.js",
+      "previous_sha256": "c809114fe9cdcbde879a9e81d5d1a9aa065f00f01eb10e91bbf5a13aeb65ace2",
+      "sha256": "31f691c6e8ebf665cf781ad0a7e524d62c759ed067fab693dceba0cace7325eb",
+      "reason": "T2/T3/T5共享流程/页面/处理迁移及颜色/纯变换接线，需求不缩减，质量/真机独立待验。"
+    },
+    {
+      "task": "RC-07",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/t1Workflow.js",
+      "previous_sha256": "a2b37b49764a83f4315b5b88e6b518416e3133a1b2c88ba9e3c91abd2b14f9c8",
+      "sha256": "cd23c6561778776741fb2237d975ec2aeb96e06a04b0a4aa2c79337f0194de87",
+      "reason": "T2/T3/T5共享流程/页面/处理迁移及颜色/纯变换接线，需求不缩减，质量/真机独立待验。"
+    },
+    {
+      "task": "RC-07",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/hooks/useT1Workflow.ts",
+      "previous_sha256": "71eefb120906289eab01bb0930e43860748e6d92d649d09ab4bd5a68fffeac45",
+      "sha256": "b3462372b3baeaf6817635868d7ea284eb283d06fe5ecf24127cf6f716d819ff",
+      "reason": "T2/T3/T5共享流程/页面/处理迁移及颜色/纯变换接线，需求不缩减，质量/真机独立待验。"
+    },
+    {
+      "task": "RC-07",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
+      "previous_sha256": "ceb9837e30c484d4d8675ff7893e66c6af74bcabb98f9f5c0aa9b8b3d4465f16",
+      "sha256": "0c07c14b922d83a50aaae392f4928c164b90771131be04a6256f02f7c2ef3c1b",
+      "reason": "T2/T3/T5共享流程/页面/处理迁移及颜色/纯变换接线，需求不缩减，质量/真机独立待验。"
+    },
+    {
+      "task": "RC-07",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
+      "previous_sha256": "b03768413ac7ea7d061f28dc3fb6605940d5b768535ffef4be35a291d377d979",
+      "sha256": "f1d54d02836b8d6c3d8aeeaca08598bd571bb395ed0371c42f7071e269579098",
+      "reason": "T2/T3/T5共享流程/页面/处理迁移及颜色/纯变换接线，需求不缩减，质量/真机独立待验。"
+    },
+    {
+      "task": "RC-07",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
+      "previous_sha256": "bae57ffd866a15937b05285b1b8b08a6ad1768830a9b69a4f111ff3ea01e3be0",
+      "sha256": "95665a0a40ab054e0d16a7d60c8751ee4d79b851ff2324c45a730e371e9b4a90",
+      "reason": "T2/T3/T5共享流程/页面/处理迁移及颜色/纯变换接线，需求不缩减，质量/真机独立待验。"
+    },
+    {
+      "task": "RC-07",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/t1Processing.ts",
+      "previous_sha256": "98c211be367282215ca0163073642aa9b3934cc4f8b5284ad8a2c2bde43e8af3",
+      "sha256": "53ca7ac11b623e7df40de71adcbf690216c7e33247e81b8804401dce65b5b2ca",
+      "reason": "T2/T3/T5共享流程/页面/处理迁移及颜色/纯变换接线，需求不缩减，质量/真机独立待验。"
+    },
+    {
+      "task": "RC-07收尾",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/t1Processing.ts",
+      "previous_sha256": "53ca7ac11b623e7df40de71adcbf690216c7e33247e81b8804401dce65b5b2ca",
+      "sha256": "f905efd244f0be2f2ce4ca2c509c63b09a983bbf0acc8f88a158e5c2f42cbc00",
+      "reason": "T2底色在最终照片坐标合成，避免工作余量裁掉渐变端点；T1/T3规则不放宽。"
+    },
+    {
+      "task": "RC-07收尾",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
+      "previous_sha256": "27db8d82f0365199238d0626f8e57a610ecc665725130008dd40d907e14dbba7",
+      "sha256": "0a5e684dd3a8c9facbe665cc83beb21c5c368656150daaa2ea45f320b1726c3d",
+      "reason": "T2底色在最终照片坐标合成，避免工作余量裁掉渐变端点；T1/T3规则不放宽。"
+    },
+    {
+      "task": "RC-07收尾",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/t1Workflow.js",
+      "previous_sha256": "cd23c6561778776741fb2237d975ec2aeb96e06a04b0a4aa2c79337f0194de87",
+      "sha256": "a8b919c79bb93f7f84d8085cd6685283e9fa4537095b128b3ac630d12adddd34",
+      "reason": "T2底色在最终照片坐标合成，避免工作余量裁掉渐变端点；T1/T3规则不放宽。"
+    }
+  ]
+}

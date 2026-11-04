@@ -1,0 +1,162 @@
+{
+  "status": "FAIL",
+  "traceId": "step-7392069a-3993-433e-91c3-36651c70681b",
+  "timestamp": "2026-10-28T15:45:08.076Z",
+  "runtime": "v26.7.0",
+  "scope": "Node实际页面控制代码/平台与图像算法替身，非微信UI或真实模型验收",
+  "rows": [
+    {
+      "tool": "T1",
+      "status": "PASS",
+      "reason": "本次观测区间未在裁剪确认前调用下游；不证明后续链路正确",
+      "observation": {
+        "imageDelivered": true,
+        "cropConfirmed": false,
+        "events": []
+      },
+      "loaded": {
+        "idphoto-miniprogram/src/core/specLibrary.js": "860d7bfae2dfcdc8ce690199e63203d9ba76ff54286e4c95d2640b95e51b71a6",
+        "idphoto-miniprogram/src/core/privacy.js": "345ea891c4d8de05adcb017d385eda24679b5f27110c8c1a34ffacc021dbb62d",
+        "idphoto-miniprogram/src/core/compose.js": "dfb0ba60b977a26fdc4565268fe8e7fb89b98de18f7b29acffdc750814c35091",
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx": "b1484978ff53468361d3f860e30d840abb0ad8b8bc350fe76d3f9d4c676dba43",
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts": "78017efe98cd2beeee3f078c23cc5052c7d49077f7d093034144f34213ae73ba",
+        "idphoto-miniprogram/src/core/processingSession.js": "98ef5aa0d74a32ac0698e5ad5a1662a1faa7aad2d600bf610e3587545f6a22b6",
+        "idphoto-miniprogram/src/core/t1Workflow.js": "8c0a6c9ced530651a5fa23fd08d6ef94323a592cd94cbda06c9931c4d83c66d6",
+        "idphoto-miniprogram/src/services/t1Processing.ts": "98c211be367282215ca0163073642aa9b3934cc4f8b5284ad8a2c2bde43e8af3",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts": "df474606820ead889f7f866de8cb76d724b401dc81353d1e9664833beb1f467d"
+      },
+      "sessionState": {
+        "revision": 3,
+        "sourceId": 1,
+        "status": "crop",
+        "stage": "crop",
+        "error": null,
+        "traceId": "T1-1793202307887-1-1",
+        "selfChecked": false,
+        "output": null,
+        "changed": [],
+        "params": {
+          "source": {
+            "path": "probe://valid.png",
+            "width": 640,
+            "height": 800,
+            "forceCloud": false
+          },
+          "specId": "one-inch",
+          "dpi": 300,
+          "bg": "white",
+          "beauty": {
+            "enabled": false,
+            "smooth": 0.35,
+            "whiten": 0.3,
+            "brighten": 0.2
+          },
+          "suit": {
+            "enabled": false,
+            "templateId": "black"
+          },
+          "consents": [
+            "faceLocal",
+            "faceCloudEnhance"
+          ],
+          "cropWindow": {
+            "x": 34.28571428571428,
+            "y": 0,
+            "w": 571.4285714285714,
+            "h": 800,
+            "ratio": 0.7142857142857143
+          },
+          "cropConfirmed": false
+        }
+      },
+      "environment": "node-page-controller/mock-picker/mock-platform/mock-image-algorithm",
+      "limitations": "真实页面代码仅执行控制流；不验证微信渲染、图片质量、模型、网络或完整授权流程；不会读取/上传照片"
+    },
+    {
+      "tool": "T2",
+      "status": "FAIL",
+      "reason": "用户确认裁剪前已进入下游处理",
+      "observed": [
+        "segment"
+      ],
+      "observation": {
+        "imageDelivered": true,
+        "cropConfirmed": false,
+        "events": [
+          {
+            "kind": "segment",
+            "cropConfirmed": false
+          }
+        ]
+      },
+      "loaded": {
+        "idphoto-miniprogram/src/core/specLibrary.js": "860d7bfae2dfcdc8ce690199e63203d9ba76ff54286e4c95d2640b95e51b71a6",
+        "idphoto-miniprogram/src/core/privacy.js": "345ea891c4d8de05adcb017d385eda24679b5f27110c8c1a34ffacc021dbb62d",
+        "idphoto-miniprogram/src/core/compose.js": "dfb0ba60b977a26fdc4565268fe8e7fb89b98de18f7b29acffdc750814c35091",
+        "idphoto-miniprogram/src/pages/tool-bg/index.tsx": "ceb9837e30c484d4d8675ff7893e66c6af74bcabb98f9f5c0aa9b8b3d4465f16",
+        "idphoto-miniprogram/src/hooks/useActionConsent.ts": "b59bb14462123218b7b439b1e936e25d8c7a43c89b0e19c0f43049c9c3b8f930",
+        "idphoto-miniprogram/src/core/consentSession.js": "d845f57a1cc64ece5ef04b777bb2297c63a25f75ad1256518a6ea31c3e67bfc7",
+        "idphoto-miniprogram/src/core/beauty.js": "12c56cb8349a21bb479f1ea64b7c023ebd66365ec1d8191b4e2074a52df0d38f",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts": "df474606820ead889f7f866de8cb76d724b401dc81353d1e9664833beb1f467d"
+      },
+      "environment": "node-page-controller/mock-picker/mock-platform/mock-image-algorithm",
+      "limitations": "真实页面代码仅执行控制流；不验证微信渲染、图片质量、模型、网络或完整授权流程；不会读取/上传照片"
+    },
+    {
+      "tool": "T3",
+      "status": "FAIL",
+      "reason": "用户确认裁剪前已进入下游处理",
+      "observed": [
+        "segment"
+      ],
+      "observation": {
+        "imageDelivered": true,
+        "cropConfirmed": false,
+        "events": [
+          {
+            "kind": "segment",
+            "cropConfirmed": false
+          }
+        ]
+      },
+      "loaded": {
+        "idphoto-miniprogram/src/core/specLibrary.js": "860d7bfae2dfcdc8ce690199e63203d9ba76ff54286e4c95d2640b95e51b71a6",
+        "idphoto-miniprogram/src/core/privacy.js": "345ea891c4d8de05adcb017d385eda24679b5f27110c8c1a34ffacc021dbb62d",
+        "idphoto-miniprogram/src/core/compose.js": "dfb0ba60b977a26fdc4565268fe8e7fb89b98de18f7b29acffdc750814c35091",
+        "idphoto-miniprogram/src/pages/tool-suit/index.tsx": "bae57ffd866a15937b05285b1b8b08a6ad1768830a9b69a4f111ff3ea01e3be0",
+        "idphoto-miniprogram/src/hooks/useActionConsent.ts": "b59bb14462123218b7b439b1e936e25d8c7a43c89b0e19c0f43049c9c3b8f930",
+        "idphoto-miniprogram/src/core/consentSession.js": "d845f57a1cc64ece5ef04b777bb2297c63a25f75ad1256518a6ea31c3e67bfc7",
+        "idphoto-miniprogram/src/core/beauty.js": "12c56cb8349a21bb479f1ea64b7c023ebd66365ec1d8191b4e2074a52df0d38f",
+        "idphoto-miniprogram/src/hooks/useConsentGate.ts": "df474606820ead889f7f866de8cb76d724b401dc81353d1e9664833beb1f467d"
+      },
+      "environment": "node-page-controller/mock-picker/mock-platform/mock-image-algorithm",
+      "limitations": "真实页面代码仅执行控制流；不验证微信渲染、图片质量、模型、网络或完整授权流程；不会读取/上传照片"
+    },
+    {
+      "tool": "T5",
+      "status": "FAIL",
+      "reason": "用户确认裁剪前已进入下游处理",
+      "observed": [
+        "product-export"
+      ],
+      "observation": {
+        "imageDelivered": true,
+        "cropConfirmed": false,
+        "events": [
+          {
+            "kind": "product-export",
+            "cropConfirmed": false
+          }
+        ]
+      },
+      "loaded": {
+        "idphoto-miniprogram/src/core/specLibrary.js": "860d7bfae2dfcdc8ce690199e63203d9ba76ff54286e4c95d2640b95e51b71a6",
+        "idphoto-miniprogram/src/core/privacy.js": "345ea891c4d8de05adcb017d385eda24679b5f27110c8c1a34ffacc021dbb62d",
+        "idphoto-miniprogram/src/core/compose.js": "dfb0ba60b977a26fdc4565268fe8e7fb89b98de18f7b29acffdc750814c35091",
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx": "b03768413ac7ea7d061f28dc3fb6605940d5b768535ffef4be35a291d377d979"
+      },
+      "environment": "node-page-controller/mock-picker/mock-platform/mock-image-algorithm",
+      "limitations": "真实页面代码仅执行控制流；不验证微信渲染、图片质量、模型、网络或完整授权流程；不会读取/上传照片"
+    }
+  ]
+}

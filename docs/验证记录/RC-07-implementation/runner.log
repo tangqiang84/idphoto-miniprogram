@@ -1,0 +1,22 @@
+隔离夹具保留在：/Users/tq/WorkBuddy/XiaoChengXu/工具链/_tmp/rc02-fixtures-b22692d2cb
+test_batch_limited_or_empty_is_blocked (__main__.RunnerTests) ... ok
+test_coverage_gap_blocks (__main__.RunnerTests) ... ok
+test_daily_summary_supports_rc_and_legacy_tables (__main__.RunnerTests) ... ok
+test_development_is_scoped (__main__.RunnerTests) ... ok
+test_ide_blocked_not_passed (__main__.RunnerTests) ... ok
+test_invalid_arguments (__main__.RunnerTests) ... ok
+test_milestone_skips_block (__main__.RunnerTests) ... ok
+test_missing_lint_dependency (__main__.RunnerTests) ... ok
+test_repeated_run_preserves_previous (__main__.RunnerTests) ... ok
+test_snapshot_includes_coverage_baseline (__main__.RunnerTests) ... ok
+test_success_and_redaction (__main__.RunnerTests) ... ok
+test_success_without_products_is_failure (__main__.RunnerTests) ... ok
+test_timeout_blocks (__main__.RunnerTests) ... ok
+test_types_fail_both_wrappers (__main__.RunnerTests) ... ok
+test_unit_lint_build_failures (__main__.RunnerTests) ... ok
+test_unknown_exit_and_business_failure (__main__.RunnerTests) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 59.591s
+
+OK

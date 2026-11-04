@@ -11,7 +11,10 @@
   "scripts": {
     "build:weapp": "taro build --type weapp",
     "dev:weapp": "npm run build:weapp -- --watch",
-    "test:core": "node --test src/core/__tests__/*.test.js"
+    "test:core": "node --test src/core/__tests__/*.test.js",
+    "lint": "node ../工具链/lint/run.cjs",
+    "test:lint": "node ../工具链/lint/run.cjs --selftest",
+    "test:verification": "python3 ../工具链/test_verify_runner.py"
   },
   "browserslist": [
     "last 3 versions",

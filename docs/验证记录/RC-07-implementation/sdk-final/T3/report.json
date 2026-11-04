@@ -1,0 +1,131 @@
+{
+  "status": "PASS",
+  "scope": "真实微信UI/本地图像算法，云端适配器禁用；非真实云模型/双平台真机验收",
+  "app": "/Users/tq/WorkBuddy/XiaoChengXu/docs/验证记录/t1-local-builds/run-01217741a7a1/workspace/idphoto-miniprogram",
+  "checks": [
+    {
+      "status": "PASS",
+      "step": "upload"
+    },
+    {
+      "status": "PASS",
+      "step": "crop"
+    },
+    {
+      "status": "PASS",
+      "step": "crop-scale",
+      "interaction": "SDK slider position + change event (not physical-device gesture)",
+      "full": {
+        "width": 302,
+        "height": 423
+      },
+      "smaller": {
+        "width": 242,
+        "height": 338
+      },
+      "repeated": {
+        "width": 242,
+        "height": 338
+      }
+    },
+    {
+      "status": "PASS",
+      "step": "beauty"
+    },
+    {
+      "status": "PASS",
+      "step": "crop-return"
+    },
+    {
+      "status": "PASS",
+      "step": "preview"
+    },
+    {
+      "status": "PASS",
+      "step": "dress"
+    },
+    {
+      "status": "PASS",
+      "step": "check"
+    },
+    {
+      "status": "PASS",
+      "step": "dpi"
+    },
+    {
+      "status": "PASS",
+      "step": "export"
+    }
+  ],
+  "tool": "T3",
+  "sample": "REAL-111",
+  "traceId": "d79db003-74c6-4dfd-9aaf-54b1911e194a",
+  "timestamp": "2026-11-04T08:02:28.599Z",
+  "artifacts": [
+    "upload-1.png",
+    "crop-2.png",
+    "crop-adjusted-3.png",
+    "beauty-4.png",
+    "beauty-return-5.png",
+    "preview-6.png",
+    "dress-7.png",
+    "check-8.png",
+    "dpi-9.png",
+    "export-10.png",
+    "result.jpg"
+  ],
+  "runtimeErrors": 0,
+  "consentMode": "local",
+  "sample_sha256": "ded108d285dd62f069b0d970f1477fc3aafb0c8222c2f5fac271239d69b31368",
+  "pickerApi": "chooseMedia",
+  "result": {
+    "bytes": 33550,
+    "sha256": "5e2e88feda5152a2f23c7e46da1bfa365174af86cfeb23bd85390f5729485507"
+  },
+  "system": {
+    "brand": "devtools",
+    "model": "iPhone 12/13 (Pro)",
+    "system": "iOS 10.0.1",
+    "platform": "devtools",
+    "benchmarkLevel": -1,
+    "pixelRatio": 3,
+    "screenWidth": 390,
+    "screenHeight": 844,
+    "windowWidth": 390,
+    "windowHeight": 753,
+    "statusBarHeight": 47,
+    "safeArea": {
+      "top": 47,
+      "left": 0,
+      "right": 390,
+      "bottom": 810,
+      "width": 390,
+      "height": 763
+    },
+    "language": "zh_CN",
+    "version": "8.0.5",
+    "fontSizeSetting": 16,
+    "SDKVersion": "3.17.6",
+    "host": {
+      "env": "WeChat"
+    },
+    "enableDebug": false,
+    "mode": "default",
+    "deviceOrientation": "portrait",
+    "bluetoothEnabled": true,
+    "locationEnabled": true,
+    "wifiEnabled": true,
+    "albumAuthorized": true,
+    "cameraAuthorized": true,
+    "locationAuthorized": true,
+    "microphoneAuthorized": true,
+    "notificationAuthorized": true,
+    "notificationAlertAuthorized": true,
+    "notificationBadgeAuthorized": true,
+    "notificationSoundAuthorized": true,
+    "phoneCalendarAuthorized": true,
+    "bluetoothAuthorized": true,
+    "locationReducedAccuracy": true,
+    "devicePixelRatio": 3
+  }
+}

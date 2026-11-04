@@ -1,0 +1,64 @@
+{
+  "timestamp": "2026-10-28T09:15:55.188326+00:00",
+  "task": "RC-04完成性复核",
+  "status": "PASS",
+  "scope": "补齐会话输出消费边界；非完整UI/真机/成品/发布验收",
+  "head": "f4d94b1de354fce7af90ac73540c2d536af385e3",
+  "workspace": "已有未提交改动保留；未提交、暂存、回退或清理",
+  "files_sha256": {
+    "idphoto-miniprogram/src/core/processingSession.js": "ba1ac9ceb4e53369a9267c904d897c2f48f04c602981d32e57df5edbf7d249df",
+    "idphoto-miniprogram/src/core/processingSession.d.ts": "2380cdcfc1fc42be8eb42b1fbdf7fbc056a3c39ed872982498ef120d1ade15b3",
+    "idphoto-miniprogram/src/core/__tests__/processingSession.test.js": "68b57453c2f9d2a37d10ab94619baa533750b52eb10266a287ba90e773c7c536",
+    "idphoto-miniprogram/src/hooks/useProcessingSession.ts": "eac533559a29b8927ead33133d9e3605d81a291f461e6773f814bafc86ee340f",
+    "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx": "92ccf015d8a70ed660a17285bd05aec88edc2b3e52cb39aaa2bdf01eaf0dc460",
+    "idphoto-miniprogram/src/components/CropStep/index.tsx": "3227ecf05aaeb6a4eca513d8aff3d83a08bab9428dc37fe9587badc0cf54f663",
+    "工具链/page_flow_probe.js": "5f5765ab45ff6248f89dcf88ca1c6e7c0d3c4bc7b3e18e38c30237630819f94f",
+    "工具链/tests/processing_session_page.test.js": "f8e3e76722a5f6e1a1994dd6551f0d94e805caa9884fe8fba7a5087f639e85a5",
+    "工具链/tests/coverage_matrix.test.js": "919de1e1144e372d2a6c5075f28aa1226e225b8b5ca32650c1243244169ffc84",
+    "工具链/prd_requirements.json": "d815dc7cbc9dac0649e802baef8071c8c58f9ce496ea0d8fc75c5bc2a8fe6a38",
+    "工具链/coverage_cases.json": "0c6c5be8ccf848fa330911338ca5159480757b8421b8dc26d1dc2d88313b3418",
+    "docs/rc01-baseline.json": "cd6fcdc15e188a01a78569091082e3abcd08fbc07a99364407d41b54e4472fc0"
+  },
+  "final_snapshot_matches": true,
+  "dependencies_and_locks_unchanged": true,
+  "tests": {
+    "core": 371,
+    "tooling": 25,
+    "session_model": 8,
+    "t1_page_control": 7,
+    "runner_fixtures": 16,
+    "lint_selftest": 6
+  },
+  "types": "PASS",
+  "lint": {
+    "files": 142,
+    "errors": 0
+  },
+  "build_id": "efc1fae5f2254b138875ec23b5dfffdc489c9df2a27ab585672809761e282df7",
+  "milestone": {
+    "status": "BLOCKED",
+    "counts": {
+      "PASS": 4,
+      "FAIL": 0,
+      "BLOCKED": 1,
+      "SKIPPED": 7,
+      "N/A": 0
+    },
+    "report": "docs/验证记录/verify-runs/run-20261028-171356-2087da94/report.json"
+  },
+  "before_fix": [
+    "consumer-before.log：旧保存实际1/预期0，退出1",
+    "patch-before.log：旧修补实际1/预期0，退出1"
+  ],
+  "after_fix": "tool-tests-complete.log：25项通过，包含7项页面控制；当前修补/保存/冲印正例保留",
+  "provider": "mock SDK/图像算法；真实TSX/hook/会话控制代码",
+  "dataset": "probe-fixture-v1合成RGBA/选图元数据，无照片读取或上传",
+  "not_executed": [
+    "微信渲染/手势",
+    "真实照片/模型/云端/成品图集",
+    "双平台真机",
+    "部署审计"
+  ],
+  "step_report": "/Users/tq/WorkBuddy/XiaoChengXu/docs/验证记录/step-flow/step-03d88fbe-d4d5-4e3a-95eb-a432fefe930f/report.json",
+  "prior_checks": "checks.json及预检报告对应修补边界补齐前的有效旧快照，不作为当前代码验证"
+}

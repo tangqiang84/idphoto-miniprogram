@@ -1,0 +1,52 @@
+{
+  "scope": "RC-02工具交付核验，不是全量业务验收",
+  "runs": [
+    {
+      "report": "docs/验证记录/verify-runs/run-20261028-145256-3942c76e/report.json",
+      "status": "PASS",
+      "exit_code": 0,
+      "counts": {
+        "PASS": 4,
+        "FAIL": 0,
+        "BLOCKED": 0,
+        "SKIPPED": 0,
+        "N/A": 8
+      },
+      "build_id": "6346c1096f6d2eadf822181c0491acdae422eda690ff0650f1da756e24a06eae",
+      "input_manifest_sha256": "8aa0ed3c7694100d43537ea3a6974dd99dfe6fd5c7f825cc5b38d02eddd914a2"
+    },
+    {
+      "report": "docs/验证记录/verify-runs/run-20261028-145440-ac409757/report.json",
+      "status": "BLOCKED",
+      "exit_code": 3,
+      "counts": {
+        "PASS": 4,
+        "FAIL": 0,
+        "BLOCKED": 1,
+        "SKIPPED": 7,
+        "N/A": 0
+      },
+      "build_id": "6346c1096f6d2eadf822181c0491acdae422eda690ff0650f1da756e24a06eae",
+      "input_manifest_sha256": "970fe23b8f65ba3bf6b21fd5bbe847351175b6b331aed2244c97c3628e65cb9a"
+    }
+  ],
+  "fixture": {
+    "status": "PASS",
+    "tests": 15,
+    "failures": 0,
+    "errors": 0,
+    "scope": "隔离模拟夹具，不是业务/真机验收"
+  },
+  "lint_examples": {
+    "total": 6,
+    "passed": 6
+  },
+  "app_dependencies_unchanged": true,
+  "app_lock_sha256": "d434f0e9ed770556d90d3c1fbb00bd29f81186c17b5feca0f278328f519b1cf7",
+  "app_lock_equals_head": true,
+  "source_matches_run_manifest": true,
+  "artifact_fingerprints_verified": true,
+  "python_syntax": "PASS",
+  "document_links": "PASS",
+  "git_head": "f4d94b1de354fce7af90ac73540c2d536af385e3"
+}

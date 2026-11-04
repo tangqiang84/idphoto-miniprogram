@@ -1,0 +1,72 @@
+{
+  "timestamp": "2026-10-28T07:46:45.333020+00:00",
+  "head": "f4d94b1de354fce7af90ac73540c2d536af385e3",
+  "workspace": "有既有未提交改动；本轮未提交/暂存/回退",
+  "files_sha256": {
+    "工具链/prd_requirements.json": "f287d45c3288a43bd1c771f5edf2f5d1ab0250bec8183c07e2bd8807d7a4a33e",
+    "工具链/coverage_cases.json": "f4db0dcf88b0dff7c6e3a029b159317c6bf5dfbb50a182d7edb7162731c7d7ba",
+    "工具链/coverage_matrix.js": "2b94f848e8a6ef7f3f4ac3bcdc718df895ef0ece041f4fe6fbeee9f700b8cbfb",
+    "工具链/smoke_steps.js": "57fbd4d1ce46320e3540805edf1226180356173ff77ecf58297ab7943f87bc1c",
+    "工具链/page_flow_probe.js": "0bf8d177707142202c02451bbfddd82e1809bb8f70bd561ee8b1cab3d9bec153",
+    "工具链/acceptance_oracles.js": "7607b0344a004d83095d7696e0ce51d3e45822ace113a0f66554c777fbd26921",
+    "工具链/tests/acceptance_contracts.test.js": "9ddd55e642a7c3e0540b76321577a4f412649fcd06bc665f3054d070b6c3db97",
+    "工具链/tests/coverage_matrix.test.js": "ae6f133f105ceb3085d9b4c6dc6db8d447cd32c4300ac8d7da895e3cef0a8924",
+    "工具链/lint/run.cjs": "5ef793f3f9e4bbfad17b71b71236d748bb5532ba5ab1eed7b7338215e534fdb2"
+  },
+  "commands": [
+    {
+      "name": "assertions",
+      "command": [
+        "node",
+        "--test",
+        "工具链/tests/acceptance_contracts.test.js",
+        "工具链/tests/coverage_matrix.test.js"
+      ],
+      "exit_code": 0,
+      "log": "assertions.log"
+    },
+    {
+      "name": "registry",
+      "command": [
+        "node",
+        "工具链/coverage_matrix.js",
+        "--validate"
+      ],
+      "exit_code": 0,
+      "log": "registry.log"
+    },
+    {
+      "name": "coverage-gate",
+      "command": [
+        "node",
+        "工具链/coverage_matrix.js",
+        "--check"
+      ],
+      "exit_code": 1,
+      "log": "coverage-gate.log"
+    },
+    {
+      "name": "baseline",
+      "command": [
+        "python3",
+        "工具链/verify_rc01.py",
+        "--selftest"
+      ],
+      "exit_code": 1,
+      "log": "baseline.log"
+    },
+    {
+      "name": "page-flow",
+      "command": [
+        "node",
+        "工具链/smoke_steps.js",
+        "--node"
+      ],
+      "exit_code": 1,
+      "log": "page-flow.log"
+    }
+  ],
+  "dataset": "无真实照片；probe://valid.png仅选图数据替身",
+  "environment": "Node控制代码/平台及图像算法替身；非微信或真实模型",
+  "scope": "RC-03工具验收，业务缺口单独保留"
+}

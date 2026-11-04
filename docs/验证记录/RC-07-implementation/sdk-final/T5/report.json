@@ -1,0 +1,106 @@
+{
+  "status": "PASS",
+  "scope": "真实微信UI/本地图像算法，云端适配器禁用；非真实云模型/双平台真机验收",
+  "app": "/Users/tq/WorkBuddy/XiaoChengXu/docs/验证记录/t1-local-builds/run-01217741a7a1/workspace/idphoto-miniprogram",
+  "checks": [
+    {
+      "status": "PASS",
+      "step": "upload"
+    },
+    {
+      "status": "PASS",
+      "step": "crop"
+    },
+    {
+      "status": "PASS",
+      "step": "crop-scale",
+      "interaction": "SDK slider position + change event (not physical-device gesture)",
+      "full": {
+        "width": 302,
+        "height": 423
+      },
+      "smaller": {
+        "width": 242,
+        "height": 338
+      },
+      "repeated": {
+        "width": 242,
+        "height": 338
+      }
+    },
+    {
+      "status": "PASS",
+      "step": "dpi"
+    },
+    {
+      "status": "PASS",
+      "step": "export"
+    }
+  ],
+  "tool": "T5",
+  "sample": "REAL-111",
+  "traceId": "a5cc3ec6-76d0-4e18-b057-09e3bebdb19b",
+  "timestamp": "2026-11-04T08:02:57.234Z",
+  "artifacts": [
+    "upload-1.png",
+    "crop-2.png",
+    "crop-adjusted-3.png",
+    "dpi-4.png",
+    "export-5.png",
+    "result.jpg"
+  ],
+  "runtimeErrors": 0,
+  "consentMode": "local",
+  "sample_sha256": "ded108d285dd62f069b0d970f1477fc3aafb0c8222c2f5fac271239d69b31368",
+  "pickerApi": "chooseMedia",
+  "result": {
+    "bytes": 39327,
+    "sha256": "90a7d0cd47405ea3f310f82995fe88ba7d2b6bc63f6f69db1994b07fb62ff8f9"
+  },
+  "system": {
+    "brand": "devtools",
+    "model": "iPhone 12/13 (Pro)",
+    "system": "iOS 10.0.1",
+    "platform": "devtools",
+    "benchmarkLevel": -1,
+    "pixelRatio": 3,
+    "screenWidth": 390,
+    "screenHeight": 844,
+    "windowWidth": 390,
+    "windowHeight": 753,
+    "statusBarHeight": 47,
+    "safeArea": {
+      "top": 47,
+      "left": 0,
+      "right": 390,
+      "bottom": 810,
+      "width": 390,
+      "height": 763
+    },
+    "language": "zh_CN",
+    "version": "8.0.5",
+    "fontSizeSetting": 16,
+    "SDKVersion": "3.17.6",
+    "host": {
+      "env": "WeChat"
+    },
+    "enableDebug": false,
+    "mode": "default",
+    "deviceOrientation": "portrait",
+    "bluetoothEnabled": true,
+    "locationEnabled": true,
+    "wifiEnabled": true,
+    "albumAuthorized": true,
+    "cameraAuthorized": true,
+    "locationAuthorized": true,
+    "microphoneAuthorized": true,
+    "notificationAuthorized": true,
+    "notificationAlertAuthorized": true,
+    "notificationBadgeAuthorized": true,
+    "notificationSoundAuthorized": true,
+    "phoneCalendarAuthorized": true,
+    "bluetoothAuthorized": true,
+    "locationReducedAccuracy": true,
+    "devicePixelRatio": 3
+  }
+}
