@@ -142,7 +142,7 @@ export default function ToolIdPhoto() {
       {screen === 'dpi' ? <View className='flow-screen screen-dpi'>
         <Text className='t1-heading'>⑥ 选择输出档位</Text>
         <DpiStep stepLabel='⑥ 输出档位' specId={p.specId} specName={spec.name} dpi={p.dpi} onChange={(dpi) => flow.setDpi(dpi)}
-          srcW={p.source?.width} srcH={p.source?.height} effectiveW={p.cropWindow?.w} effectiveH={p.cropWindow?.h} />
+          srcW={p.source?.width} srcH={p.source?.height} effectiveW={p.cropWindow?.w} effectiveH={p.cropWindow?.h} processingW={state.preview?.pixelEvidence?.processingCrop?.width} processingH={state.preview?.pixelEvidence?.processingCrop?.height} />
         {mirror}
         <Button className='flow-confirm-dpi' disabled={busy || state.pendingSelf} onClick={() => flow.export()}>确认档位并生成最终成品</Button>
       </View> : null}
@@ -162,6 +162,7 @@ export default function ToolIdPhoto() {
         <Image src={state.finalResult.preview} className='preview' mode='aspectFit' />
         <Text>{state.finalResult.width}×{state.finalResult.height}px · {state.finalResult.fileKb}KB · {p.dpi}档位 · JPG</Text>
         <Text className='tag'>免费 · 无水印；dpi表示输出像素档位，不承诺写入文件元数据。</Text>
+        {state.finalResult.pixelEvidence?.sourceEnough === false || state.finalResult.pixelEvidence?.processingEnough === false ? <Text className='color-risk'>当前输出包含放大，增加像素不能补回原图或处理过程损失的细节。</Text> : null}
         <Button className='flow-save' onClick={() => consume('save', state.finalResult.traceId)}>保存到相册</Button>
         <Button className='flow-print' onClick={() => consume('print', state.finalResult.traceId)}>去冲印排版</Button>
       </View> : null}

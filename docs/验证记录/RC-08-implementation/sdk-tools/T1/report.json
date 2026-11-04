@@ -1,0 +1,146 @@
+{
+  "status": "PASS",
+  "scope": "真实微信UI/本地图像算法，云端适配器禁用；非真实云模型/双平台真机验收",
+  "app": "/Users/tq/WorkBuddy/XiaoChengXu/docs/验证记录/t1-local-builds/run-216972338aa1/workspace/idphoto-miniprogram",
+  "checks": [
+    {
+      "status": "PASS",
+      "step": "upload"
+    },
+    {
+      "status": "PASS",
+      "step": "crop"
+    },
+    {
+      "status": "PASS",
+      "step": "crop-scale",
+      "interaction": "SDK slider position + change event (not physical-device gesture)",
+      "full": {
+        "width": 302,
+        "height": 423
+      },
+      "smaller": {
+        "width": 242,
+        "height": 338
+      },
+      "repeated": {
+        "width": 242,
+        "height": 338
+      }
+    },
+    {
+      "status": "PASS",
+      "step": "beauty"
+    },
+    {
+      "status": "PASS",
+      "step": "crop-return"
+    },
+    {
+      "status": "PASS",
+      "step": "preview"
+    },
+    {
+      "status": "PASS",
+      "step": "dress"
+    },
+    {
+      "status": "PASS",
+      "step": "check"
+    },
+    {
+      "status": "PASS",
+      "step": "dpi"
+    },
+    {
+      "status": "PASS",
+      "step": "export"
+    },
+    {
+      "status": "PASS",
+      "step": "cloud-consent-invalidates-output"
+    },
+    {
+      "status": "PASS",
+      "step": "local-withdraw-clears-source"
+    },
+    {
+      "status": "PASS",
+      "step": "regrant-no-old-result"
+    }
+  ],
+  "tool": "T1",
+  "sample": "REAL-111",
+  "traceId": "4dd92a9d-2820-40cd-a49d-3981a208475b",
+  "timestamp": "2026-11-04T08:47:54.641Z",
+  "artifacts": [
+    "upload-1.png",
+    "crop-2.png",
+    "crop-adjusted-3.png",
+    "beauty-4.png",
+    "beauty-return-5.png",
+    "preview-6.png",
+    "dress-7.png",
+    "check-8.png",
+    "dpi-9.png",
+    "export-10.png",
+    "result.jpg",
+    "cloud-change-12.png",
+    "withdraw-13.png",
+    "regrant-14.png"
+  ],
+  "runtimeErrors": 0,
+  "consentMode": "local",
+  "sample_sha256": "ded108d285dd62f069b0d970f1477fc3aafb0c8222c2f5fac271239d69b31368",
+  "pickerApi": "chooseMedia",
+  "result": {
+    "bytes": 37622,
+    "sha256": "99dc5c11e06e0bbd469c97c8bdb8a159f871b2b1c71e859db9ce9e629634a439"
+  },
+  "system": {
+    "brand": "devtools",
+    "model": "iPhone 12/13 (Pro)",
+    "system": "iOS 10.0.1",
+    "platform": "devtools",
+    "benchmarkLevel": -1,
+    "pixelRatio": 3,
+    "screenWidth": 390,
+    "screenHeight": 844,
+    "windowWidth": 390,
+    "windowHeight": 753,
+    "statusBarHeight": 47,
+    "safeArea": {
+      "top": 47,
+      "left": 0,
+      "right": 390,
+      "bottom": 810,
+      "width": 390,
+      "height": 763
+    },
+    "language": "zh_CN",
+    "version": "8.0.5",
+    "fontSizeSetting": 16,
+    "SDKVersion": "3.17.6",
+    "host": {
+      "env": "WeChat"
+    },
+    "enableDebug": false,
+    "mode": "default",
+    "deviceOrientation": "portrait",
+    "bluetoothEnabled": true,
+    "locationEnabled": true,
+    "wifiEnabled": true,
+    "albumAuthorized": true,
+    "cameraAuthorized": true,
+    "locationAuthorized": true,
+    "microphoneAuthorized": true,
+    "notificationAuthorized": true,
+    "notificationAlertAuthorized": true,
+    "notificationBadgeAuthorized": true,
+    "notificationSoundAuthorized": true,
+    "phoneCalendarAuthorized": true,
+    "bluetoothAuthorized": true,
+    "locationReducedAccuracy": true,
+    "devicePixelRatio": 3
+  }
+}

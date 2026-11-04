@@ -1,0 +1,56 @@
+✖ RC-08 T1真实页面/平台适配九规格双档72路径固定尺寸与像素溯源 (557.004252ms)
+✖ RC-08 T2真实页面/平台适配九规格双档72路径固定尺寸与像素溯源 (161.099207ms)
+✖ RC-08 T3真实页面/平台适配九规格双档72路径固定尺寸与像素溯源 (36.192712ms)
+✔ RC-08 T5真实页面/平台适配九规格双档72路径固定尺寸与像素溯源 (550.890811ms)
+✖ RC-08最终文件原始字节边界：300严格、600机构提示；T5显式上限两档都严格 (12.699866ms)
+✔ RC-08实际格式不符即拒绝最终成品，不按请求扩展名假定格式 (23.329609ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 2
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2532.373095
+
+✖ failing tests:
+
+test at 工具链/tests/output_matrix.test.js:12:41
+✖ RC-08 T1真实页面/平台适配九规格双档72路径固定尺寸与像素溯源 (557.004252ms)
+  TypeError: h.flow.skipBeauty is not a function
+      at ready (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/output_matrix.test.js:10:117)
+      at Object.exercise (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/output_matrix.test.js:13:146)
+      at probePage (/Users/tq/WorkBuddy/XiaoChengXu/工具链/page_flow_probe.js:181:49)
+      at async TestContext.<anonymous> (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/output_matrix.test.js:13:86)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at 工具链/tests/output_matrix.test.js:12:41
+✖ RC-08 T2真实页面/平台适配九规格双档72路径固定尺寸与像素溯源 (161.099207ms)
+  TypeError: h.flow.skipBeauty is not a function
+      at ready (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/output_matrix.test.js:10:117)
+      at Object.exercise (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/output_matrix.test.js:13:146)
+      at probePage (/Users/tq/WorkBuddy/XiaoChengXu/工具链/page_flow_probe.js:181:49)
+      at async TestContext.<anonymous> (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/output_matrix.test.js:13:86)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+
+test at 工具链/tests/output_matrix.test.js:12:41
+✖ RC-08 T3真实页面/平台适配九规格双档72路径固定尺寸与像素溯源 (36.192712ms)
+  TypeError: h.flow.skipBeauty is not a function
+      at ready (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/output_matrix.test.js:10:117)
+      at Object.exercise (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/output_matrix.test.js:13:146)
+      at probePage (/Users/tq/WorkBuddy/XiaoChengXu/工具链/page_flow_probe.js:181:49)
+      at async TestContext.<anonymous> (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/output_matrix.test.js:13:86)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+
+test at 工具链/tests/output_matrix.test.js:15:1
+✖ RC-08最终文件原始字节边界：300严格、600机构提示；T5显式上限两档都严格 (12.699866ms)
+  TypeError: h.flow.skipBeauty is not a function
+      at ready (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/output_matrix.test.js:10:117)
+      at Object.exercise (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/output_matrix.test.js:16:279)
+      at probePage (/Users/tq/WorkBuddy/XiaoChengXu/工具链/page_flow_probe.js:181:49)
+      at async TestContext.<anonymous> (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/output_matrix.test.js:16:219)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7)

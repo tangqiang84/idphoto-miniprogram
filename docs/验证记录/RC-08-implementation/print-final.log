@@ -1,0 +1,10 @@
+✔ RC-08实际T6旋转相纸后源裁剪比例保持，纸张按真实落盘值核验 (316.84505ms)
+✔ RC-08 T6文件格式不符不提供预览保存；不可拼版美签不生成废图 (18.987629ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 856.817207

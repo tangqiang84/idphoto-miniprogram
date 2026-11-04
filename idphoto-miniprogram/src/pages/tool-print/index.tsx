@@ -1,3 +1,5 @@
+import { printGeometry } from '../../core/printGeometry';
+import { inspectExportedFile } from '../../services/exportInspection';
 import { View, Text, Button, Image, Switch } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { useEffect, useState } from 'react';
@@ -111,6 +113,8 @@ export default function ToolPrint() {
     }
     let cancelled = false;
     setBusy(true);
+    setPreview('');
+    setResult(null);
     (async () => {
       try {
         const out = await compose(srcImg, specId, paperId, showGuide);
@@ -120,7 +124,7 @@ export default function ToolPrint() {
           setMsg(out.msg);
         }
       } catch (e: any) {
-        if (!cancelled) setMsg('生成失败：' + String((e && e.message) || e));
+        if (!cancelled) { const traceId = `print-${Date.now()}`; console.warn('[T6]', { code: e?.code || 'PRINT_EXPORT_FAILED', traceId }); setMsg(`生成失败，请重试（PRINT_EXPORT_FAILED，${traceId}）`); }
       } finally {
         if (!cancelled) setBusy(false);
       }
@@ -141,8 +145,8 @@ export default function ToolPrint() {
     const spec = getSpec(sid);
     const paper = getPaper(pid);
     if (!spec || !paper) throw new Error('规格或相纸不存在');
-    const layout = planLayout(pid, sid);
-    if (!layout) throw new Error('排版计算失败');
+    const layout = printGeometry(pid, sid);
+    if (!layout || !layout.valid) throw { code: 'PRINT_GEOMETRY', message: '排版几何校验失败' };
 
     if (layout.count === 0) {
       // 无法容纳（如 visa + instax-mini）：不出废图，提示换纸/换规格
@@ -161,31 +165,12 @@ export default function ToolPrint() {
       throw new Error('当前基础库不支持离屏 canvas，请升级基础库到 2.16.1+');
     }
 
-    const sheet = layout.sheetPx;
-    // paperRotated（planLayout 已选最优朝向）：画布与 print 区同步旋转，
-    // 否则网格 cols/rows 与算法坐标系错配 → 照片溢出 print 区、绘制数 ≠ count。
-    const canvasW = layout.paperRotated ? sheet.height : sheet.width;
-    const canvasH = layout.paperRotated ? sheet.width : sheet.height;
+    const canvasW = layout.width, canvasH = layout.height;
     const cv: any = anyTaro.createOffscreenCanvas({ type: '2d', width: canvasW, height: canvasH });
     const ctx: any = cv.getContext('2d');
-
-    // 白底（instax 等成像区外的白边由白底天然承担）
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvasW, canvasH);
-
-    // print 区域（可打印/成像区）居中于（已按朝向旋转的）画布
-    const printWpx = mmToPx(layout.paperRotated ? paper.printHeightMm : paper.printWidthMm, paper.dpi);
-    const printHpx = mmToPx(layout.paperRotated ? paper.printWidthMm : paper.printHeightMm, paper.dpi);
-    const ox = (canvasW - printWpx) / 2;
-    const oy = (canvasH - printHpx) / 2;
-
-    // footprint（单张证件照在相纸上的像素尺寸）
-    const fwpMm = layout.photoRotated ? spec.heightMm : spec.widthMm;
-    const fhpMm = layout.photoRotated ? spec.widthMm : spec.heightMm;
-    const fwp = mmToPx(fwpMm, paper.dpi);
-    const fhp = mmToPx(fhpMm, paper.dpi);
-    const gap = mmToPx(DEFAULT_GAP_MM, paper.dpi);
-    const margin = mmToPx(DEFAULT_MARGIN_MM, paper.dpi);
+    const fwp = layout.placements[0].width, fhp = layout.placements[0].height;
 
     const image = cv.createImage();
     await new Promise<void>((resolve, reject) => {
@@ -196,7 +181,7 @@ export default function ToolPrint() {
 
     const drawOne = (dx: number, dy: number) => {
       // cover 缩放：等比填满 footprint，居中裁剪，避免比例失真
-      const tr = fwp / fhp;
+      const tr = layout.photoRotated ? fhp / fwp : fwp / fhp;
       const sr = img.width / img.height;
       let sx = 0, sy = 0, sw = img.width, sh = img.height;
       if (sr > tr) {
@@ -206,7 +191,13 @@ export default function ToolPrint() {
         sh = img.width / tr;
         sy = (img.height - sh) / 2;
       }
-      ctx.drawImage(image, sx, sy, sw, sh, dx, dy, fwp, fhp);
+      if (layout.photoRotated) {
+        ctx.save();
+        ctx.translate(dx + fwp, dy);
+        ctx.rotate(Math.PI / 2);
+        ctx.drawImage(image, sx, sy, sw, sh, 0, 0, fhp, fwp);
+        ctx.restore();
+      } else ctx.drawImage(image, sx, sy, sw, sh, dx, dy, fwp, fhp);
       if (guide) {
         ctx.save();
         ctx.strokeStyle = 'rgba(0,0,0,0.32)';
@@ -217,22 +208,7 @@ export default function ToolPrint() {
       }
     };
 
-    if (!paper.tileable) {
-      // 不可拼版（instax / 方形贴纸）：仅 1 张，居中于 print 区
-      const dx = ox + (printWpx - fwp) / 2;
-      const dy = oy + (printHpx - fhp) / 2;
-      drawOne(dx, dy);
-    } else {
-      for (let r = 0; r < layout.rows; r++) {
-        for (let c = 0; c < layout.cols; c++) {
-          const dx = ox + margin + c * (fwp + gap);
-          const dy = oy + margin + r * (fhp + gap);
-          // 保护：理论上算法已保证不越界，越界则跳过（不出废图）
-          if (dx + fwp > ox + printWpx + 1 || dy + fhp > oy + printHpx + 1) continue;
-          drawOne(dx, dy);
-        }
-      }
-    }
+    for (const placement of layout.placements) drawOne(placement.x, placement.y);
 
     const exported: any = await Taro.canvasToTempFilePath({
       canvas: cv,
@@ -240,11 +216,8 @@ export default function ToolPrint() {
       destWidth: canvasW, destHeight: canvasH,
       fileType: 'jpg', quality: 0.95,
     });
-    const fs = Taro.getFileSystemManager();
-    const fi: any = await new Promise((resolve, reject) => {
-      fs.getFileInfo({ filePath: exported.tempFilePath, success: resolve, fail: reject });
-    });
-    const fileKb = Math.round(fi.size / 1024);
+    const artifact = await inspectExportedFile(exported.tempFilePath, { width: canvasW, height: canvasH }, 'jpg');
+    const fileKb = Number(artifact.fileKb.toFixed(2));
 
     return {
       preview: exported.tempFilePath,
@@ -257,7 +230,7 @@ export default function ToolPrint() {
   }
 
   async function save() {
-    if (!preview) return;
+    if (!preview || busy || !pick.mirrorConfirmed) return;
     try {
       await Taro.saveImageToPhotosAlbum({ filePath: preview });
       Taro.showToast({ title: '已保存到相册' });
@@ -351,7 +324,7 @@ export default function ToolPrint() {
       {result && result.count > 0 ? (
         <Text className='out-info'>
           本版可排 {result.count} 张 · 输出 {result.sheet.width}×{result.sheet.height}px @
-          {result.dpi}dpi · {result.fileKb}KB
+          {result.dpi}dpi 像素档 · {result.fileKb}KB
           {paperLabel && !paperLabel.tileable ? ' · 每版仅 1 张（白边不可拼版）' : ''}
         </Text>
       ) : null}
@@ -378,7 +351,7 @@ export default function ToolPrint() {
 
       {/* 说明 */}
       <Text className='note-faint'>
-        说明：导出为拼版 JPG（白底、无水印、免费）。mini 相纸中 instax / 方形贴纸每版仅 1 张，四周白边不可裁掉用于拼版；裁剪参考线仅供自裁定位，不会印到成品。
+        说明：dpi为相纸尺寸换算像素，不承诺文件dpi元数据。导出为拼版 JPG（白底、无水印、免费）。mini 相纸中 instax / 方形贴纸每版仅 1 张，四周白边不可裁掉用于拼版；开启时参考线会写入拼版图，仅供自裁定位。
       </Text>
 
       {pick.Guide}

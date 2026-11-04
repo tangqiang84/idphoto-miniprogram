@@ -1,0 +1,13 @@
+[PASS] unit：命令实际退出0
+[PASS] types：命令实际退出0
+[PASS] lint：命令实际退出0
+[PASS] build：命令实际退出0
+[BLOCKED] coverage：需求覆盖存在已知缺口，不能算里程碑通过
+[SKIPPED] smoke-t1：用户显式跳过，不能算已执行
+[SKIPPED] smoke-t2：用户显式跳过，不能算已执行
+[SKIPPED] smoke-t3：用户显式跳过，不能算已执行
+[SKIPPED] smoke-t4：用户显式跳过，不能算已执行
+[SKIPPED] smoke-t5：用户显式跳过，不能算已执行
+[SKIPPED] smoke-t6：用户显式跳过，不能算已执行
+[SKIPPED] batch：用户显式跳过，不能算已执行
+{"status": "BLOCKED", "scope": "里程碑自动检查（不替代真机与发布审批）", "counts": {"PASS": 4, "FAIL": 0, "BLOCKED": 1, "SKIPPED": 7, "N/A": 0}, "report": "/Users/tq/WorkBuddy/XiaoChengXu/docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/report.json", "trace_id": "verify-75a60ac56ac1432f872c40547b4f1f4b"}

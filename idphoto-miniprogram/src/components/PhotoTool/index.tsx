@@ -159,8 +159,8 @@ export default function PhotoTool({ tool = 'T1' }: { tool?: string }) {
       {screen === 'dpi' ? <View className='flow-screen screen-dpi'>
         <Text className='t1-heading'>{stepNo} · 选择输出档位</Text>
         {tool === 'T5' ? <View><Text>KB上限（0表示不设压缩上限；无法满足时禁止保存）</Text><Input className='kb-input' value={limit} onInput={(e) => setLimit(e.detail.value)} /><Button className='kb-apply' onClick={() => { const kb = Number(limit); if (!limit.trim() || !Number.isFinite(kb) || kb < 0 || kb > 20000) { setInputError('KB上限须为0–20000'); return; } setInputError(''); flow.update({ kbLimit: kb }); }}>应用KB上限</Button>{inputError ? <Text>{inputError}</Text> : null}</View> : null}
-        {p.customTarget ? <Text>自定义输出固定为{target.width}×{target.height}px，不随dpi翻倍，不写入dpi元数据。</Text> : <DpiStep stepLabel='输出像素档位' specId={p.specId} specName={spec.name} dpi={p.dpi} onChange={(dpi) => flow.setDpi(dpi)}
-          srcW={p.source?.width} srcH={p.source?.height} effectiveW={p.cropWindow?.w} effectiveH={p.cropWindow?.h} />}
+        <DpiStep customTarget={p.customTarget} stepLabel='输出像素档位' specId={p.specId} specName={spec.name} dpi={p.dpi} onChange={(dpi) => flow.setDpi(dpi)}
+          srcW={p.source?.width} srcH={p.source?.height} effectiveW={p.cropWindow?.w} effectiveH={p.cropWindow?.h} processingW={state.preview?.pixelEvidence?.processingCrop?.width} processingH={state.preview?.pixelEvidence?.processingCrop?.height} />
         {mirror}
         <Button className='flow-confirm-dpi' disabled={busy || state.pendingSelf} onClick={() => flow.export()}>确认档位并生成最终成品</Button>
       </View> : null}
@@ -181,6 +181,7 @@ export default function PhotoTool({ tool = 'T1' }: { tool?: string }) {
         {state.finalResult.colorRisk ? <Text className='color-risk'>仅作为图像素材，不符合该证件底色要求；不能据此认定证件合规</Text> : null}
         <Text>{state.finalResult.width}×{state.finalResult.height}px · {state.finalResult.fileKb}KB · {p.dpi}档位 · {state.finalResult.fileType === 'png' ? 'PNG' : 'JPG'}</Text>
         <Text className='tag'>免费 · 无水印；dpi表示输出像素档位，不承诺写入文件元数据。</Text>
+        {state.finalResult.pixelEvidence?.sourceEnough === false || state.finalResult.pixelEvidence?.processingEnough === false ? <Text className='color-risk'>当前输出包含放大，增加像素不能补回原图或处理过程损失的细节。</Text> : null}
         <Button className='flow-save' onClick={() => consume('save', state.finalResult.traceId)}>保存到相册</Button>
         <Button className='flow-print' onClick={() => consume('print', state.finalResult.traceId)}>去冲印排版</Button>
       </View> : null}

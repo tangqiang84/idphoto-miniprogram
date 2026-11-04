@@ -54,7 +54,7 @@ function createT1Workflow(session, adapters, options = {}) {
     if (mode === 'final') {
       finalResult = stamp(result.output);
       if (tool === 'T3' && !finalResult.suitApplied) { finalResult = null; screen = 'dress'; return fail('FLOW_SUIT_REQUIRED', '换装未成功，请重新应用并自检'); }
-      if (hardFailures(finalResult).length) { screen = 'dpi'; return fail('FLOW_HARD_CHECK', '成品有必需指标不通过：' + hardFailures(finalResult).join('、')); }
+      if (hardFailures(finalResult).length) { const failed = hardFailures(finalResult); finalResult = null; screen = 'dpi'; return fail('FLOW_HARD_CHECK', '成品有必需指标不通过：' + failed.join('、')); }
       if (finalResult.suitApplied) { pendingSelf = true; screen = 'dpi'; }
       else screen = 'export';
     } else {

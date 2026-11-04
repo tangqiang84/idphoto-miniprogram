@@ -1,0 +1,33 @@
+✔ RC-08全部16相纸×9规格几何及整纸独立像素误差≤1，单张限制不被绕过 (5.28529ms)
+✖ RC-08固定排版：6寸一寸8张；instax小区无法容纳美签；12寸无累积溢出 (1.629028ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 127.466812
+
+✖ failing tests:
+
+test at idphoto-miniprogram/src/core/__tests__/printGeometry.test.js:11:1
+✖ RC-08固定排版：6寸一寸8张；instax小区无法容纳美签；12寸无累积溢出 (1.629028ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  10 !== 8
+  
+      at TestContext.<anonymous> (/Users/tq/WorkBuddy/XiaoChengXu/idphoto-miniprogram/src/core/__tests__/printGeometry.test.js:12:57)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 10,
+    expected: 8,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

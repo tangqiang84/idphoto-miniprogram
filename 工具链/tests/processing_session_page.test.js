@@ -16,7 +16,7 @@ function fixture() {
       canvasToTempFilePath: async (input) => {
         const path = `fixture://result-${f.renders.length}`;
         f.renders.push({ ...input, phase: f.session?.getState().stage });
-        f.files.set(path, { width: input.destWidth, height: input.destHeight });
+        f.files.set(path, { width: input.destWidth, height: input.destHeight, type: input.fileType });
         return { tempFilePath: path };
       },
       getImageInfo: async ({ src }) => f.files.get(src),
@@ -121,7 +121,7 @@ test('T1旧prepare迟到、重复确认和取消不能再触发抠图；失败�
 test('T1导出硬指标失败或文件信息缺失，不能提供最终成品入口', async () => {
   const f = fixture(); const info = f.options.taro.getImageInfo;
   f.options.taro.getImageInfo = async (input) => f.session.getState().stage === 'export' ? { width: 13, height: 19 } : info(input);
-  await run(f, async (h) => { await dpi(h); await finalize(h); screen(h, 'dpi'); assert.equal(button(h, 'flow-save'), undefined); assert.equal(h.flow.getState().error.code, 'FLOW_HARD_CHECK'); });
+  await run(f, async (h) => { await dpi(h); await finalize(h); screen(h, 'dpi'); assert.equal(button(h, 'flow-save'), undefined); assert.equal(h.flow.getState().error.code, 'SESSION_PROCESS_FAILED'); });
 });
 test('T1镜像与预审不可绕过，旧步骤确认回调不得触发处理', async () => {
   const f = fixture(); await run(f, async (h) => {

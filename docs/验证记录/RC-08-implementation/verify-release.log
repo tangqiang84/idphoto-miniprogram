@@ -1,0 +1,13 @@
+[PASS] unit：命令实际退出0
+[FAIL] types：检查非零退出（含未知退出码），禁止当成功
+[SKIPPED] lint：上游检查未通过，本项未执行
+[SKIPPED] build：上游检查未通过，本项未执行
+[SKIPPED] coverage：上游检查未通过，本项未执行
+[SKIPPED] smoke-t1：用户显式跳过，不能算已执行
+[SKIPPED] smoke-t2：用户显式跳过，不能算已执行
+[SKIPPED] smoke-t3：用户显式跳过，不能算已执行
+[SKIPPED] smoke-t4：用户显式跳过，不能算已执行
+[SKIPPED] smoke-t5：用户显式跳过，不能算已执行
+[SKIPPED] smoke-t6：用户显式跳过，不能算已执行
+[SKIPPED] batch：用户显式跳过，不能算已执行
+{"status": "FAIL", "scope": "里程碑自动检查（不替代真机与发布审批）", "counts": {"PASS": 1, "FAIL": 1, "BLOCKED": 0, "SKIPPED": 10, "N/A": 0}, "report": "/Users/tq/WorkBuddy/XiaoChengXu/docs/验证记录/verify-runs/run-20261104-164414-dabf5b34/report.json", "trace_id": "verify-8eb9b61a7a764d47afff6dfc73e101c3"}

@@ -15,7 +15,7 @@
         "T4"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-A",
         "file": "证件照小程序PRD正文.md"
       },
@@ -41,7 +41,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-A",
         "file": "证件照小程序PRD正文.md"
       },
@@ -68,7 +68,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-A",
         "file": "证件照小程序PRD正文.md"
       },
@@ -97,7 +97,7 @@
         "T5"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-A",
         "file": "证件照小程序PRD正文.md"
       },
@@ -122,7 +122,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-B",
         "file": "证件照小程序PRD正文.md"
       },
@@ -147,7 +147,7 @@
         "T5"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-B",
         "file": "证件照小程序PRD正文.md"
       },
@@ -183,7 +183,7 @@
         "T4"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-B",
         "file": "证件照小程序PRD正文.md"
       },
@@ -208,7 +208,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-C",
         "file": "证件照小程序PRD正文.md"
       },
@@ -234,7 +234,7 @@
         "T2"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-C",
         "file": "证件照小程序PRD正文.md"
       },
@@ -260,7 +260,7 @@
         "T2"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-C",
         "file": "证件照小程序PRD正文.md"
       },
@@ -287,7 +287,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-D",
         "file": "证件照小程序PRD正文.md"
       },
@@ -310,7 +310,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-D",
         "file": "证件照小程序PRD正文.md"
       },
@@ -333,7 +333,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-D",
         "file": "证件照小程序PRD正文.md"
       },
@@ -363,7 +363,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-D",
         "file": "证件照小程序PRD正文.md"
       },
@@ -387,7 +387,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-E",
         "file": "证件照小程序PRD正文.md"
       },
@@ -413,7 +413,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-E",
         "file": "证件照小程序PRD正文.md"
       },
@@ -442,7 +442,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-F",
         "file": "证件照小程序PRD正文.md"
       },
@@ -465,7 +465,7 @@
         "T5"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-F",
         "file": "证件照小程序PRD正文.md"
       },
@@ -474,7 +474,8 @@
         "ACCEPT-F2",
         "PART-SPEC",
         "PART-RC07-POLICY",
-        "PART-RC07-PAGES"
+        "PART-RC07-PAGES",
+        "PART-RC08-PIXELS"
       ],
       "followup": [
         "RC-07",
@@ -494,7 +495,7 @@
         "T4"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-G",
         "file": "证件照小程序PRD正文.md"
       },
@@ -521,7 +522,7 @@
         "T4"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-G",
         "file": "证件照小程序PRD正文.md"
       },
@@ -550,13 +551,15 @@
         "T5"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-H",
         "file": "证件照小程序PRD正文.md"
       },
       "acceptance": "读取实际文件格式/像素/KB与底色；无水印免费；不能只看页面参数。",
       "cases": [
-        "ACCEPT-H1"
+        "ACCEPT-H1",
+        "PART-RC08-FILES",
+        "PART-RC08-SDK"
       ],
       "followup": [
         "RC-08",
@@ -576,7 +579,7 @@
         "T5"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-H",
         "file": "证件照小程序PRD正文.md"
       },
@@ -586,7 +589,9 @@
         "PART-SPEC",
         "PART-RC04-SESSION",
         "PART-RC04-T1-PAGE",
-        "PART-RC05-FLOW"
+        "PART-RC05-FLOW",
+        "PART-RC08-PIXELS",
+        "PART-RC08-SDK"
       ],
       "followup": [
         "RC-08"
@@ -604,13 +609,14 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-H",
         "file": "证件照小程序PRD正文.md"
       },
       "acceptance": "600dpi仅KB超限不阻断/不计建议；300dpi同图按对应规则判定。",
       "cases": [
-        "ACCEPT-H2.1"
+        "ACCEPT-H2.1",
+        "PART-RC08-FILES"
       ],
       "followup": [
         "RC-08"
@@ -629,7 +635,7 @@
         "T4"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-I",
         "file": "证件照小程序PRD正文.md"
       },
@@ -657,7 +663,7 @@
         "T4"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-I",
         "file": "证件照小程序PRD正文.md"
       },
@@ -682,7 +688,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-I",
         "file": "证件照小程序PRD正文.md"
       },
@@ -711,7 +717,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-I",
         "file": "证件照小程序PRD正文.md"
       },
@@ -738,7 +744,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-J",
         "file": "证件照小程序PRD正文.md"
       },
@@ -765,7 +771,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-J",
         "file": "证件照小程序PRD正文.md"
       },
@@ -793,7 +799,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-J",
         "file": "证件照小程序PRD正文.md"
       },
@@ -825,7 +831,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-K",
         "file": "证件照小程序PRD正文.md"
       },
@@ -848,14 +854,15 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-K",
         "file": "证件照小程序PRD正文.md"
       },
       "acceptance": "固定纸/照片尺寸独立算张数、朝向、边距；每张无拉伸越界。",
       "cases": [
         "ACCEPT-K3",
-        "PART-PAPER"
+        "PART-PAPER",
+        "PART-RC08-PRINT"
       ],
       "followup": [
         "RC-08"
@@ -871,14 +878,16 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-K",
         "file": "证件照小程序PRD正文.md"
       },
       "acceptance": "按物理尺寸独立算像素，误差≤1px，PNG/JPG实际可读无水印。",
       "cases": [
         "ACCEPT-K4",
-        "PART-PAPER"
+        "PART-PAPER",
+        "PART-RC08-PRINT",
+        "PART-RC08-SDK"
       ],
       "followup": [
         "RC-08",
@@ -895,14 +904,15 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-K",
         "file": "证件照小程序PRD正文.md"
       },
       "acceptance": "instax仅一张，无法容纳时拒绝，不静默缩小规格或忽略白边。",
       "cases": [
         "ACCEPT-K5",
-        "PART-PAPER"
+        "PART-PAPER",
+        "PART-RC08-PRINT"
       ],
       "followup": [
         "RC-08"
@@ -922,7 +932,7 @@
         "T5"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§11",
         "file": "证件照小程序PRD正文.md"
       },
@@ -949,7 +959,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§11",
         "file": "证件照小程序PRD正文.md"
       },
@@ -977,7 +987,7 @@
         "T5"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§11",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1004,7 +1014,7 @@
         "T5"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§11",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1012,7 +1022,8 @@
       "cases": [
         "ACCEPT-AC4",
         "PART-SPEC",
-        "PART-COMPLIANCE"
+        "PART-COMPLIANCE",
+        "PART-RC08-FILES"
       ],
       "followup": [
         "RC-08",
@@ -1032,7 +1043,7 @@
         "T4"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§11",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1058,7 +1069,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§11",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1084,7 +1095,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§11",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1108,7 +1119,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§11",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1137,7 +1148,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§11",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1160,7 +1171,7 @@
         "T4"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§11",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1183,7 +1194,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§11",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1209,7 +1220,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§11",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1239,7 +1250,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§11",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1263,7 +1274,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§9",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1290,7 +1301,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§9",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1316,7 +1327,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§9",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1339,7 +1350,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-K",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1361,7 +1372,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-K",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1387,13 +1398,14 @@
         "T5"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§4-H",
         "file": "证件照小程序PRD正文.md"
       },
       "acceptance": "大原图小裁剪、低像素放大工作图均能揭示警告。",
       "cases": [
-        "ACCEPT-H2.2"
+        "ACCEPT-H2.2",
+        "PART-RC08-PIXELS"
       ],
       "followup": [
         "RC-08"
@@ -1409,7 +1421,7 @@
         "T1"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§5、§15.3",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1436,7 +1448,7 @@
         "T2"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§5",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1462,7 +1474,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§5",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1489,7 +1501,7 @@
         "T4"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§5",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1513,7 +1525,7 @@
         "T5"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§5、§15.3",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1540,7 +1552,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§5",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1566,7 +1578,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§9 精度",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1594,7 +1606,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§9 兼容",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1621,7 +1633,7 @@
         "T4"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§7、§9 安全",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1647,7 +1659,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§9 可用",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1676,7 +1688,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§2.3、§10",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1703,7 +1715,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§7、§6",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1732,7 +1744,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§15",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1759,7 +1771,7 @@
         "T5"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§12",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1784,7 +1796,7 @@
         "T4"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§12",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1809,7 +1821,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§12",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1836,7 +1848,7 @@
         "T5"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§12",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1864,7 +1876,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§12",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1891,7 +1903,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§12",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1914,7 +1926,7 @@
         "T6"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§12",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1940,7 +1952,7 @@
         "T4"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§12",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1963,7 +1975,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§12",
         "file": "证件照小程序PRD正文.md"
       },
@@ -1987,7 +1999,7 @@
         "T3"
       ],
       "source": {
-        "version": "RC-01-v1.8",
+        "version": "RC-01-v1.9",
         "section": "§12",
         "file": "证件照小程序PRD正文.md"
       },

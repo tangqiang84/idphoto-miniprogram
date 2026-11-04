@@ -5,6 +5,8 @@ import { requiredConsents, buildConsentRecord, segment, composite, compositeTran
 } from '.';
 import { requestPoseKeypoints, encodeCanvasToJpegB64 } from './poseService';
 import { prepareWorkCanvas } from './pipeline';
+import { inspectExportedFile } from './exportInspection';
+import { assessPixels } from '../core/outputEvidence';
 import { type SessionTask } from '../core/processingSession';
 
 const SUIT_TEMPLATES = [
@@ -77,20 +79,28 @@ export function createT1Processing(tool = 'T1') {
       }), EXPORT_TIMEOUT_MS, 'fileinfo:timeout'));
       if (!p.kbLimit || file.size <= p.kbLimit * 1024) break;
     }
-    const size = await task.call(() => Taro.getImageInfo({ src: exported.tempFilePath }));
-    if (!Number.isFinite(file.size) || file.size <= 0 || !(size.width > 0) || !(size.height > 0)) throw new Error('export:invalid_file');
+    const artifact = await task.call(() => inspectExportedFile(exported.tempFilePath, target, fileType));
+    const size = { width: artifact.width, height: artifact.height };
     let report = check(p.specId, { widthPx: size.width, heightPx: size.height, dpi: p.dpi,
-      fileKb: Math.round(file.size / 1024), bg: p.bg, headHeightRatio: data.headRatio ?? undefined });
+      fileKb: artifact.fileKb, bg: p.bg, headHeightRatio: data.headRatio ?? undefined });
     if (tool === 'T5') report = { ...report, checks: [
       { key: 'dimension', label: '尺寸', pass: size.width === target.width && size.height === target.height },
       { key: 'dpi', label: '像素档位', pass: true }, { key: 'bg', label: '保留原图底色', pass: true },
-      { key: 'filesize', label: '文件大小', pass: !p.kbLimit || file.size <= p.kbLimit * 1024 },
+      { key: 'filesize', label: '文件大小', pass: !p.kbLimit || artifact.fileBytes <= p.kbLimit * 1024 },
     ] } as any;
     const colorRisk = tool === 'T2' && report.checks.some((c: any) => c.key === 'bg' && !c.pass);
     if (tool === 'T2') report = { ...report, checks: report.checks.map((c: any) => c.key === 'bg' ? { ...c, level: 'advisory' } : c) };
-    return { preview: exported.tempFilePath, fileType, colorRisk, isFinal: mode === 'final', result: report, suitApplied: data.suitApplied,
+    const failed = report.checks.filter((c: any) => c.level !== 'advisory' && !c.pass);
+    const finalReport = { ...report, pass: failed.length === 0, suggestions: failed.map((c: any) => c.detail || c.label) };
+    const effective = { width: p.cropWindow!.w, height: p.cropWindow!.h };
+    const processing = { width: data.plan.sw, height: data.plan.sh };
+    const pixelEvidence = { source: { width: p.source!.width, height: p.source!.height }, effective,
+      work: { width: data.w, height: data.h }, processingCrop: processing,
+      segmentationInput: tool === 'T5' ? null : { width: data.w, height: data.h },
+      target, ...assessPixels(effective, target, processing) };
+    return { preview: exported.tempFilePath, fileType: artifact.fileType, dpiMetadata: artifact.dpiMetadata, fileBytes: artifact.fileBytes, pixelEvidence, colorRisk, isFinal: mode === 'final', result: finalReport, suitApplied: data.suitApplied,
       suitReason: data.suitReason, backend: data.backend, degraded: data.degraded, headRatio: data.headRatio,
-      width: size.width, height: size.height, fileKb: Math.round(file.size / 1024), dpi: p.dpi };
+      width: size.width, height: size.height, fileKb: Number(artifact.fileKb.toFixed(2)), dpi: p.dpi };
   }
   async function process(task: SessionTask, mode: string, strokes?: any[]) {
     requireConsent(task);

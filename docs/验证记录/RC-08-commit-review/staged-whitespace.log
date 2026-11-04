@@ -1,0 +1,121 @@
+docs/验证记录/RC-08-implementation/coverage-render.log:2347: new blank line at EOF.
+docs/验证记录/RC-08-implementation/geometry-first.log:17: trailing whitespace.
++  
+docs/验证记录/RC-08-implementation/geometry-first.log:19: trailing whitespace.
++  
+docs/验证记录/RC-08-implementation/tools-complete.log:77: trailing whitespace.
++  
+docs/验证记录/RC-08-implementation/tools-complete.log:157: trailing whitespace.
++  
+docs/验证记录/RC-08-implementation/tools-first.log:66: trailing whitespace.
++  
+docs/验证记录/RC-08-implementation/tools-first.log:69: trailing whitespace.
++  
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:12: trailing whitespace.
++● Webpack █████████████████████████  (0%)  
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:13: trailing whitespace.
++ 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:16: trailing whitespace.
++● Webpack █████████████████████████ setup (2%)  
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:21: trailing whitespace.
++cies 0/20 modules 1 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:26: trailing whitespace.
++cies 0/20 modules 1 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:31: trailing whitespace.
++cies 1/20 modules 19 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:37: trailing whitespace.
++ncies 9/32 modules 21 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:42: trailing whitespace.
++● Webpack █████████████████████████ building (34%)  
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:46: trailing whitespace.
++● Webpack █████████████████████████ building (34%)  
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:51: trailing whitespace.
++encies 12/58 modules 46 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:56: trailing whitespace.
++encies 13/71 modules 46 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:61: trailing whitespace.
++encies 13/114 modules 63 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:67: trailing whitespace.
++encies 17/133 modules 104 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:73: trailing whitespace.
++encies 49/147 modules 95 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:79: trailing whitespace.
++encies 71/169 modules 96 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:85: trailing whitespace.
++dencies 82/172 modules 90 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:91: trailing whitespace.
++dencies 96/181 modules 85 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:97: trailing whitespace.
++dencies 129/186 modules 57 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:103: trailing whitespace.
++dencies 140/191 modules 50 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:109: trailing whitespace.
++dencies 149/194 modules 44 active 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:114: trailing whitespace.
++● Webpack █████████████████████████ sealing (71%)  
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:118: trailing whitespace.
++● Webpack █████████████████████████ sealing (87%)  
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:122: trailing whitespace.
++● Webpack █████████████████████████ sealing (88%)  
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:126: trailing whitespace.
++● Webpack █████████████████████████ sealing (92%) asset processing 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:130: trailing whitespace.
++● Webpack █████████████████████████ sealing (92%) asset processing 
+docs/验证记录/t1-local-builds/run-216972338aa1/build.log:136: new blank line at EOF.
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:12: trailing whitespace.
++● Webpack █████████████████████████  (0%)  
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:13: trailing whitespace.
++ 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:16: trailing whitespace.
++● Webpack █████████████████████████ setup (2%)  
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:21: trailing whitespace.
++cies 0/20 modules 1 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:26: trailing whitespace.
++cies 0/20 modules 1 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:31: trailing whitespace.
++cies 1/20 modules 19 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:37: trailing whitespace.
++ncies 9/32 modules 21 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:42: trailing whitespace.
++● Webpack █████████████████████████ building (34%)  
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:46: trailing whitespace.
++● Webpack █████████████████████████ building (34%)  
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:51: trailing whitespace.
++encies 12/61 modules 46 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:56: trailing whitespace.
++encies 12/62 modules 50 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:62: trailing whitespace.
++encies 13/72 modules 50 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:68: trailing whitespace.
++encies 13/75 modules 60 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:74: trailing whitespace.
++encies 18/122 modules 102 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:80: trailing whitespace.
++encies 19/132 modules 103 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:86: trailing whitespace.
++encies 48/144 modules 96 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:92: trailing whitespace.
++encies 65/168 modules 99 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:98: trailing whitespace.
++dencies 81/170 modules 89 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:104: trailing whitespace.
++dencies 91/181 modules 87 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:110: trailing whitespace.
++dencies 102/183 modules 79 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:116: trailing whitespace.
++dencies 135/189 modules 54 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:122: trailing whitespace.
++dencies 140/191 modules 50 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:128: trailing whitespace.
++dencies 149/194 modules 44 active 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:133: trailing whitespace.
++● Webpack █████████████████████████ sealing (70%)  
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:137: trailing whitespace.
++● Webpack █████████████████████████ sealing (80%)  
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:141: trailing whitespace.
++● Webpack █████████████████████████ sealing (88%)  
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:145: trailing whitespace.
++● Webpack █████████████████████████ sealing (92%) asset processing 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:149: trailing whitespace.
++● Webpack █████████████████████████ sealing (92%) asset processing 
+docs/验证记录/verify-runs/run-20261104-164559-e6a360eb/build.log:155: new blank line at EOF.

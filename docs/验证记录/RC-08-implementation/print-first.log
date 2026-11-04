@@ -1,0 +1,32 @@
+✖ RC-08实际T6旋转照片后源裁剪比例保持，纸张按真实落盘值核验 (186.207471ms)
+✖ RC-08 T6文件格式不符不提供预览保存；不可拼版美签不生成废图 (8.639673ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 550.635594
+
+✖ failing tests:
+
+test at 工具链/tests/print_output.test.js:7:1
+✖ RC-08实际T6旋转照片后源裁剪比例保持，纸张按真实落盘值核验 (186.207471ms)
+  TypeError: Cannot read properties of undefined (reading 'props')
+      at choose (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/print_output.test.js:6:119)
+      at Object.exercise (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/print_output.test.js:7:139)
+      at async probePage (/Users/tq/WorkBuddy/XiaoChengXu/工具链/page_flow_probe.js:181:35)
+      at async TestContext.<anonymous> (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/print_output.test.js:7:69)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at 工具链/tests/print_output.test.js:8:1
+✖ RC-08 T6文件格式不符不提供预览保存；不可拼版美签不生成废图 (8.639673ms)
+  TypeError: Cannot read properties of undefined (reading 'props')
+      at choose (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/print_output.test.js:6:119)
+      at Object.exercise (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/print_output.test.js:8:166)
+      at async probePage (/Users/tq/WorkBuddy/XiaoChengXu/工具链/page_flow_probe.js:181:35)
+      at async TestContext.<anonymous> (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/print_output.test.js:8:70)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7)

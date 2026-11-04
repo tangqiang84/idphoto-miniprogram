@@ -1,0 +1,12 @@
+{
+  "status": "FAIL",
+  "timestamp": "2026-11-04T08:37:03.508Z",
+  "app": "/Users/tq/WorkBuddy/XiaoChengXu/docs/验证记录/t1-local-builds/run-02c8cde76e56/workspace/idphoto-miniprogram",
+  "cases": [],
+  "runtimeErrors": 0,
+  "scope": "微信开发者工具真实本地落盘；T5九规格双档、T6几何；非实体机/模型质量",
+  "sample": "REAL-111",
+  "sampleSha256": "ded108d285dd62f069b0d970f1477fc3aafb0c8222c2f5fac271239d69b31368",
+  "picker": "chooseMedia",
+  "code": "MATRIX_UI_FAILED"
+}

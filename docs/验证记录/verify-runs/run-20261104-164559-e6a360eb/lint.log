@@ -1,0 +1,5 @@
+
+> idphoto-miniprogram@0.1.0 lint
+> node ../工具链/lint/run.cjs
+
+ESLint检查 171 个文件，错误 0；未自动修改文件。

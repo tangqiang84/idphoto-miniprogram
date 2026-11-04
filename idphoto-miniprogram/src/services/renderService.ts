@@ -1,3 +1,4 @@
+import { inspectExportedFile } from './exportInspection';
 import Taro from '@tarojs/taro';
 import { composite, compositeTransparent } from '../core/matting';
 import { withTimeout, EXPORT_TIMEOUT_MS } from '../core/asyncUtils';
@@ -86,14 +87,6 @@ export async function composeAndExportImage(p: RenderParams): Promise<RenderResu
     'export: 画布导出超时',
   );
 
-  const fs = Taro.getFileSystemManager();
-  const fi: any = await withTimeout(
-    new Promise((resolve, reject) => {
-      fs.getFileInfo({ filePath: exported.tempFilePath, success: resolve, fail: reject });
-    }),
-    EXPORT_TIMEOUT_MS,
-    'export: 文件信息读取超时',
-  );
-
-  return { preview: exported.tempFilePath, fileKb: Math.round(fi.size / 1024), outW, outH };
+  const actual = await inspectExportedFile(exported.tempFilePath, { width: outW, height: outH }, transparent ? 'png' : (p.fileType || 'jpg'));
+  return { preview: exported.tempFilePath, fileKb: actual.fileKb, outW: actual.width, outH: actual.height };
 }

@@ -2183,6 +2183,122 @@
         "RC-12"
       ],
       "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC08-PIXELS",
+      "requirements": [
+        "H2",
+        "H2.2",
+        "F2"
+      ],
+      "role": "partial",
+      "kind": "controller",
+      "implementation": "implemented",
+      "input": "固定授权样本/独立规格与相纸参考期望/字节边界与非法实际格式",
+      "action": "执行真实页面和平台适配或禁云SDK文件矩阵，独立核验像素和文件",
+      "expected": "有效裁剪像素独立于工作图；实际格式尺寸字节与目标一致；相纸边界及单张约束",
+      "negative": "过限一字节/格式不符/小裁剪/无法容纳不得误报满足或提供成品",
+      "environment": "Node平台替身与真实禁云微信SDK分开记录",
+      "limitations": "局部流程/文件证据；非模型质量、实体机冲印或全需求通过",
+      "runner": {
+        "script": "工具链/tests/dpi_evidence.test.js",
+        "selector": "RC-08实际档位组件",
+        "command": "node --test 工具链/tests/dpi_evidence.test.js"
+      },
+      "followup": [
+        "RC-09",
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC08-FILES",
+      "requirements": [
+        "H1",
+        "H2.1",
+        "AC4"
+      ],
+      "role": "partial",
+      "kind": "controller",
+      "implementation": "implemented",
+      "input": "固定授权样本/独立规格与相纸参考期望/字节边界与非法实际格式",
+      "action": "执行真实页面和平台适配或禁云SDK文件矩阵，独立核验像素和文件",
+      "expected": "有效裁剪像素独立于工作图；实际格式尺寸字节与目标一致；相纸边界及单张约束",
+      "negative": "过限一字节/格式不符/小裁剪/无法容纳不得误报满足或提供成品",
+      "environment": "Node平台替身与真实禁云微信SDK分开记录",
+      "limitations": "局部流程/文件证据；非模型质量、实体机冲印或全需求通过",
+      "runner": {
+        "script": "工具链/tests/output_matrix.test.js",
+        "selector": "RC-08最终文件原始字节边界",
+        "command": "node --test 工具链/tests/output_matrix.test.js"
+      },
+      "followup": [
+        "RC-09",
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC08-PRINT",
+      "requirements": [
+        "K3",
+        "K4",
+        "K5"
+      ],
+      "role": "partial",
+      "kind": "controller",
+      "implementation": "implemented",
+      "input": "固定授权样本/独立规格与相纸参考期望/字节边界与非法实际格式",
+      "action": "执行真实页面和平台适配或禁云SDK文件矩阵，独立核验像素和文件",
+      "expected": "有效裁剪像素独立于工作图；实际格式尺寸字节与目标一致；相纸边界及单张约束",
+      "negative": "过限一字节/格式不符/小裁剪/无法容纳不得误报满足或提供成品",
+      "environment": "Node平台替身与真实禁云微信SDK分开记录",
+      "limitations": "局部流程/文件证据；非模型质量、实体机冲印或全需求通过",
+      "runner": {
+        "script": "工具链/tests/print_output.test.js",
+        "selector": "RC-08实际T6",
+        "command": "node --test 工具链/tests/print_output.test.js"
+      },
+      "followup": [
+        "RC-09",
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC08-SDK",
+      "requirements": [
+        "H1",
+        "H2",
+        "K4"
+      ],
+      "role": "partial",
+      "kind": "artifact",
+      "implementation": "implemented",
+      "input": "固定授权样本/独立规格与相纸参考期望/字节边界与非法实际格式",
+      "action": "执行真实页面和平台适配或禁云SDK文件矩阵，独立核验像素和文件",
+      "expected": "有效裁剪像素独立于工作图；实际格式尺寸字节与目标一致；相纸边界及单张约束",
+      "negative": "过限一字节/格式不符/小裁剪/无法容纳不得误报满足或提供成品",
+      "environment": "Node平台替身与真实禁云微信SDK分开记录",
+      "limitations": "局部流程/文件证据；非模型质量、实体机冲印或全需求通过",
+      "runner": {
+        "script": "工具链/smoke_output_matrix.js",
+        "selector": "T5九规格双档",
+        "command": "node 工具链/smoke_output_matrix.js --app <禁云副本> --port <端口> --out <新目录>"
+      },
+      "followup": [
+        "RC-09",
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
     }
   ]
 }

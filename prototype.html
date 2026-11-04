@@ -234,14 +234,14 @@
     <div class="nav"><span class="back" onclick="go('s_check')">‹ 返回</span> 选择输出档位</div>
     <div class="body">
       <div class="card"><h3>输出分辨率档位</h3>
-        <div><span class="chip sel" data-dpi="300" onclick="selDpi(this)">300dpi 标准（基础）</span><span class="chip" data-dpi="600" onclick="selDpi(this)">600dpi 印刷级</span></div>
-        <p class="tag" style="margin-top:6px;">两档均免费、无水印。600dpi 像素翻倍、体积约为 300dpi 的 2~4 倍，用于印刷 / 冲印。</p>
+        <div><span class="chip sel" data-dpi="300" onclick="selDpi(this)">300dpi 像素档</span><span class="chip" data-dpi="600" onclick="selDpi(this)">600dpi 像素档</span></div>
+        <p class="tag" style="margin-top:6px;">两档均免费、无水印。按规格物理尺寸换算目标像素，不承诺写入文件dpi元数据；600档用于印刷 / 冲印。</p>
       </div>
       <div class="card">
         <h3>分辨率要求与提示</h3>
         <div id="dpi-req" class="dpi-req">目标规格：一寸 ｜ 300dpi 需 295×413 px ｜ 600dpi 需 591×827 px</div>
-        <div id="dpi-note" class="dpi-note ok">✓ 当前原图 / 裁剪后像素满足 300dpi 要求，可正常输出。</div>
-        <div class="disabled-note">提示逻辑：根据「当前规格 + 原图 / 裁剪后真实像素」动态判断；下方为原型示意，真实判定在代码中按实际像素执行（源像素不足 600dpi 时明示降质风险）。</div>
+        <div id="dpi-note" class="dpi-note ok">原型示意：清晰度须按原图有效裁剪窗评估，不能使用放大后的工作图自证。</div>
+        <div class="disabled-note">提示逻辑：根据「当前规格 + 原图有效裁剪像素」动态判断；下方为原型示意，真实判定在代码中按实际像素执行（源像素不足 600dpi 时明示降质风险）。</div>
       </div>
       <button class="btn" onclick="dpiConfirm()">确认并导出</button>
     </div>
@@ -378,7 +378,7 @@
           <span class="chip" data-paper="zink-2.3x3.4" onclick="t6selPaper(this)">ZINK 2.3×3.4</span>
         </div>
         <div class="row" style="border:none;padding-top:10px;">
-          <span>裁剪参考线</span>
+          <span>裁剪参考线（开启会写入拼版图）</span>
           <span><span class="chip sel" data-crop="1" onclick="t6selCrop(this)">开</span> <span class="chip" data-crop="0" onclick="t6selCrop(this)">关</span></span>
         </div>
       </div>
@@ -573,17 +573,17 @@
     var note = document.getElementById('dpi-note');
     if(dpi === 600){
       note.className = 'dpi-note warn';
-      note.innerHTML = '⚠ <b>需注意：600dpi 需 ' + req600 + ' px</b>。若原图 / 裁剪后像素不足，将放大导致清晰度下降。建议：① 重新上传更高清原图；② 改用 300dpi。';
+      note.innerHTML = '⚠ <b>需注意：600dpi 需 ' + req600 + ' px</b>。若原图有效裁剪像素不足，将放大导致清晰度下降。建议：① 重新上传更高清原图；② 改用 300dpi。';
     } else {
-      note.className = 'dpi-note ok';
-      note.innerHTML = '✓ 当前目标规格 300dpi 需 ' + req300 + ' px，原图 / 裁剪后像素通常可满足，可正常输出。';
+      note.className = 'dpi-note warn';
+      note.innerHTML = '原型示意：300dpi 需 ' + req300 + ' px；须用原图有效裁剪像素判断。工作图放大不能补回细节，证据缺失不表示满足。';
     }
   }
   function dpiConfirm(){
     var dpi = window.curDpi || 300;
-    var fmt = (window.curBg === 'transparent' || (window.curBg||'').indexOf('#') === 0) ? 'PNG' : 'JPG';
+    var fmt = (window.curBg === 'transparent') ? 'PNG' : 'JPG';
     document.getElementById('export-dpi').textContent = dpi + 'dpi ' + fmt + ' · 无水印 · 免费';
-    document.getElementById('export-dpi-row').textContent = dpi + 'dpi 标准（免费 · 无水印）';
+    document.getElementById('export-dpi-row').textContent = dpi + 'dpi 像素档（免费 · 无水印，不承诺文件dpi元数据）';
     go('s_export');
   }
 

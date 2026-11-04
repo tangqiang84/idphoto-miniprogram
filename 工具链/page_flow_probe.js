@@ -131,6 +131,7 @@ async function probePage(tool, options = {}) {
         loaded[path.relative(ROOT, modulePath)] = crypto.createHash('sha256').update(fs.readFileSync(modulePath)).digest('hex');
         if (!['processingSession', 't1Workflow'].includes(name)) return require(modulePath);
       }
+      if (request === './exportInspection' || request.endsWith('/services/exportInspection')) return load(path.resolve(ROOT, 'idphoto-miniprogram/src/services/exportInspection.ts'));
       if (request.endsWith('/services/t1Processing')) return load(path.resolve(path.dirname(file), request + '.ts'));
       if (request.endsWith('/core/t1Workflow')) {
         const modulePath = require.resolve('../idphoto-miniprogram/src/core/t1Workflow');

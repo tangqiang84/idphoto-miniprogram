@@ -1,0 +1,28 @@
+✖ RC-08实际T6旋转照片后源裁剪比例保持，纸张按真实落盘值核验 (186.948289ms)
+✔ RC-08 T6文件格式不符不提供预览保存；不可拼版美签不生成废图 (11.060904ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 563.012066
+
+✖ failing tests:
+
+test at 工具链/tests/print_output.test.js:7:1
+✖ RC-08实际T6旋转照片后源裁剪比例保持，纸张按真实落盘值核验 (186.948289ms)
+  AssertionError [ERR_ASSERTION]: 6寸二寸最优旋转排版应真实旋转图像
+      at Object.exercise (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/print_output.test.js:7:185)
+      at async probePage (/Users/tq/WorkBuddy/XiaoChengXu/工具链/page_flow_probe.js:181:35)
+      at async TestContext.<anonymous> (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/print_output.test.js:7:69)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

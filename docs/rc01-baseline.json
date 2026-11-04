@@ -1,8 +1,8 @@
 {
-  "version": "RC-01-v1.8",
+  "version": "RC-01-v1.9",
   "date": "2026-10-28",
   "git_head": "f4d94b1de354fce7af90ac73540c2d536af385e3",
-  "scope": "需求/现状文档审查；未运行本轮业务端到端或真机验收",
+  "scope": "需求/现状基线；业务验收按各RC本轮报告分别记录，不代表全产品发布通过",
   "decisions": [
     {
       "id": "D-01",
@@ -36,12 +36,12 @@
     "idphoto-miniprogram/src/components/BeautyStep/index.tsx": "7c9f3b48dd0480783f21b8cc7368815023726530566a69da06520c01fd5d8bf6",
     "idphoto-miniprogram/src/components/CameraGuide/index.tsx": "386e64797630314e907629cdc5e0503c82c7591f5ebea9234e3e8c8bcb145678",
     "idphoto-miniprogram/src/components/CropStep/index.tsx": "8e84757c24e1226a58d5bf420c89930242e0fe2274df132f9b2dbe7c9c736a82",
-    "idphoto-miniprogram/src/components/DpiStep/index.tsx": "a3296e86907774fc3acedef8beee5da0c5734076a7f4994d9f14c0248f306bd3",
+    "idphoto-miniprogram/src/components/DpiStep/index.tsx": "7b010e9bf4c181cfeb2e22dc3b9d3a948484deed93a255036290d4109770aa6d",
     "idphoto-miniprogram/src/components/QualityTip/index.tsx": "f2007b8bbfadd6c24dfcd65709ece6854e579c804e6ecbd36a0eba0abdeccf93",
     "idphoto-miniprogram/src/components/StepFlow/index.tsx": "8346a538a96f6f52fd2d3d5cf30c92c856d448b11f2523981a6521daaf4b53fa",
     "idphoto-miniprogram/src/core/beauty.js": "12c56cb8349a21bb479f1ea64b7c023ebd66365ec1d8191b4e2074a52df0d38f",
     "idphoto-miniprogram/src/core/color.js": "31f691c6e8ebf665cf781ad0a7e524d62c759ed067fab693dceba0cace7325eb",
-    "idphoto-miniprogram/src/core/compliance.js": "7436a1d0f5eb469f99a8b008d06ff7898181fc7e4041ba5f7c85a84d330f1984",
+    "idphoto-miniprogram/src/core/compliance.js": "c994358dffc07e691dc222b96c3a0cd42ffe77e2d7785d016eaeba2532c66527",
     "idphoto-miniprogram/src/core/compose.js": "dfb0ba60b977a26fdc4565268fe8e7fb89b98de18f7b29acffdc750814c35091",
     "idphoto-miniprogram/src/core/cropWindow.js": "ae59c53b6531aab0855dc38f6bf4760427e143c0bc044ae4ec757c91c156f0f9",
     "idphoto-miniprogram/src/core/face.js": "cf9dcdd83b63173602999680291252bc1cc5f7eb6f9634d730af9d239769fa54",
@@ -64,24 +64,27 @@
     "idphoto-miniprogram/src/pages/privacy/index.tsx": "fcda8d8d85731e0506952373157f97d1330b4a0e1097095d8c6d66f6328f826f",
     "idphoto-miniprogram/src/pages/tool-bg/index.tsx": "0c07c14b922d83a50aaae392f4928c164b90771131be04a6256f02f7c2ef3c1b",
     "idphoto-miniprogram/src/pages/tool-check/index.tsx": "32c9a9bbef2781490cbdca04e5ae5fcf737e1b9e4a35b74063f7464795396a45",
-    "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx": "28bf7b371117297e91380f9cfab3b4307810000cc3fef6878e16c9610fa27305",
-    "idphoto-miniprogram/src/pages/tool-print/index.tsx": "ba15490327f8846aa3e405f9ab92ec4c0f18fabcc6058ced7581ceeae3167241",
+    "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx": "d25e730f9ffd210a45e855e60ddf598b62790aed8b091b30a9a63f27455904d2",
+    "idphoto-miniprogram/src/pages/tool-print/index.tsx": "6cd1714651098a1b7acf04770dda0a734376cb2c97cf189e030b3a993c5f89a6",
     "idphoto-miniprogram/src/pages/tool-spec/index.tsx": "f1d54d02836b8d6c3d8aeeaca08598bd571bb395ed0371c42f7071e269579098",
     "idphoto-miniprogram/src/pages/tool-suit/index.tsx": "95665a0a40ab054e0d16a7d60c8751ee4d79b851ff2324c45a730e371e9b4a90",
     "idphoto-miniprogram/src/services/faceService.ts": "632ced63daf622c715113dcb309856cce020699c50724ed352837a681418845e",
     "idphoto-miniprogram/src/services/modelService.ts": "ebd993acc2dbb70a18bb5ed7c67dd98e0d5232e18770006cd21e36382727659b",
     "idphoto-miniprogram/src/services/pipeline.ts": "29b9851b25eec8d891adb9b6357e09b724e7017847c0aa859b5a77bcc0c2a50c",
     "idphoto-miniprogram/src/services/poseService.ts": "78837c4d614b8877fca41e072f932f93d294db7d969b8505ac6ca3199bc39e7c",
-    "idphoto-miniprogram/src/services/renderService.ts": "46f8c6560521f3c336f148ac247867f8c8a00ccc9d380592d7e77c6f332cc7d8",
-    "idphoto-miniprogram/src/core/t1Workflow.js": "a8b919c79bb93f7f84d8085cd6685283e9fa4537095b128b3ac630d12adddd34",
-    "idphoto-miniprogram/src/services/t1Processing.ts": "f905efd244f0be2f2ce4ca2c509c63b09a983bbf0acc8f88a158e5c2f42cbc00",
+    "idphoto-miniprogram/src/services/renderService.ts": "5619a0bbd02a05cb09902c7f89239e5d793ace9152371ec9f97339124c972e35",
+    "idphoto-miniprogram/src/core/t1Workflow.js": "ea8491859815b70d1b0856f251043821fc735a4b9108342b16f917337aa20797",
+    "idphoto-miniprogram/src/services/t1Processing.ts": "78d3547786f0b271eaf9560b4c38ed3270b7fe6590542af40be3f25d54629478",
     "idphoto-miniprogram/src/hooks/useT1Workflow.ts": "b3462372b3baeaf6817635868d7ea284eb283d06fe5ecf24127cf6f716d819ff",
     "idphoto-miniprogram/src/core/consentSession.js": "d845f57a1cc64ece5ef04b777bb2297c63a25f75ad1256518a6ea31c3e67bfc7",
     "idphoto-miniprogram/src/hooks/useActionConsent.ts": "b59bb14462123218b7b439b1e936e25d8c7a43c89b0e19c0f43049c9c3b8f930",
     "idphoto-miniprogram/src/services/cloudFnAdapter.ts": "b7f792b026a4edb83032b5140c1793cdd39199f1ab14f8a3195745eee451f6c5",
     "idphoto-miniprogram/src/services/index.ts": "84a00bfba0fe241ba9f060043c8f9fd4fe63b76c3ea5e3f70fcb3cf0d8bc976c",
     "idphoto-miniprogram/src/components/BackgroundControl/index.tsx": "0a5e684dd3a8c9facbe665cc83beb21c5c368656150daaa2ea45f320b1726c3d",
-    "idphoto-miniprogram/src/components/PhotoTool/index.tsx": "1bcf8026856b4c56731d2363ad655952546779ea2b16d81a5f8a95b41513336c"
+    "idphoto-miniprogram/src/components/PhotoTool/index.tsx": "55ad25b85fc1741bb460233c2dd247c1cd8216916e919f94c480b77d3d8c02c1",
+    "idphoto-miniprogram/src/core/outputEvidence.js": "cd61e5f2f39f98a201df8dac912840f856dd8ddfbd27ef4da746b4f5a82adb49",
+    "idphoto-miniprogram/src/core/printGeometry.js": "19e76eba88a25fa8d657e0c51c116b9f2aee98f55d8c45d086a3cfdfe9572fa7",
+    "idphoto-miniprogram/src/services/exportInspection.ts": "15fbbf568478aa5b3a277f1b66d1132fdc1aed22f9bbfe3597bd6334463de2f8"
   },
   "requirements": [
     {
@@ -596,9 +599,12 @@
         "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
         "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
         "idphoto-miniprogram/src/services/t1Processing.ts",
-        "idphoto-miniprogram/src/hooks/useT1Workflow.ts"
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts",
+        "idphoto-miniprogram/src/core/outputEvidence.js",
+        "idphoto-miniprogram/src/services/exportInspection.ts",
+        "idphoto-miniprogram/src/core/printGeometry.js"
       ],
-      "gap": "T5保留九标准规格、自定义1–5000整数像素和KB压缩上限，裁剪/档位/最终输出独立；全部规格及元数据一致性归RC-08。",
+      "gap": "T5九规格双档、自定义固定像素与KB输出继续统一会话；固定72条四工具页面/适配路径通过，元数据无写入承诺。",
       "acceptance": "像素1–5000边界及非法输入、KB上限可测；自定义目标比例参与裁剪。",
       "tasks": [
         "RC-07",
@@ -680,9 +686,12 @@
         "idphoto-miniprogram/src/services/renderService.ts",
         "idphoto-miniprogram/src/core/compose.js",
         "idphoto-miniprogram/src/components/DpiStep/index.tsx",
-        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/core/outputEvidence.js",
+        "idphoto-miniprogram/src/services/exportInspection.ts",
+        "idphoto-miniprogram/src/core/printGeometry.js"
       ],
-      "gap": "T1默认JPG，完整JPG/PNG选择与硬指标门控待补验。",
+      "gap": "最终导出核验实际尺寸、格式与原始字节；300档机构KB边界严格，不用取整掩盖超限。真实文件矩阵及像素/元数据证据见RC-08报告；模型/视觉/实体机仍另验。",
       "acceptance": "读取实际文件格式/像素/KB与底色；无水印免费；不能只看页面参数。",
       "tasks": [
         "RC-08",
@@ -708,9 +717,12 @@
         "idphoto-miniprogram/src/services/renderService.ts",
         "idphoto-miniprogram/src/core/compose.js",
         "idphoto-miniprogram/src/components/DpiStep/index.tsx",
-        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/core/outputEvidence.js",
+        "idphoto-miniprogram/src/services/exportInspection.ts",
+        "idphoto-miniprogram/src/core/printGeometry.js"
       ],
-      "gap": "已有600档，工作画布可能放大后用于像素评估。",
+      "gap": "300/600为输出像素档，不承诺文件dpi元数据；原图有效裁剪与工作/处理输入分开溯源，低像素明确提示，不把放大工作图当真实细节。",
       "acceptance": "用原图裁剪区域真实像素判断；不足警示；核对目标像素，不要求dpi标签。",
       "tasks": [
         "RC-08"
@@ -733,9 +745,12 @@
       "evidence": [
         "idphoto-miniprogram/src/core/compliance.js",
         "idphoto-miniprogram/src/pages/tool-check/index.tsx",
-        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/core/outputEvidence.js",
+        "idphoto-miniprogram/src/services/exportInspection.ts",
+        "idphoto-miniprogram/src/core/printGeometry.js"
       ],
-      "gap": "core 有 advisory；页面更新档位后旧报告是否失效需验。",
+      "gap": "机构文件KB原始字节在300档严格、600档只提示；T5用户显式上限两档仍严格。负例与边界回归已补。",
       "acceptance": "600dpi仅KB超限不阻断/不计建议；300dpi同图按对应规则判定。",
       "tasks": [
         "RC-08"
@@ -1025,9 +1040,12 @@
         "idphoto-miniprogram/src/core/paperLibrary.js",
         "idphoto-miniprogram/src/core/printHandoff.js",
         "idphoto-miniprogram/src/pages/tool-print/index.tsx",
-        "相纸尺寸口径对照表.md"
+        "相纸尺寸口径对照表.md",
+        "idphoto-miniprogram/src/core/outputEvidence.js",
+        "idphoto-miniprogram/src/services/exportInspection.ts",
+        "idphoto-miniprogram/src/core/printGeometry.js"
       ],
-      "gap": "平铺算法存在；输出真实几何待复验。",
+      "gap": "16相纸×9规格纯几何检查和真实T6文件样例；毫米坐标后一次舍入，单张相纸不可拼版、放不下拒绝。纸张旋转与照片旋转区分；非实体机冲印结果。",
       "acceptance": "固定纸/照片尺寸独立算张数、朝向、边距；每张无拉伸越界。",
       "tasks": [
         "RC-08"
@@ -1048,9 +1066,12 @@
         "idphoto-miniprogram/src/core/paperLibrary.js",
         "idphoto-miniprogram/src/core/printHandoff.js",
         "idphoto-miniprogram/src/pages/tool-print/index.tsx",
-        "相纸尺寸口径对照表.md"
+        "相纸尺寸口径对照表.md",
+        "idphoto-miniprogram/src/core/outputEvidence.js",
+        "idphoto-miniprogram/src/services/exportInspection.ts",
+        "idphoto-miniprogram/src/core/printGeometry.js"
       ],
-      "gap": "相纸像素规划与合成存在；元数据按已确认档位语义。",
+      "gap": "最终JPG尺寸/格式/字节实测；白底及参考线保留，开参考线会写入拼版图。相纸mm×原生像素档，不承诺DPI元数据。",
       "acceptance": "按物理尺寸独立算像素，误差≤1px，PNG/JPG实际可读无水印。",
       "tasks": [
         "RC-08",
@@ -1072,9 +1093,12 @@
         "idphoto-miniprogram/src/core/paperLibrary.js",
         "idphoto-miniprogram/src/core/printHandoff.js",
         "idphoto-miniprogram/src/pages/tool-print/index.tsx",
-        "相纸尺寸口径对照表.md"
+        "相纸尺寸口径对照表.md",
+        "idphoto-miniprogram/src/core/outputEvidence.js",
+        "idphoto-miniprogram/src/services/exportInspection.ts",
+        "idphoto-miniprogram/src/core/printGeometry.js"
       ],
-      "gap": "不可拼版数据与提示存在，需验真实导出。",
+      "gap": "全部16相纸×9规格独立固定整纸像素（容差1）及边界、单张/拒绝几何；打印机实体机物理误差仍归RC-12。",
       "acceptance": "instax仅一张，无法容纳时拒绝，不静默缩小规格或忽略白边。",
       "tasks": [
         "RC-08"
@@ -1631,9 +1655,12 @@
         "idphoto-miniprogram/src/services/renderService.ts",
         "idphoto-miniprogram/src/core/compose.js",
         "idphoto-miniprogram/src/components/DpiStep/index.tsx",
-        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/core/outputEvidence.js",
+        "idphoto-miniprogram/src/services/exportInspection.ts",
+        "idphoto-miniprogram/src/core/printGeometry.js"
       ],
-      "gap": "现DpiStep优先工作图，真实像素追踪不足。",
+      "gap": "原图有效裁剪/工作画布/分割入口/处理裁剪/目标分别记录；处理分辨率不足提示。未观测模型内部缩放，不宣称神经模型内部输入达标。",
       "acceptance": "大原图小裁剪、低像素放大工作图均能揭示警告。",
       "tasks": [
         "RC-08"
@@ -3627,6 +3654,118 @@
       "previous_sha256": "cd23c6561778776741fb2237d975ec2aeb96e06a04b0a4aa2c79337f0194de87",
       "sha256": "a8b919c79bb93f7f84d8085cd6685283e9fa4537095b128b3ac630d12adddd34",
       "reason": "T2底色在最终照片坐标合成，避免工作余量裁掉渐变端点；T1/T3规则不放宽。"
+    },
+    {
+      "task": "RC-08",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/components/DpiStep/index.tsx",
+      "previous_sha256": "a3296e86907774fc3acedef8beee5da0c5734076a7f4994d9f14c0248f306bd3",
+      "sha256": "7b010e9bf4c181cfeb2e22dc3b9d3a948484deed93a255036290d4109770aa6d",
+      "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
+    },
+    {
+      "task": "RC-08",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+      "previous_sha256": "1bcf8026856b4c56731d2363ad655952546779ea2b16d81a5f8a95b41513336c",
+      "sha256": "55ad25b85fc1741bb460233c2dd247c1cd8216916e919f94c480b77d3d8c02c1",
+      "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
+    },
+    {
+      "task": "RC-08",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/compliance.js",
+      "previous_sha256": "7436a1d0f5eb469f99a8b008d06ff7898181fc7e4041ba5f7c85a84d330f1984",
+      "sha256": "c994358dffc07e691dc222b96c3a0cd42ffe77e2d7785d016eaeba2532c66527",
+      "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
+    },
+    {
+      "task": "RC-08",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/outputEvidence.js",
+      "previous_sha256": null,
+      "sha256": "cd61e5f2f39f98a201df8dac912840f856dd8ddfbd27ef4da746b4f5a82adb49",
+      "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
+    },
+    {
+      "task": "RC-08",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/printGeometry.js",
+      "previous_sha256": null,
+      "sha256": "19e76eba88a25fa8d657e0c51c116b9f2aee98f55d8c45d086a3cfdfe9572fa7",
+      "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
+    },
+    {
+      "task": "RC-08",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+      "previous_sha256": "28bf7b371117297e91380f9cfab3b4307810000cc3fef6878e16c9610fa27305",
+      "sha256": "d25e730f9ffd210a45e855e60ddf598b62790aed8b091b30a9a63f27455904d2",
+      "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
+    },
+    {
+      "task": "RC-08",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/pages/tool-print/index.tsx",
+      "previous_sha256": "ba15490327f8846aa3e405f9ab92ec4c0f18fabcc6058ced7581ceeae3167241",
+      "sha256": "6cd1714651098a1b7acf04770dda0a734376cb2c97cf189e030b3a993c5f89a6",
+      "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
+    },
+    {
+      "task": "RC-08",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/exportInspection.ts",
+      "previous_sha256": null,
+      "sha256": "15fbbf568478aa5b3a277f1b66d1132fdc1aed22f9bbfe3597bd6334463de2f8",
+      "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
+    },
+    {
+      "task": "RC-08",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/renderService.ts",
+      "previous_sha256": "46f8c6560521f3c336f148ac247867f8c8a00ccc9d380592d7e77c6f332cc7d8",
+      "sha256": "5619a0bbd02a05cb09902c7f89239e5d793ace9152371ec9f97339124c972e35",
+      "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
+    },
+    {
+      "task": "RC-08",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/t1Processing.ts",
+      "previous_sha256": "f905efd244f0be2f2ce4ca2c509c63b09a983bbf0acc8f88a158e5c2f42cbc00",
+      "sha256": "882e580b6b004bd1d3c3ff037c1512000eece53eff1cd18372b8ecb42147a2ab",
+      "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
+    },
+    {
+      "task": "RC-08",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/t1Processing.ts",
+      "previous_sha256": "882e580b6b004bd1d3c3ff037c1512000eece53eff1cd18372b8ecb42147a2ab",
+      "sha256": "f0c9ff663866c498956bfd10b822479916ba9d671e7bef6b77af394ada13c3ee",
+      "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
+    },
+    {
+      "task": "RC-08",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/t1Workflow.js",
+      "previous_sha256": "a8b919c79bb93f7f84d8085cd6685283e9fa4537095b128b3ac630d12adddd34",
+      "sha256": "ea8491859815b70d1b0856f251043821fc735a4b9108342b16f917337aa20797",
+      "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
+    },
+    {
+      "task": "RC-08",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/t1Processing.ts",
+      "previous_sha256": "f0c9ff663866c498956bfd10b822479916ba9d671e7bef6b77af394ada13c3ee",
+      "sha256": "297803bd334fc972daa85baff0b6ee06f76b3f15fb95621bf69ede8d50b6533e",
+      "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
+    },
+    {
+      "task": "RC-08",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/t1Processing.ts",
+      "previous_sha256": "297803bd334fc972daa85baff0b6ee06f76b3f15fb95621bf69ede8d50b6533e",
+      "sha256": "78d3547786f0b271eaf9560b4c38ed3270b7fe6590542af40be3f25d54629478",
+      "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
     }
   ]
 }

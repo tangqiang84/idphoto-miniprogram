@@ -1,0 +1,496 @@
+{
+  "status": "PASS",
+  "timestamp": "2026-11-04T09:04:47.033742+00:00",
+  "records": [
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-one-inch-300.jpg",
+      "status": "PASS",
+      "size": [
+        295,
+        413
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 37902,
+      "sha256": "6ab3e13849a8e042d4ebde125c9a7a76ef21ceac8e73c20c98cd8b06cf678022",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-one-inch-600.jpg",
+      "status": "PASS",
+      "size": [
+        591,
+        827
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 121316,
+      "sha256": "f2e49dedb2398debd0480cbbc73d7fdef81eb402fb97847c25d50b86097857d4",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-small-one-inch-300.jpg",
+      "status": "PASS",
+      "size": [
+        260,
+        378
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 32563,
+      "sha256": "5a4268d83f4cbe8353a081407514568415378696c96d471efad8283de0912102",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-small-one-inch-600.jpg",
+      "status": "PASS",
+      "size": [
+        520,
+        756
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 101773,
+      "sha256": "d70adf3318c5d3120e104c7654cfed524195c5820c2f93b52e8fa5a6881af682",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-driver-license-300.jpg",
+      "status": "PASS",
+      "size": [
+        260,
+        378
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 32563,
+      "sha256": "5a4268d83f4cbe8353a081407514568415378696c96d471efad8283de0912102",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-driver-license-600.jpg",
+      "status": "PASS",
+      "size": [
+        520,
+        756
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 101773,
+      "sha256": "d70adf3318c5d3120e104c7654cfed524195c5820c2f93b52e8fa5a6881af682",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-two-inch-300.jpg",
+      "status": "PASS",
+      "size": [
+        413,
+        579
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 67321,
+      "sha256": "c7c4e2d316a397ba2fa0f4574186fa771fe85b195b6524d3ea0c5425c51eafe9",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-two-inch-600.jpg",
+      "status": "PASS",
+      "size": [
+        827,
+        1157
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 212793,
+      "sha256": "e491e85bf7d130d6f628d0431a8dc825a2ed8fa6ea77182d13df6735ba139529",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-small-two-inch-300.jpg",
+      "status": "PASS",
+      "size": [
+        413,
+        531
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 61725,
+      "sha256": "64a183f37657980f9db132b3b701fc34bbe975d9de6cdcf9b9c2c82b4a7d34d4",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-small-two-inch-600.jpg",
+      "status": "PASS",
+      "size": [
+        827,
+        1063
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 195919,
+      "sha256": "6671acb30e6df671cf9903785251e6e4ec9cf744b0a8658c571ad4027a0873cb",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-big-one-inch-300.jpg",
+      "status": "PASS",
+      "size": [
+        390,
+        567
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 62990,
+      "sha256": "b6054dbc2119235224afc8f7517ef0184a2e210559940e52b4858ddb9cc9eb0f",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-big-one-inch-600.jpg",
+      "status": "PASS",
+      "size": [
+        780,
+        1134
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 199895,
+      "sha256": "1b8c4ba32643fa0a54e8caa92fd4e906d19e7e4068c55bde69d3f6d6b45b1d90",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-big-two-inch-300.jpg",
+      "status": "PASS",
+      "size": [
+        413,
+        626
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 72897,
+      "sha256": "c7c0a59fde5c2cadfec5ff138cdeef899e3dabc84e77de66089df67c87e910e0",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-big-two-inch-600.jpg",
+      "status": "PASS",
+      "size": [
+        827,
+        1252
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 228013,
+      "sha256": "9342548b9a87933113cfde2df1b0be80c0df8b800795a4ceb2d5ec1091b795df",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-passport-cn-300.jpg",
+      "status": "PASS",
+      "size": [
+        390,
+        567
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 62990,
+      "sha256": "b6054dbc2119235224afc8f7517ef0184a2e210559940e52b4858ddb9cc9eb0f",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-passport-cn-600.jpg",
+      "status": "PASS",
+      "size": [
+        780,
+        1134
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 199895,
+      "sha256": "1b8c4ba32643fa0a54e8caa92fd4e906d19e7e4068c55bde69d3f6d6b45b1d90",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-visa-us-300.jpg",
+      "status": "PASS",
+      "size": [
+        600,
+        600
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 100721,
+      "sha256": "dd42e189e72be0f84f78d74a6c287e782b48f224d57f6ddf0bb27a65f59888d7",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T5-visa-us-600.jpg",
+      "status": "PASS",
+      "size": [
+        1200,
+        1200
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 255245,
+      "sha256": "bd7f0a8d72c45bec85d3f12637d6a008c3f5fb56497dcc08a5bf7d68d805d92e",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T6-six-one.jpg",
+      "status": "PASS",
+      "size": [
+        1795,
+        1205
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 442630,
+      "sha256": "818dcce8ad289ca88ea1a22a158765506ead29b891cf7fb2aba6fa95e0767877",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位",
+      "white_corner": true
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T6-six-two-rotated.jpg",
+      "status": "PASS",
+      "size": [
+        1205,
+        1795
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 315087,
+      "sha256": "1b2f99a0b1e700739093937f7df89e780d1c05bd2f75818f1752c01bb67a2c53",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位",
+      "white_corner": true
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T6-instax-one.jpg",
+      "status": "PASS",
+      "size": [
+        1016,
+        638
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 48105,
+      "sha256": "2e7c6c241fe12141e0565940c710af83751a37c26c2e920e96d07618d46397a6",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位",
+      "white_corner": true
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T6-zink-one.jpg",
+      "status": "PASS",
+      "size": [
+        937,
+        628
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 96095,
+      "sha256": "531db78a27384e6e0da362ac0ed15da01007157b83943c273ac51299aab5dee8",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位",
+      "white_corner": true
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-matrix-final/T6-twelve-one.jpg",
+      "status": "PASS",
+      "size": [
+        3000,
+        3602
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 3100183,
+      "sha256": "379cf61ccc2048b00372cf7a9df04fd5836553fa6588eda42c516fc8f32ec35f",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位",
+      "white_corner": true
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-tools/T1/result.jpg",
+      "status": "PASS",
+      "size": [
+        295,
+        413
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 37622,
+      "sha256": "99dc5c11e06e0bbd469c97c8bdb8a159f871b2b1c71e859db9ce9e629634a439",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-tools/T2/result.png",
+      "status": "PASS",
+      "size": [
+        591,
+        827
+      ],
+      "format": "PNG",
+      "mode": "RGBA",
+      "bytes": 935082,
+      "sha256": "8317f332f85371b19da01f71bd9b28cc81936e94ce6721cd7ece5b54871f6ca8",
+      "observed_dpi": null,
+      "jfif_density": null,
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-tools/T3/result.jpg",
+      "status": "PASS",
+      "size": [
+        295,
+        413
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 33550,
+      "sha256": "5e2e88feda5152a2f23c7e46da1bfa365174af86cfeb23bd85390f5729485507",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    },
+    {
+      "file": "docs/验证记录/RC-08-implementation/sdk-tools/T5/result.jpg",
+      "status": "PASS",
+      "size": [
+        295,
+        413
+      ],
+      "format": "JPEG",
+      "mode": "RGB",
+      "bytes": 39327,
+      "sha256": "90a7d0cd47405ea3f310f82995fe88ba7d2b6bc63f6f69db1994b07fb62ff8f9",
+      "observed_dpi": null,
+      "jfif_density": [
+        1,
+        1
+      ],
+      "metadata_contract": "应用未主动写入DPI；平台附带值不视为用户选定像素档位"
+    }
+  ],
+  "errors": [],
+  "scope": "固定授权样本27个实际文件；非模型质量、真机或实体冲印认证"
+}

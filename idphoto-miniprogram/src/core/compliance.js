@@ -80,10 +80,10 @@ function check(specId, measured) {
   const dpiOk = dpi >= DPI_STD;
   checks.push({
     key: 'dpi',
-    label: '分辨率',
+    label: '输出像素档位',
     pass: dpiOk,
     level: 'required',
-    detail: `实测 ${dpi}dpi，要求 ≥${DPI_STD}dpi`,
+    detail: `按 ${dpi}dpi 档位换算目标像素，不代表已读取或写入文件dpi元数据`,
   });
 
   // 3. 文件大小（区间判定：下限 ≤ 实测 ≤ 上限）

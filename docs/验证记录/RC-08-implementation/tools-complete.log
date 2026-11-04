@@ -1,0 +1,169 @@
+✔ upload-boundaries (13.774412ms)
+✔ color-equivalence-and-rejection (83.769478ms)
+✔ fixed-spec-reference (1.832258ms)
+✔ beauty-forbidden-options (2.110816ms)
+✔ paper-independent-reference (0.899764ms)
+✔ compliance-restricted-background (0.947513ms)
+✔ crop-before-downstream-oracle (0.389517ms)
+✔ estimate-is-not-measured-shoulder (0.241275ms)
+✔ expected-rejection-is-not-product-success (0.37434ms)
+✔ RC-07真实颜色控件：HEX/RGB等价、越界不调用处理、渐变和透明可明确切换 (876.513ms)
+✔ RC-06实际选图hook：T1/T2/T3/T4未本地授权，相册和相机零调用 (2501.66192ms)
+✔ RC-06实际选图hook：仅本地可选；在相册回传前撤回再授权，旧照片不读不处理 (104.9933ms)
+✔ RC-06实际相机hook：打开后撤回关闭预览，迟到拍摄不读取照片 (64.944627ms)
+✔ RC-06仅本地低置信抠图仍返回本地结果，不发出云请求且明确质量限制 (5.7489ms)
+✔ RC-06 T1处理在途撤回，迟到工作画布不会抠图或提供成品 (70.607668ms)
+✔ RC-06旧页面：T2/T3/T4在途授权变化后不继续处理、不恢复结果 (42.303745ms)
+✔ RC-06 T5/T6实际页面与选图hook不强加人脸授权 (175.0404ms)
+✔ RC-06 T3仅本地授权可以取图，换装动作须独立同意，拒绝时零抠图 (20.135053ms)
+✔ RC-06撤回后质量评估提示也不能继续显示或在重新授权时复活 (208.436704ms)
+✔ RC-06质量采样迟到，撤回再同意也不能回写或进入处理 (17.943576ms)
+✔ RC-06真实云适配器：默认拒绝，只有cloud授权可调用；撤回前的迟到返回丢弃 (622.991482ms)
+✔ RC-06保留的HTTP云工厂同样默认拒绝无权限，撤回时丢弃返回 (340.109876ms)
+✔ RC-06真实姿态服务：缺基础/上云/换装任一授权均零上传，撤回后不接受返回 (234.781559ms)
+✔ 76 requirements match baseline and registry has no execution PASS (17.996299ms)
+✔ missing fields, duplicates, unknown references and unknown modes fail (524.812407ms)
+✔ directories, escaping paths and absent assertion selectors fail (32.370474ms)
+✔ structural flow and pixel privacy evidence cannot claim primary acceptance (292.502996ms)
+✔ existing scripts and partial assertions never imply complete requirement (0.372016ms)
+✔ empty, omitted and reduced registries cannot bypass the coverage gate (210.670914ms)
+✔ CLI rejects an empty manifest rather than declaring zero gaps (857.066589ms)
+✔ CLI emits parseable JSON and honest gate exit codes (1992.904912ms)
+✔ report output is exclusive and preserves old content (745.705283ms)
+✔ T1裁剪缩放是绝对比例，连续80%不复合缩小，拖动回写同一原图窗 (943.398598ms)
+✔ T1程序化定位事件不冒充用户拖动或覆盖待确认裁剪 (177.256277ms)
+✔ RC-08实际档位组件：大原图小裁剪必警告，已放大工作图或缺失裁剪证据不能误报满足 (1171.90613ms)
+✔ RC-08实际档位组件：自定义固定像素也评估清晰度，档位不冒充元数据实测 (99.944958ms)
+✔ 新基础库chooseMedia与旧chooseImage都规范为同一照片/字节契约 (2.839317ms)
+✔ 取消、缺失接口、空结果与读取失败均结构化，原异常不向外暴露 (1.320148ms)
+✔ RC-08 T1真实页面/平台适配九规格双档72路径固定尺寸与像素溯源 (2102.922919ms)
+✔ RC-08 T2真实页面/平台适配九规格双档72路径固定尺寸与像素溯源 (1022.418118ms)
+✔ RC-08 T3真实页面/平台适配九规格双档72路径固定尺寸与像素溯源 (248.130145ms)
+✔ RC-08 T5真实页面/平台适配九规格双档72路径固定尺寸与像素溯源 (229.815252ms)
+✔ RC-08最终文件原始字节边界：300严格、600机构提示；T5显式上限两档都严格 (67.150406ms)
+✔ RC-08实际格式不符即拒绝最终成品，不按请求扩展名假定格式 (32.20312ms)
+✖ RC-08 T5压缩后再次核验到更大文件时必须按最后实际字节拒绝，不能沿用压缩循环读数 (18.848615ms)
+✔ RC-08实际T6旋转相纸后源裁剪比例保持，纸张按真实落盘值核验 (765.676184ms)
+✔ RC-08 T6文件格式不符不提供预览保存；不可拼版美签不生成废图 (26.89066ms)
+✔ T1真实页面回调：各步骤独立，裁剪和美颜确认前零下游，确认档位后才有最终文件 (903.104671ms)
+✔ T1跳过美颜不调用美颜；返回保留裁剪和参数，改规格重新确认 (18.718582ms)
+✔ T1换装两次新结果都要求自检；当前自检撤销后不能保存或冲印 (22.52099ms)
+✔ T1旧保存/冲印/修补回调不能消费新任务结果，当前修补仍有效 (19.80037ms)
+✔ T1旧prepare迟到、重复确认和取消不能再触发抠图；失败可重试 (15.481449ms)
+✔ T1导出硬指标失败或文件信息缺失，不能提供最终成品入口 (79.919238ms)
+✔ T1镜像与预审不可绕过，旧步骤确认回调不得触发处理 (40.744291ms)
+✔ T1本地智能建议保留原图坐标，且不冒充美颜/最终成品 (20.833975ms)
+✔ RC-06 T1成品后撤回上云/本地授权使旧输出和旧保存回调失效 (33.497886ms)
+✔ RC-07实际T2页面：规格必选，裁剪/美颜后处理，无换装；HEX/RGB/渐变/透明输出角色正确 (1110.162836ms)
+✔ RC-07实际T3页面：九规格、无跳过按钮，换装预览与最终文件都须当前自检 (33.799108ms)
+✔ RC-07实际T5页面：确认裁剪后档位，修改自定义与KB保参，整个链路零人脸算法 (164.690693ms)
+✔ RC-07 T4隔离回归：只读原图出检测报告，不生成或保存图片 (47.082717ms)
+✔ RC-07 T6隔离回归：独立无脸授权拼版，实际调用输出固定相纸几何 (41.643521ms)
+ℹ tests 61
+ℹ suites 0
+ℹ pass 60
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7565.958107
+
+✖ failing tests:
+
+test at 工具链/tests/output_matrix.test.js:19:1
+✖ RC-08 T5压缩后再次核验到更大文件时必须按最后实际字节拒绝，不能沿用压缩循环读数 (18.848615ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + {
+  +   backend: undefined,
+  +   colorRisk: false,
+  +   degraded: undefined,
+  +   dpi: 600,
+  +   dpiMetadata: 'not-written',
+  +   fileBytes: 204801,
+  +   fileKb: 200,
+  +   fileType: 'jpg',
+  +   headRatio: null,
+  +   height: 827,
+  +   isFinal: true,
+  +   key: '[1,["source",{"path":"probe://valid.png","width":640,"height":800,"forceCloud":false}],["specId","one-inch"],["bg","white"],["beauty",{"enabled":false,"smooth":0.35,"whiten":0.3,"brighten":0.2}],["suit",{"enabled":false,"templateId":"black"}],["consents",[]],["cropWindow",{"x":34.28571428571428,"y":0,"w":571.4285714285714,"h":800,"ratio":0.7142857142857143}],["cropConfirmed",true],["customTarget",null]]',
+  +   pixelEvidence: {
+  +     effective: {
+  +       height: 800,
+  +       width: 571.4285714285714
+  +     },
+  +     processingCrop: {
+  +       height: 827,
+  +       width: 591
+  +     },
+  +     processingEnough: true,
+  +     segmentationInput: null,
+  +     source: {
+  +       height: 800,
+  +       width: 640
+  +     },
+  +     sourceEnough: false,
+  +     target: {
+  +       dpi: 600,
+  +       height: 827,
+  +       width: 591
+  +     },
+  +     work: {
+  +       height: 827,
+  +       width: 591
+  +     }
+  +   },
+  +   preview: 'fixture://0',
+  +   result: {
+  +     checks: [
+  +       {
+  +         key: 'dimension',
+  +         label: '尺寸',
+  +         pass: true
+  +       },
+  +       {
+  +         key: 'dpi',
+  +         label: '像素档位',
+  +         pass: true
+  +       },
+  +       {
+  +         key: 'bg',
+  +         label: '保留原图底色',
+  +         pass: true
+  +       },
+  +       {
+  +         key: 'filesize',
+  +         label: '文件大小',
+  +         pass: false
+  +       }
+  +     ],
+  +     dpi: 600,
+  +     pass: true,
+  +     suggestions: [],
+  +     target: {
+  +       dpi: 600,
+  +       height: 827,
+  +       width: 591
+  +     }
+  +   },
+  +   revision: 3,
+  +   suitApplied: false,
+  +   suitReason: undefined,
+  +   traceId: 'T1-1793781787757-80-1',
+  +   width: 591
+  + }
+  - null
+  
+      at Object.exercise (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/output_matrix.test.js:19:358)
+      at async probePage (/Users/tq/WorkBuddy/XiaoChengXu/工具链/page_flow_probe.js:181:35)
+      at async TestContext.<anonymous> (/Users/tq/WorkBuddy/XiaoChengXu/工具链/tests/output_matrix.test.js:19:202)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { preview: 'fixture://0', fileType: 'jpg', dpiMetadata: 'not-written', fileBytes: 204801, pixelEvidence: { source: [Object], effective: [Object], work: [Object], processingCrop: [Object], segmentationInput: null, target: [Object], sourceEnough: false, processingEnough: true }, colorRisk: false, isFinal: true, result: { pass: true, target: [Object], checks: [Array], suggestions: [], dpi: 600 }, suitApplied: false, suitReason: undefined, backend: undefined, degraded: undefined, headRatio: null, width: 591, height: 827, fileKb: 200, dpi: 600, traceId: 'T1-1793781787757-80-1', revision: 3, key: '[1,["source",{"path":"probe://valid.png","width":640,"height":800,"forceCloud":false}],["specId","one-inch"],["bg","white"],["beauty",{"enabled":false,"smooth":0.35,"whiten":0.3,"brighten":0.2}],["suit",{"enabled":false,"templateId":"black"}],["consents",[]],["cropWindow",{"x":34.28571428571428,"y":0,"w":571.4285714285714,"h":800,"ratio":0.7142857142857143}],["cropConfirmed",true],["customTarget",null]]' },
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
