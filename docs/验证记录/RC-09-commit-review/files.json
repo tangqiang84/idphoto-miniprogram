@@ -1,0 +1,71 @@
+{
+  "status": "PASS",
+  "timestamp": "2026-11-04T14:25:55.158670+00:00",
+  "records": [
+    {
+      "id": "T1",
+      "status": "PASS",
+      "format": "JPEG",
+      "size": [
+        295,
+        413
+      ],
+      "bytes": 37622,
+      "sha256": "99dc5c11e06e0bbd469c97c8bdb8a159f871b2b1c71e859db9ce9e629634a439",
+      "observed_dpi": null,
+      "scope": "仅文件与SDK证据一致，非模型质量"
+    },
+    {
+      "id": "T2",
+      "status": "PASS",
+      "format": "PNG",
+      "size": [
+        591,
+        827
+      ],
+      "bytes": 935082,
+      "sha256": "8317f332f85371b19da01f71bd9b28cc81936e94ce6721cd7ece5b54871f6ca8",
+      "observed_dpi": null,
+      "scope": "仅文件与SDK证据一致，非模型质量"
+    },
+    {
+      "id": "T3",
+      "status": "PASS",
+      "format": "JPEG",
+      "size": [
+        295,
+        413
+      ],
+      "bytes": 33550,
+      "sha256": "5e2e88feda5152a2f23c7e46da1bfa365174af86cfeb23bd85390f5729485507",
+      "observed_dpi": null,
+      "scope": "仅文件与SDK证据一致，非模型质量"
+    },
+    {
+      "id": "T5",
+      "status": "PASS",
+      "format": "JPEG",
+      "size": [
+        295,
+        413
+      ],
+      "bytes": 39327,
+      "sha256": "90a7d0cd47405ea3f310f82995fe88ba7d2b6bc63f6f69db1994b07fb62ff8f9",
+      "observed_dpi": null,
+      "scope": "仅文件与SDK证据一致，非模型质量"
+    },
+    {
+      "id": "model-smoke-traditional",
+      "status": "PASS",
+      "format": "JPEG",
+      "size": [
+        295,
+        413
+      ],
+      "bytes": 37622,
+      "sha256": "99dc5c11e06e0bbd469c97c8bdb8a159f871b2b1c71e859db9ce9e629634a439",
+      "observed_dpi": null,
+      "scope": "仅文件与SDK证据一致，非模型质量"
+    }
+  ]
+}

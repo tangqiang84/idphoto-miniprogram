@@ -2299,6 +2299,149 @@
         "RC-12"
       ],
       "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC09-IDENTITY",
+      "requirements": [
+        "B1",
+        "NFR-QUALITY"
+      ],
+      "role": "partial",
+      "kind": "controller",
+      "implementation": "implemented",
+      "input": "默认禁用模型、固定小规格推理替身、正反错误及合成/授权样本",
+      "action": "验证接线、来源分类、固定摘要与降级；真实资源门禁保持阻断",
+      "expected": "传统/模拟不显示真模型成功；失败原因可见；未知视觉不标达标；缺资源不通过",
+      "negative": "固定SHA缺失或错、推理异常/超时、迟到会话、未知provider/云shadow必须正确分类",
+      "environment": "Node替身/传统算法样本与禁云微信SDK分开；无实际模型权重/外部调用/实体机",
+      "limitations": "仅可执行部分；真实模型、部署、复杂背景/浅衣/发丝人工质量和真机仍待验收",
+      "runner": {
+        "script": "idphoto-miniprogram/src/core/__tests__/mattingEvidence.test.js",
+        "selector": "RC-09传统/模拟/未知",
+        "command": "node --test idphoto-miniprogram/src/core/__tests__/mattingEvidence.test.js"
+      },
+      "followup": [
+        "RC-09",
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC09-MODEL",
+      "requirements": [
+        "B1",
+        "H2.2",
+        "NFR-OFFLINE"
+      ],
+      "role": "partial",
+      "kind": "controller",
+      "implementation": "implemented",
+      "input": "默认禁用模型、固定小规格推理替身、正反错误及合成/授权样本",
+      "action": "验证接线、来源分类、固定摘要与降级；真实资源门禁保持阻断",
+      "expected": "传统/模拟不显示真模型成功；失败原因可见；未知视觉不标达标；缺资源不通过",
+      "negative": "固定SHA缺失或错、推理异常/超时、迟到会话、未知provider/云shadow必须正确分类",
+      "environment": "Node替身/传统算法样本与禁云微信SDK分开；无实际模型权重/外部调用/实体机",
+      "limitations": "仅可执行部分；真实模型、部署、复杂背景/浅衣/发丝人工质量和真机仍待验收",
+      "runner": {
+        "script": "工具链/tests/model_service.test.js",
+        "selector": "RC-09实际模型服务",
+        "command": "node --test 工具链/tests/model_service.test.js"
+      },
+      "followup": [
+        "RC-09",
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC09-STATUS",
+      "requirements": [
+        "B1",
+        "NFR-QUALITY"
+      ],
+      "role": "partial",
+      "kind": "controller",
+      "implementation": "implemented",
+      "input": "默认禁用模型、固定小规格推理替身、正反错误及合成/授权样本",
+      "action": "验证接线、来源分类、固定摘要与降级；真实资源门禁保持阻断",
+      "expected": "传统/模拟不显示真模型成功；失败原因可见；未知视觉不标达标；缺资源不通过",
+      "negative": "固定SHA缺失或错、推理异常/超时、迟到会话、未知provider/云shadow必须正确分类",
+      "environment": "Node替身/传统算法样本与禁云微信SDK分开；无实际模型权重/外部调用/实体机",
+      "limitations": "仅可执行部分；真实模型、部署、复杂背景/浅衣/发丝人工质量和真机仍待验收",
+      "runner": {
+        "script": "工具链/tests/matting_status.test.js",
+        "selector": "RC-09真实来源提示组件",
+        "command": "node --test 工具链/tests/matting_status.test.js"
+      },
+      "followup": [
+        "RC-09",
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC09-SAMPLES",
+      "requirements": [
+        "B1",
+        "NFR-QUALITY",
+        "NFR-1"
+      ],
+      "role": "partial",
+      "kind": "artifact",
+      "implementation": "implemented",
+      "input": "默认禁用模型、固定小规格推理替身、正反错误及合成/授权样本",
+      "action": "验证接线、来源分类、固定摘要与降级；真实资源门禁保持阻断",
+      "expected": "传统/模拟不显示真模型成功；失败原因可见；未知视觉不标达标；缺资源不通过",
+      "negative": "固定SHA缺失或错、推理异常/超时、迟到会话、未知provider/云shadow必须正确分类",
+      "environment": "Node替身/传统算法样本与禁云微信SDK分开；无实际模型权重/外部调用/实体机",
+      "limitations": "仅可执行部分；真实模型、部署、复杂背景/浅衣/发丝人工质量和真机仍待验收",
+      "runner": {
+        "script": "工具链/rc09_matting_probe.js",
+        "selector": "syntheticIoU",
+        "command": "node 工具链/rc09_matting_probe.js --out <新目录>"
+      },
+      "followup": [
+        "RC-09",
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC09-RESOURCE",
+      "requirements": [
+        "B1",
+        "NFR-COMPAT",
+        "NFR-OFFLINE"
+      ],
+      "role": "partial",
+      "kind": "controller",
+      "implementation": "implemented",
+      "input": "默认禁用模型、固定小规格推理替身、正反错误及合成/授权样本",
+      "action": "验证接线、来源分类、固定摘要与降级；真实资源门禁保持阻断",
+      "expected": "传统/模拟不显示真模型成功；失败原因可见；未知视觉不标达标；缺资源不通过",
+      "negative": "固定SHA缺失或错、推理异常/超时、迟到会话、未知provider/云shadow必须正确分类",
+      "environment": "Node替身/传统算法样本与禁云微信SDK分开；无实际模型权重/外部调用/实体机",
+      "limitations": "仅可执行部分；真实模型、部署、复杂背景/浅衣/发丝人工质量和真机仍待验收",
+      "runner": {
+        "script": "工具链/tests/rc09_acceptance.test.js",
+        "selector": "RC-09资源门禁",
+        "command": "node --test 工具链/tests/rc09_acceptance.test.js"
+      },
+      "followup": [
+        "RC-09",
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
     }
   ]
 }

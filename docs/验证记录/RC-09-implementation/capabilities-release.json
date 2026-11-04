@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-11-04T13:58:31.657Z",
+  "scope": "仓库实现/默认配置盘点，非线上部署状态或真实推理证明",
+  "edge": {
+    "defaultEnabled": false,
+    "defaultWeightConfigured": false,
+    "runtimeBoundByDefault": false,
+    "weightArtifact": "BLOCKED",
+    "licenseArtifact": "BLOCKED",
+    "realDeviceCompatibility": "BLOCKED",
+    "notes": "仅有规格/加载器；暂无固定权重、许可对应版本及运行时资源"
+  },
+  "cloud": {
+    "implemented": [
+      "CloudBase-shadow-traditional",
+      "CloudBase-baidu-provider-contract",
+      "self-hosted-BiRefNet-source"
+    ],
+    "deploymentVersion": null,
+    "liveProvider": null,
+    "deploymentEvidence": "BLOCKED",
+    "privacyPromises": "未核实部署，不由源码/域名或像素证明"
+  },
+  "licensing": {
+    "checkedAt": "2026-11-04",
+    "repositorySources": [
+      {
+        "url": "https://github.com/ZHKKKe/MODNet/blob/master/LICENSE",
+        "repositoryLicense": "Apache-2.0"
+      },
+      {
+        "url": "https://github.com/ZhengPeng7/BiRefNet/blob/main/LICENSE",
+        "repositoryLicense": "MIT"
+      }
+    ],
+    "limitation": "仅核对上游仓库许可证，不代表尚未提供的量化/转换权重或数据许可已通过"
+  },
+  "hashes": {
+    "idphoto-miniprogram/src/services/modelService.ts": "020e71eaf8492de251af24ac4d33872bf2d8d862c6ed4b516e0798ef360ad53b",
+    "idphoto-miniprogram/src/services/t1Processing.ts": "7c5dbc81372994550dbba2c42496bf4e3662e74d80292b7b018e623a76c1c4a0",
+    "idphoto-miniprogram/src/core/matting.js": "b92f51a458fcbe98030710775e3adbb627db8cdd669a154b9bd22829eeddee41",
+    "idphoto-miniprogram/src/core/mattingLocal.js": "dc02891fd0ca3686c65024b193028fa43bd6224d7b638cf4824de7cf7ff3fb8f",
+    "idphoto-miniprogram/src/core/mattingCloud.js": "18056bb76596b7f5242fd167c68bea2a892d1232d8c8603d9b6c96a38e19114b",
+    "idphoto-miniprogram/cloudfunctions/matting/index.js": "409f34bc07e849851bf6b867ad226957f9a3c4cdb43a89f2eb243f42eaa1c26a",
+    "部署/birefnet/server.py": "b26122832190df081210fca2d7e963a7b2d0eb58ef38d84d069698edf157dd43"
+  }
+}

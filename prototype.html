@@ -157,7 +157,7 @@
           <span>启用美颜修图（默认关闭）</span>
           <span class="chip" id="beauty-toggle" onclick="beautyToggle(this)">关</span>
         </div>
-        <p class="tag">仅做轻度皮肤优化，不改变脸型与五官，保证审核通过；默认不开启，开启后在「裁剪后、抠图换底前」对全画布执行。</p>
+        <p class="tag">仅做轻度皮肤优化，不改变脸型与五官，实际审核仍以目标机构为准；默认不开启，开启后在「裁剪后、抠图换底前」对全画布执行。</p>
       </div>
       <div class="card">
         <div class="sliderrow"><div class="lab"><span>磨皮</span><span class="val" id="beauty-skin-val">35%</span></div><input type="range" id="beauty-skin" min="0" max="100" value="35" oninput="beautySlide('skin',this.value)"></div>
@@ -175,6 +175,7 @@
     <div class="nav"><span class="back" onclick="go('s_beauty')">‹ 返回</span> 抠图换底（已按规格裁剪）</div>
     <div class="body">
       <div class="preview">人像预览</div>
+      <div class="card matting-status"><p class="tag">来源示意：本地传统算法（非AI模型）；实际产品按本次结果显示来源与原因。</p><p class="warn">复杂背景、浅色衣服和发丝可能不可靠；数值置信度不等于视觉质量，需人工核对或手动修补。</p></div>
       <div class="colors">
         <div class="sw sel" style="background:#FFFFFF" onclick="selColor(this,'#FFFFFF')" title="白底"></div>
         <div class="sw" style="background:#438EDB" onclick="selColor(this,'#438EDB')" title="深蓝（标准蓝底）"></div>
@@ -253,6 +254,7 @@
     <div class="body">
       <div class="success"><div class="ico">✅</div><h3 style="margin:10px 0;">导出完成</h3><p class="tag" id="export-dpi">300dpi JPG · 无水印 · 免费</p></div>
       <div class="card"><div class="row"><span>输出档位</span><span class="ok" id="export-dpi-row">300dpi 标准（免费 · 无水印）</span></div><div class="row"><span>全部功能</span><span class="ok">免费 · 无水印（MVP 不设付费档）</span></div></div>
+      <p class="warn">导出成功不表示抠图视觉质量已验收；传统算法、模型与模拟来源应分别标识。</p>
       <div class="pricenote">600dpi 为印刷/冲印用途，像素翻倍、体积约为 300dpi 的 2~4 倍；若上一步提示像素不足，成品清晰度可能下降。</div>
       <button class="btn ghost" onclick="go('s_t6');t6update()">🖨 去冲印排版（拼版打印）</button>
       <button class="btn" onclick="go('s_home')">返回首页</button>

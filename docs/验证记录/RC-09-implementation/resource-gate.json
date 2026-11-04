@@ -1,0 +1,68 @@
+{
+  "status": "BLOCKED",
+  "counts": {
+    "PASS": 0,
+    "FAIL": 0,
+    "BLOCKED": 8,
+    "SKIPPED": 1
+  },
+  "errors": [],
+  "items": [
+    {
+      "id": "EDGE_ARTIFACT",
+      "status": "BLOCKED",
+      "reason": "缺具体权重/转换版本/真实SHA256及对应许可证据；规格表commercialOk不是权重证明",
+      "evidence": []
+    },
+    {
+      "id": "EDGE_RUNTIME_DEVICE",
+      "status": "BLOCKED",
+      "reason": "缺微信可用运行时、WASM/推理兼容和真实设备模型成功记录；替身推理不计真实模型",
+      "evidence": []
+    },
+    {
+      "id": "CLOUD_DEPLOYMENT",
+      "status": "BLOCKED",
+      "reason": "缺境内部署版本、地域及不留存/不训练独立证明；未调用外部收费服务",
+      "evidence": []
+    },
+    {
+      "id": "QUALITY_COMPLEX",
+      "status": "BLOCKED",
+      "reason": "复杂背景只有技术合成样本，缺固定授权真实图集/标注与人工评审",
+      "evidence": []
+    },
+    {
+      "id": "QUALITY_LIGHT_CLOTHES",
+      "status": "BLOCKED",
+      "reason": "浅衣合成反例置信度高仍丢失衣服，不能认作视觉通过；缺真实图集评审",
+      "evidence": []
+    },
+    {
+      "id": "QUALITY_HAIR",
+      "status": "BLOCKED",
+      "reason": "细线合成样本不能证明真实发丝质量，缺对应图集和评审",
+      "evidence": []
+    },
+    {
+      "id": "OFFLINE_DEVICE",
+      "status": "BLOCKED",
+      "reason": "断网替身只覆盖控制流，缺实体机断网本地操作记录",
+      "evidence": []
+    },
+    {
+      "id": "LIVE_QUOTA_TIMEOUT",
+      "status": "SKIPPED",
+      "reason": "额度/超时替身已测；未提供真实服务且无收费调用授权，不执行真实配额消耗",
+      "evidence": []
+    },
+    {
+      "id": "PHYSICAL_PERFORMANCE",
+      "status": "BLOCKED",
+      "reason": "Node/开发者工具计时不是中端真实设备耗时，待真机记录",
+      "evidence": []
+    }
+  ],
+  "scope": "证据存在/哈希与资源状态门禁，不自动判定人工质量或部署承诺真实，报告内容仍须审阅",
+  "timestamp": "2026-11-04T13:45:41.230Z"
+}

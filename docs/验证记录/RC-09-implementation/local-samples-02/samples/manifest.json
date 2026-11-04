@@ -1,0 +1,53 @@
+{
+  "version": "RC09-local-v1",
+  "cases": [
+    {
+      "id": "complex-background",
+      "kind": "synthetic",
+      "width": 160,
+      "height": 224,
+      "rgba": "complex-background.rgba",
+      "truth": "complex-background-truth.png",
+      "source_sha256": "224823a4fdd3731c148b1c6d72d509b52ce2a34aeb49e659d940ed4a4c95e4a0",
+      "consent": "程序生成非真实人像",
+      "version": "RC09-synthetic-v1"
+    },
+    {
+      "id": "light-clothes",
+      "kind": "synthetic",
+      "width": 160,
+      "height": 224,
+      "rgba": "light-clothes.rgba",
+      "truth": "light-clothes-truth.png",
+      "source_sha256": "23d4d282e5fdc6cdeaefdd60a187d08e8e96b846b3e471641e509038e9113132",
+      "consent": "程序生成非真实人像",
+      "version": "RC09-synthetic-v1"
+    },
+    {
+      "id": "thin-hair",
+      "kind": "synthetic",
+      "width": 160,
+      "height": 224,
+      "rgba": "thin-hair.rgba",
+      "truth": "thin-hair-truth.png",
+      "source_sha256": "7602443b3787e7b87022d9c79dd32c303e5a318c241a7c3b33f50426f60187f5",
+      "consent": "程序生成非真实人像",
+      "version": "RC09-synthetic-v1"
+    },
+    {
+      "id": "REAL-111",
+      "kind": "authorized-portrait",
+      "width": 256,
+      "height": 340,
+      "original_size": [
+        600,
+        798
+      ],
+      "rgba": "REAL-111.rgba",
+      "truth": null,
+      "source_sha256": "ded108d285dd62f069b0d970f1477fc3aafb0c8222c2f5fac271239d69b31368",
+      "consent": "沿用RC-07/08固定授权素材，仅本地验证",
+      "version": "REAL-111-sha256"
+    }
+  ]
+}

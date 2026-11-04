@@ -48,3 +48,4 @@ test('RC-06真实姿态服务：缺基础/上云/换装任一授权均零上传�
   const pending=requestPoseKeypoints(req,a.capture('pose'));a.update(['faceLocal','suitSwap']);release({result:{}});
   const result=await pending;assert.equal(result.ok,false);assert.equal(result.pose,null);assert.equal(calls,1);
 });
+test('RC-09真实云适配器保留额度错误码并隐藏原始服务错误',async()=>{const {makeCloudFnAdapter}=load('cloudFnAdapter',async()=>({result:{error:'private_fixture_payload',code:18}}));const adapter=makeCloudFnAdapter({authorization:{check(){}}});await assert.rejects(adapter.call({}),e=>e.code===18&&!e.message.includes('private_fixture_payload'));});

@@ -1,0 +1,1 @@
+{"scope":"静态/契约，非权重/许可或真实模型质量验收","checks":[{"name":"规格表不含禁止的RMBG","status":"PASS"},{"name":"默认关闭不配置权重","status":"PASS"},{"name":"运行时不静态引入","status":"PASS"},{"name":"MODNet与BiRefNet预处理参数不同","status":"PASS"},{"name":"默认计划为传统算法","status":"PASS"}]}

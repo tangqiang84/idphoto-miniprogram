@@ -1,4 +1,13 @@
 'use strict';
+const { failureCode, safeId } = require('./mattingEvidence');
+function safeProviderMeta(meta) {
+  const out = {};
+  for (const key of ['source','version','modelId','fallbackFrom','code','retryable','personNum','width','height','latencyMs']) {
+    const value = meta && meta[key];
+    if (typeof value === 'boolean' || typeof value === 'number' && Number.isFinite(value) || safeId(value)) out[key] = value;
+  }
+  return out;
+}
 // 上云增强接入契约 + 真实调用（BiRefNet / RMBG-2.0 境内 GPU 云函数）
 //
 // 合规内嵌（对齐《证件照小程序 PRD 正文 MVP v0.1》）：
@@ -639,12 +648,12 @@ async function cloudMatting({ rgba, alpha, width, height, adapter, consents = []
     // 网络/鉴权失败 → 降级端侧（第258/292行：上云失败有降级提示）
     audit && audit({
       stage: 'cloud_fail',
-      error: String((e && e.message) || e),
+      code: failureCode(e),
       payloadKb: Math.round((req.image || '').length / 1024), // 载荷体积（排查 callFunction 体积限制）
       uploadPx: upW * upH,
       degraded: true, hasPixel: false,
     });
-    return { alpha, backend: 'cloud->edge', confidence: estimateQuality(alpha).confidence, degraded: true, reason: 'network_or_auth', cloudMeta: { latencyMs: Date.now() - t0 } };
+    return { alpha, backend: 'cloud->edge', confidence: estimateQuality(alpha).confidence, degraded: true, reason: 'network_or_auth', reasonCode: failureCode(e), cloudMeta: { latencyMs: Date.now() - t0 } };
   }
   const dt = Date.now() - t0;
 
@@ -672,7 +681,7 @@ async function cloudMatting({ rgba, alpha, width, height, adapter, consents = []
       cloudFg: verdict.cloudFg, localFg: verdict.localFg,
       // 云端返回的元数据（source=scoremap/foreground、personNum=是否检测到人、图尺寸）——
       // 排查「云端说没人」到底是模型没认出人还是我们解码口径不对（2026-10-27 真机排障）
-      providerMeta: resp.providerMeta || null,
+      providerMeta: safeProviderMeta(resp.providerMeta),
       uploadPx: upW * upH,
       cloudAlphaBytes: subAlphaRaw.__len || 0,
       expectedAlphaBytes: upW * upH,
@@ -681,14 +690,14 @@ async function cloudMatting({ rgba, alpha, width, height, adapter, consents = []
     return {
       alpha, backend: 'cloud->edge', confidence: verdict.localConf, degraded: true,
       reason: verdict.reason,
-      cloudMeta: { latencyMs: dt, provider, providerMeta: resp.providerMeta || null },
+      cloudMeta: { latencyMs: dt, provider, providerMeta: safeProviderMeta(resp.providerMeta) },
     };
   }
   // AC8：审计只记元数据，无像素
   audit && audit({ stage: 'cloud_ok', latencyMs: dt, region: resp.region || 'CN', confidence: verdict.cloudConf, retained: false, provider, hasPixel: false });
   return {
     alpha: enhanced, backend: 'cloud', confidence: estimateQuality(enhanced).confidence, degraded: false,
-    cloudMeta: { latencyMs: dt, region: resp.region || 'CN', retained: false, provider, providerMeta: resp.providerMeta || null },
+    cloudMeta: { latencyMs: dt, region: resp.region || 'CN', retained: false, provider, providerMeta: safeProviderMeta(resp.providerMeta) },
   };
 }
 

@@ -5,6 +5,7 @@ import { requiredConsents, buildConsentRecord, segment, composite, compositeTran
 } from '.';
 import { requestPoseKeypoints, encodeCanvasToJpegB64 } from './poseService';
 import { prepareWorkCanvas } from './pipeline';
+import { prepareModelForSegment } from './modelService';
 import { inspectExportedFile } from './exportInspection';
 import { assessPixels } from '../core/outputEvidence';
 import { type SessionTask } from '../core/processingSession';
@@ -99,7 +100,7 @@ export function createT1Processing(tool = 'T1') {
       segmentationInput: tool === 'T5' ? null : { width: data.w, height: data.h },
       target, ...assessPixels(effective, target, processing) };
     return { preview: exported.tempFilePath, fileType: artifact.fileType, dpiMetadata: artifact.dpiMetadata, fileBytes: artifact.fileBytes, pixelEvidence, colorRisk, isFinal: mode === 'final', result: finalReport, suitApplied: data.suitApplied,
-      suitReason: data.suitReason, backend: data.backend, degraded: data.degraded, headRatio: data.headRatio,
+      suitReason: data.suitReason, backend: data.backend, mattingEvidence: data.mattingEvidence, degraded: data.degraded, headRatio: data.headRatio,
       width: size.width, height: size.height, fileKb: Number(artifact.fileKb.toFixed(2)), dpi: p.dpi };
   }
   async function process(task: SessionTask, mode: string, strokes?: any[]) {
@@ -131,10 +132,13 @@ export function createT1Processing(tool = 'T1') {
       task.step('matting');
       const cloudPermission = { check() { task.check(); if (!buildConsentRecord(tool, p.consents, 'cloud').ready) throw { code: 'CONSENT_REQUIRED', message: '未同意上云增强', traceId: task.traceId }; } };
       const adapter = buildCloudFnAdapter({ authorization: cloudPermission });
+      const model = await task.call(() => prepareModelForSegment({ check: () => task.check() }));
+      if (model.reasonCode && model.reasonCode !== 'MODEL_DISABLED') console.warn('[model-fallback]', { code: model.reasonCode, traceId: task.traceId });
       const seg: any = await task.call(() => segment({ rgba, width: w, height: h, bgSamples: prepared.bgSamples,
+        session: model.session, spec: model.spec, modelInfo: model,
         cloud: { adapter: { ...adapter, call: (request) => task.call(() => adapter.call(request)) } },
         consents: p.consents, tool, forceCloud: !!image.forceCloud && p.consents.includes('faceCloudEnhance'),
-        audit: (meta) => console.log('[audit]', meta) }));
+        audit: (meta) => console.log('[audit]', { ...meta, traceId: task.traceId }) }));
       const alpha = seg.alpha instanceof Float32Array ? Float32Array.from(seg.alpha) : Uint8ClampedArray.from(seg.alpha);
       const wantSuit = p.suit.enabled; const granted = p.consents;
       const templateIndex = SUIT_TEMPLATES.findIndex((tpl) => tpl.id === p.suit.templateId);
@@ -199,7 +203,7 @@ export function createT1Processing(tool = 'T1') {
       const win = p.cropWindow;
       const headRatio = metrics && win ? Math.max(0, Math.min(win.h, metrics.chinY - win.y) - Math.max(0, metrics.crownY - win.y)) / win.h : null;
       data = { key, w, h, alpha, exportRgba, plan: prepared.plan, headRatio,
-        suitApplied: suitAppliedNow, suitReason: suitSkipReason, backend: backendLabel(seg.backend), degraded: !!seg.degraded };
+        suitApplied: suitAppliedNow, suitReason: suitSkipReason, backend: seg.evidence?.label || backendLabel(seg.backend), mattingEvidence: seg.evidence, degraded: !!seg.degraded };
     }
     if (strokes) {
       const { sx, sy, sw, sh } = data.plan;

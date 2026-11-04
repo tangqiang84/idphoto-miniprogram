@@ -1,0 +1,2 @@
+  File "工具链/_tmp/rc09_audit.py", line 32
+SyntaxError: Non-UTF-8 code starting with '\xe9' in file 工具链/_tmp/rc09_audit.py on line 32, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details

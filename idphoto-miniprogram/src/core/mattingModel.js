@@ -201,8 +201,8 @@ function postprocess(raw, spec, outW, outH) {
 }
 
 // ===================== 权重校验（纯逻辑，可单测） =====================
-// 为什么校验与下载分开：sha256 在小程序里靠 wx.getFileSystemManager().getFileInfo
-// 的 digestAlgorithm 拿（core 不能依赖运行时），所以这里只做「比对」，不做「计算」。
+// 为什么校验与下载分开：sha256 在平台适配层读取权重字节后计算；不是依赖 getFileInfo
+// 的digestAlgorithm（平台未必支持SHA256）；本文件只比对，不依赖平台API。
 // verifyWeight({ size, sha256 }, spec) → { ok, reason, checks: { size: bool, sha: bool|null } }
 function verifyWeight(meta, spec) {
   if (!meta || !spec) return { ok: false, reason: '缺少 meta 或 spec', checks: { size: false, sha: null } };
@@ -218,7 +218,8 @@ function verifyWeight(meta, spec) {
     checks.size = true; // 未声明体积 → 跳过
   }
   // sha256 校验：规格与实测都有值时才比对（未固定权重时跳过，只靠体积兜底）
-  if (spec.sha256 && meta.sha256) {
+  if (spec.sha256) {
+    if (!meta.sha256) return { ok: false, reason: '权重 sha256 未取得，不能跳过固定摘要校验', checks: { ...checks, sha: false } };
     checks.sha = String(spec.sha256).toLowerCase() === String(meta.sha256).toLowerCase();
     if (!checks.sha) return { ok: false, reason: '权重 sha256 不匹配，疑似损坏或被替换', checks };
   }

@@ -1,0 +1,6 @@
+PASS 合法JS
+PASS 合法TS
+PASS 合法TSX
+PASS 拦截debugger
+PASS 拦截重复键
+PASS 拦截语法错误

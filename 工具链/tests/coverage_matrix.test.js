@@ -15,7 +15,7 @@ test('76 requirements match baseline and registry has no execution PASS', () => 
   assert.deepEqual(reqs.map((r) => r.id).sort(), require('../../docs/rc01-baseline.json').requirements.map((r) => r.id).sort());
   const matrix = buildMatrix(reqs, cases);
   assert.equal(matrix.total, 76);
-  assert.equal(matrix.implementedCases, 25);
+  assert.equal(matrix.implementedCases, 30);
   assert.equal(matrix.gaps.length, 76);
   assert.ok(matrix.rows.every((r) => r.execution === 'NOT_RUN' && !r.complete));
 });

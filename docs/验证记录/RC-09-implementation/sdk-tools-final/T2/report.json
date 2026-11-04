@@ -1,0 +1,151 @@
+{
+  "status": "PASS",
+  "scope": "真实微信UI/本地图像算法，云端适配器禁用；非真实云模型/双平台真机验收",
+  "app": "/Users/tq/WorkBuddy/XiaoChengXu/docs/验证记录/t1-local-builds/run-3d0a4754662c/workspace/idphoto-miniprogram",
+  "checks": [
+    {
+      "status": "PASS",
+      "step": "upload"
+    },
+    {
+      "status": "PASS",
+      "step": "crop"
+    },
+    {
+      "status": "PASS",
+      "step": "crop-scale",
+      "interaction": "SDK slider position + change event (not physical-device gesture)",
+      "full": {
+        "width": 302,
+        "height": 423
+      },
+      "smaller": {
+        "width": 242,
+        "height": 338
+      },
+      "repeated": {
+        "width": 242,
+        "height": 338
+      }
+    },
+    {
+      "status": "PASS",
+      "step": "beauty"
+    },
+    {
+      "status": "PASS",
+      "step": "crop-return"
+    },
+    {
+      "status": "PASS",
+      "step": "preview"
+    },
+    {
+      "status": "PASS",
+      "step": "matting-identity-and-unreviewed-quality"
+    },
+    {
+      "status": "PASS",
+      "step": "hex-rgb-identical-files"
+    },
+    {
+      "status": "PASS",
+      "step": "check"
+    },
+    {
+      "status": "PASS",
+      "step": "dpi"
+    },
+    {
+      "status": "PASS",
+      "step": "export"
+    }
+  ],
+  "tool": "T2",
+  "sample": "REAL-111",
+  "traceId": "efbacda1-dac8-49f2-8ba7-590641c700e2",
+  "timestamp": "2026-11-04T14:12:19.495Z",
+  "artifacts": [
+    "upload-1.png",
+    "crop-2.png",
+    "crop-adjusted-3.png",
+    "beauty-4.png",
+    "beauty-return-5.png",
+    "preview-6.png",
+    "color-0.jpg",
+    "color-1.jpg",
+    "gradient.jpg",
+    "check-10.png",
+    "dpi-11.png",
+    "export-12.png",
+    "result.png"
+  ],
+  "runtimeErrors": 0,
+  "consentMode": "local",
+  "sample_sha256": "ded108d285dd62f069b0d970f1477fc3aafb0c8222c2f5fac271239d69b31368",
+  "pickerApi": "chooseMedia",
+  "mattingSource": {
+    "status": "PASS",
+    "text": "处理来源：本地传统算法（非AI模型） · 本次抠图 119ms（模型准备 0ms，另计）原因码：MODEL_DISABLED、CLOUD_CONSENT_MISSING传统算法对复杂背景、浅色衣服和发丝可能不可靠，请人工核对或手动修补；视觉质量尚未完成评审。",
+    "provider": "classical",
+    "realModel": false,
+    "qualityReviewed": false,
+    "environment": "微信开发者工具模拟器，非实体机",
+    "latencyMs": 119
+  },
+  "colorHashes": [
+    "97cffddd6917d8f220c92b101a48647bd9b1acddaf62c9f181f6a77f43bec469",
+    "97cffddd6917d8f220c92b101a48647bd9b1acddaf62c9f181f6a77f43bec469"
+  ],
+  "outputDpi": 600,
+  "result": {
+    "bytes": 935082,
+    "sha256": "8317f332f85371b19da01f71bd9b28cc81936e94ce6721cd7ece5b54871f6ca8"
+  },
+  "system": {
+    "brand": "devtools",
+    "model": "iPhone 12/13 (Pro)",
+    "system": "iOS 10.0.1",
+    "platform": "devtools",
+    "benchmarkLevel": -1,
+    "pixelRatio": 3,
+    "screenWidth": 390,
+    "screenHeight": 844,
+    "windowWidth": 390,
+    "windowHeight": 753,
+    "statusBarHeight": 47,
+    "safeArea": {
+      "top": 47,
+      "left": 0,
+      "right": 390,
+      "bottom": 810,
+      "width": 390,
+      "height": 763
+    },
+    "language": "zh_CN",
+    "version": "8.0.5",
+    "fontSizeSetting": 16,
+    "SDKVersion": "3.17.6",
+    "host": {
+      "env": "WeChat"
+    },
+    "enableDebug": false,
+    "mode": "default",
+    "deviceOrientation": "portrait",
+    "bluetoothEnabled": true,
+    "locationEnabled": true,
+    "wifiEnabled": true,
+    "albumAuthorized": true,
+    "cameraAuthorized": true,
+    "locationAuthorized": true,
+    "microphoneAuthorized": true,
+    "notificationAuthorized": true,
+    "notificationAlertAuthorized": true,
+    "notificationBadgeAuthorized": true,
+    "notificationSoundAuthorized": true,
+    "phoneCalendarAuthorized": true,
+    "bluetoothAuthorized": true,
+    "locationReducedAccuracy": true,
+    "devicePixelRatio": 3
+  }
+}

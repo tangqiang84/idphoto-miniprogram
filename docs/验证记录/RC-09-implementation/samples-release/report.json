@@ -1,0 +1,155 @@
+{
+  "status": "PASS",
+  "scope": "仅技术执行；RC-09真实质量/真机验收未完成",
+  "timestamp": "2026-11-04T13:58:33.555Z",
+  "node": "v26.7.0",
+  "platform": "darwin",
+  "gitHead": "06f470d409ed1225a63ea0543df852f6fe134aa2",
+  "datasetVersion": "RC09-local-v1",
+  "records": [
+    {
+      "id": "complex-background",
+      "technical": "PASS",
+      "visual": "SKIPPED",
+      "visualReason": "合成技术夹具，不代表真实发丝/浅衣/复杂背景视觉质量",
+      "evidence": {
+        "kind": "traditional",
+        "location": "edge",
+        "provider": null,
+        "modelId": null,
+        "modelRevision": null,
+        "artifactSha256": null,
+        "evidenceLevel": "traditional",
+        "deploymentVerified": false,
+        "qualityReview": "not-reviewed",
+        "label": "本地传统算法（非AI模型）",
+        "reasonCodes": [
+          "MODEL_DISABLED",
+          "CLOUD_CONSENT_MISSING"
+        ],
+        "limitation": "传统算法对复杂背景、浅色衣服和发丝可能不可靠，请人工核对或手动修补",
+        "initializationMs": null,
+        "cloudAttempted": false,
+        "latencyMs": 76,
+        "cloudLatencyMs": null,
+        "modelInput": null
+      },
+      "latencyMs": 77,
+      "environment": "Node本机CPU，非微信真机",
+      "confidence": 0,
+      "foregroundRatio": 0.11090959821428571,
+      "syntheticIoU": 0.25332451207409856,
+      "sourceSha256": "224823a4fdd3731c148b1c6d72d509b52ce2a34aeb49e659d940ed4a4c95e4a0"
+    },
+    {
+      "id": "light-clothes",
+      "technical": "PASS",
+      "visual": "SKIPPED",
+      "visualReason": "合成技术夹具，不代表真实发丝/浅衣/复杂背景视觉质量",
+      "evidence": {
+        "kind": "traditional",
+        "location": "edge",
+        "provider": null,
+        "modelId": null,
+        "modelRevision": null,
+        "artifactSha256": null,
+        "evidenceLevel": "traditional",
+        "deploymentVerified": false,
+        "qualityReview": "not-reviewed",
+        "label": "本地传统算法（非AI模型）",
+        "reasonCodes": [
+          "MODEL_DISABLED"
+        ],
+        "limitation": "传统算法对复杂背景、浅色衣服和发丝可能不可靠，请人工核对或手动修补",
+        "initializationMs": null,
+        "cloudAttempted": false,
+        "latencyMs": 29,
+        "cloudLatencyMs": null,
+        "modelInput": null
+      },
+      "latencyMs": 30,
+      "environment": "Node本机CPU，非微信真机",
+      "confidence": 0.9885044642857143,
+      "foregroundRatio": 0.10622209821428572,
+      "syntheticIoU": 0.2543256062529227,
+      "sourceSha256": "23d4d282e5fdc6cdeaefdd60a187d08e8e96b846b3e471641e509038e9113132"
+    },
+    {
+      "id": "thin-hair",
+      "technical": "PASS",
+      "visual": "SKIPPED",
+      "visualReason": "合成技术夹具，不代表真实发丝/浅衣/复杂背景视觉质量",
+      "evidence": {
+        "kind": "traditional",
+        "location": "edge",
+        "provider": null,
+        "modelId": null,
+        "modelRevision": null,
+        "artifactSha256": null,
+        "evidenceLevel": "traditional",
+        "deploymentVerified": false,
+        "qualityReview": "not-reviewed",
+        "label": "本地传统算法（非AI模型）",
+        "reasonCodes": [
+          "MODEL_DISABLED",
+          "CLOUD_CONSENT_MISSING"
+        ],
+        "limitation": "传统算法对复杂背景、浅色衣服和发丝可能不可靠，请人工核对或手动修补",
+        "initializationMs": null,
+        "cloudAttempted": false,
+        "latencyMs": 15,
+        "cloudLatencyMs": null,
+        "modelInput": null
+      },
+      "latencyMs": 16,
+      "environment": "Node本机CPU，非微信真机",
+      "confidence": 0.25053013392857143,
+      "foregroundRatio": 1,
+      "syntheticIoU": 0.42039620535714284,
+      "sourceSha256": "7602443b3787e7b87022d9c79dd32c303e5a318c241a7c3b33f50426f60187f5"
+    },
+    {
+      "id": "REAL-111",
+      "technical": "PASS",
+      "visual": "SKIPPED",
+      "visualReason": "缺少人工标注及评审",
+      "evidence": {
+        "kind": "traditional",
+        "location": "edge",
+        "provider": null,
+        "modelId": null,
+        "modelRevision": null,
+        "artifactSha256": null,
+        "evidenceLevel": "traditional",
+        "deploymentVerified": false,
+        "qualityReview": "not-reviewed",
+        "label": "本地传统算法（非AI模型）",
+        "reasonCodes": [
+          "MODEL_DISABLED",
+          "CLOUD_CONSENT_MISSING"
+        ],
+        "limitation": "传统算法对复杂背景、浅色衣服和发丝可能不可靠，请人工核对或手动修补",
+        "initializationMs": null,
+        "cloudAttempted": false,
+        "latencyMs": 98,
+        "cloudLatencyMs": null,
+        "modelInput": null
+      },
+      "latencyMs": 98,
+      "environment": "Node本机CPU，非微信真机",
+      "confidence": 0.47494255514705885,
+      "foregroundRatio": 0.44500229779411765,
+      "syntheticIoU": null,
+      "sourceSha256": "ded108d285dd62f069b0d970f1477fc3aafb0c8222c2f5fac271239d69b31368"
+    }
+  ],
+  "counts": {
+    "traditional": 4,
+    "realModel": 0,
+    "cloudReal": 0,
+    "simulation": 0,
+    "visualPass": 0,
+    "visualSkipped": 4
+  },
+  "manifestSha256": "56c0cc2e67474d55b31ddaf75df054d2d3133e2ee276595f0bc1916404786a07"
+}

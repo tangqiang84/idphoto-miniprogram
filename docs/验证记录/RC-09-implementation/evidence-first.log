@@ -1,0 +1,11 @@
+✔ RC-09 SHA256独立已知向量及分块边界与Node实现一致 (43.160082ms)
+✔ RC-09传统/模拟/未知不能显示真模型成功，provider自报不证明部署或质量 (0.716614ms)
+✔ RC-09错误只转换为安全原因码，不回传URL/凭据或原始载荷 (0.33429ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 191.02473

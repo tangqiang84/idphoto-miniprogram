@@ -1,0 +1,9 @@
+✔ RC-09实际页面/初始化器/segment接线：默认传统来源与未评审提示可见，禁用模型不读取缓存或下载 (308.852046ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 690.244017

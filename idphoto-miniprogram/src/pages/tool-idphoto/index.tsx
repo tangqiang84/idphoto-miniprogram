@@ -1,3 +1,4 @@
+import MattingStatus from '../../components/MattingStatus';
 import { View, Text, Button, Image, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { useState } from 'react';
@@ -108,7 +109,7 @@ export default function ToolIdPhoto() {
           className={`bg-swatch${p.bg === key ? ' bg-swatch--sel' : ''}`} style={{ background: BG[key] }} onClick={() => flow.background(key)}>
           <Text>{({ white: '白底', blue: '标准深蓝', blueLight: '浅蓝', red: '红底' })[key]}</Text>
         </View>)}</View>
-        <Text className='tag'>处理来源：{state.preview?.backend || '待生成'}{state.preview?.degraded ? '（已降级，请核对边缘质量）' : ''}</Text>
+        <MattingStatus evidence={state.preview?.mattingEvidence} />
         <Button className='flow-patch' disabled={busy || !state.preview} onClick={() => setPatch({ traceId: state.preview.traceId })}>手动修补边缘</Button>
         {patch && state.preview ? <AlphaPatch workPreviewPath={state.preview.preview} workW={state.preview.width} workH={state.preview.height}
           onApply={(strokes: any[]) => { setPatch(null); return flow.patch(strokes, patch.traceId); }} onCancel={() => setPatch(null)} /> : null}
@@ -160,6 +161,7 @@ export default function ToolIdPhoto() {
       {screen === 'export' && state.finalResult ? <View className='flow-screen screen-export'>
         <Text className='t1-heading'>⑦ 成品已生成</Text>
         <Image src={state.finalResult.preview} className='preview' mode='aspectFit' />
+        <MattingStatus evidence={state.finalResult.mattingEvidence} />
         <Text>{state.finalResult.width}×{state.finalResult.height}px · {state.finalResult.fileKb}KB · {p.dpi}档位 · JPG</Text>
         <Text className='tag'>免费 · 无水印；dpi表示输出像素档位，不承诺写入文件元数据。</Text>
         {state.finalResult.pixelEvidence?.sourceEnough === false || state.finalResult.pixelEvidence?.processingEnough === false ? <Text className='color-risk'>当前输出包含放大，增加像素不能补回原图或处理过程损失的细节。</Text> : null}

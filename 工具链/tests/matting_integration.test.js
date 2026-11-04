@@ -1,0 +1,7 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict');const {probePage}=require('../page_flow_probe');const {segment}=require('../../idphoto-miniprogram/src/core/matting');
+test('RC-09实际页面/初始化器/segment接线：默认传统来源与未评审提示可见，禁用模型不读取缓存或下载',async()=>{let reads=0,downloads=0;const files=new Map();let received;
+ await probePage('T1',{prepareWorkCanvas:async()=>({w:64,h:80,rgba:new Uint8ClampedArray(64*80*4),plan:{sx:0,sy:0,sw:64,sh:80},crop:null,srcMetrics:null}),services:{segment:async p=>{received=p;return segment(p);},applyBeauty(){},tightBBox:()=>null},taro:{getFileSystemManager:()=>({getFileInfo:({success})=>success({size:61440}),readFile(){reads++;}}),downloadFile:async()=>{downloads++;},canvasToTempFilePath:async p=>{const name='fixture://'+files.size;files.set(name,{width:p.destWidth,height:p.destHeight,type:p.fileType});return {tempFilePath:name};},getImageInfo:async({src})=>files.get(src)},exercise:async h=>{
+ h.flow.confirmCrop();await h.flow.confirmBeauty(true);assert.equal(received.modelInfo.reasonCode,'MODEL_DISABLED');assert.equal(received.session,null);assert.equal(received.spec,null);assert.equal(h.flow.getState().preview.mattingEvidence.kind,'traditional');const texts=h.nodes(h.render(),n=>n.type==='Text').map(n=>JSON.stringify(n.props.children)).join(' ');assert.match(texts,/本地传统算法/);assert.match(texts,/MODEL_DISABLED/);assert.match(texts,/视觉质量尚未完成评审/);assert.equal(reads,0);assert.equal(downloads,0);
+ }});
+});

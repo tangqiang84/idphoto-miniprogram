@@ -31,7 +31,11 @@ export function makeCloudFnAdapter(opts: CloudFnAdapterOpts = {}) {
       );
       opts.authorization.check();
       const result = (res && res.result) || {};
-      if (result.error) throw new Error('cloudfn: ' + result.error);
+      if (result.error) {
+        const error: any = new Error('cloudfn: 上云服务暂不可用');
+        error.code = result.code;
+        throw error;
+      }
       // provider 用于前端判断「这次结果来自真模型还是影子实现」：
       //  - 'baidu'          百度智能云人像分割（真模型）
       //  - 'shadow'         云函数 CPU 影子实现（含百度失败后的降级）

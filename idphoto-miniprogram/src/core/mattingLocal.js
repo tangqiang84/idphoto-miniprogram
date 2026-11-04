@@ -2,7 +2,7 @@
 // 端侧抠图（本地优先）
 //   - runClassicalFallback：真实可运行的经典算法（边界采样背景色 + 双边高斯模型 + 软 alpha + 羽化），
 //     零依赖、任意环境可跑，作为端侧保底与 PoC 质量基线。
-//   - runRealModel / preprocess：RMBG-1.4（onnxruntime）接入契约，设备侧部署权重后自动接管。
+//   - runRealModel / preprocess：按spec参数化的onnxruntime接入契约，设备侧部署权重后自动接管。
 //   - estimateQuality：由 alpha 产出 confidence，喂给路由决策（歧义像素多 / 前景异常 → 置信低 → 上云增强）。
 
 // 模型规格表（输入尺寸 / 归一化 / 输出后处理）—— 任务 #3 起由 core/mattingModel 统一声明，
@@ -216,7 +216,7 @@ async function runRealModel(session, rgba, w, h, spec) {
 // opts.bgSamples 透传给经典基线（任务 #24，缺省行为不变）
 // opts.spec      模型规格（驱动输入尺寸/归一化/输出后处理）
 //
-// 【重要】真模型推理失败**不在此处吞掉**：上层（modelService.segmentWithModel）负责
+// 【重要】真模型推理失败**不在此处吞掉**：上层segment负责
 // 捕获并降级到经典基线。理由：静默降级会让「模型坏了」表现为「抠图质量变差」，
 // 用户和日志都看不到原因。降级必须是显式、可观测、有提示的决策。
 async function localMatting(rgba, w, h, opts = {}) {

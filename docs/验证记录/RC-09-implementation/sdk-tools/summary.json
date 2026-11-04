@@ -1,0 +1,18 @@
+[
+  {
+    "tool": "T1",
+    "exit_code": 0
+  },
+  {
+    "tool": "T2",
+    "exit_code": 0
+  },
+  {
+    "tool": "T3",
+    "exit_code": 0
+  },
+  {
+    "tool": "T5",
+    "exit_code": 0
+  }
+]

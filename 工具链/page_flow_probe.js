@@ -123,6 +123,7 @@ async function probePage(tool, options = {}) {
         imageHandler = onImage;
         return { pickAlbum: () => { imageDelivered = true; return onImage({ path: 'probe://valid.png', width: 640, height: 800 }, { tips: [] }); } };
       } };
+      if (request.endsWith('/MattingStatus')) return load(path.resolve(path.dirname(file), request, 'index.tsx'));
       if (request.endsWith('/components/PhotoTool')) return load(path.resolve(path.dirname(file), request, 'index.tsx'));
       if (request.includes('/components/') || request === '../BackgroundControl') return { __esModule: true, default: request.split('/').pop() };
       if (request.endsWith('/hooks/useConsentGate') || request.endsWith('/hooks/useProcessingSession') || request.endsWith('/hooks/useT1Workflow') || request.endsWith('/hooks/useActionConsent')) return load(path.resolve(path.dirname(file), request + '.ts'));
@@ -131,6 +132,7 @@ async function probePage(tool, options = {}) {
         loaded[path.relative(ROOT, modulePath)] = crypto.createHash('sha256').update(fs.readFileSync(modulePath)).digest('hex');
         if (!['processingSession', 't1Workflow'].includes(name)) return require(modulePath);
       }
+      if (request === './modelService') return load(path.resolve(ROOT, 'idphoto-miniprogram/src/services/modelService.ts'));
       if (request === './exportInspection' || request.endsWith('/services/exportInspection')) return load(path.resolve(ROOT, 'idphoto-miniprogram/src/services/exportInspection.ts'));
       if (request.endsWith('/services/t1Processing')) return load(path.resolve(path.dirname(file), request + '.ts'));
       if (request.endsWith('/core/t1Workflow')) {

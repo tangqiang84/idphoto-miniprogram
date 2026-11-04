@@ -8,12 +8,13 @@ const ROOT = path.resolve(__dirname, '..');
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function main(args = process.argv.slice(2)) {
   if (args.includes('--help')) { console.log('node 工具链/smoke_t1_steps.js --app 禁云验证工程 [--port 9457] [--out 新目录]'); return 0; }
-  for (let i = 0; i < args.length; i += 2) if (!['--app', '--out', '--port', '--consents', '--withdraw', '--tool'].includes(args[i]) || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('ARGUMENT_INVALID');
+  for (let i = 0; i < args.length; i += 2) if (!['--app', '--out', '--port', '--consents', '--withdraw', '--tool', '--matting'].includes(args[i]) || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('ARGUMENT_INVALID');
   const get = (key, fallback) => { const i = args.indexOf(key); return i < 0 ? fallback : args[i + 1]; };
   const app = path.resolve(get('--app', path.join(ROOT, 'idphoto-miniprogram')));
   const tool = get('--tool', 'T1');
   if (!['T1','T2','T3','T5'].includes(tool)) throw new Error('TOOL_INVALID');
   const port = Number(get('--port', '9457'));
+  const assertMatting = get('--matting', 'no') === 'yes';
   const consentMode = get('--consents', 'all'); const withdraw = get('--withdraw', 'no');
   if (!['all','local'].includes(consentMode) || !['yes','no'].includes(withdraw)) throw new Error('ARGUMENT_INVALID');
   const out = path.resolve(get('--out', path.join(ROOT, 'docs/验证记录/t1-steps', crypto.randomUUID())));
@@ -90,6 +91,12 @@ async function main(args = process.argv.slice(2)) {
       await tap('.crop-apply'); await wait('.screen-beauty'); await shot('beauty-return');
       if (await page.$('.preview')) throw new Error('EARLY_PREVIEW');
       await tap('.flow-skip-beauty'); await step('preview');
+      if (assertMatting) {
+        const source = await wait('.matting-status'); const text = await source.text();
+        if (!text.includes('本地传统算法（非AI模型）') || !text.includes('MODEL_DISABLED') || !text.includes('视觉质量尚未完成评审')) throw new Error('MATTING_IDENTITY_INVALID');
+        report.mattingSource = { status: 'PASS', text, provider: 'classical', realModel: false, qualityReviewed: false, environment: '微信开发者工具模拟器，非实体机', latencyMs: Number((text.match(/本次抠图 (\d+)ms/) || [])[1]) || null };
+        checks.push({status:'PASS',step:'matting-identity-and-unreviewed-quality'});
+      }
       if (await page.$('.flow-save')) throw new Error('EARLY_SAVE');
       if (tool === 'T2') {
         const hashes = [];

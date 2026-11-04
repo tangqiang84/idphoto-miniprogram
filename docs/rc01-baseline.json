@@ -1,5 +1,5 @@
 {
-  "version": "RC-01-v1.9",
+  "version": "RC-01-v1.10",
   "date": "2026-10-28",
   "git_head": "f4d94b1de354fce7af90ac73540c2d536af385e3",
   "scope": "需求/现状基线；业务验收按各RC本轮报告分别记录，不代表全产品发布通过",
@@ -47,9 +47,9 @@
     "idphoto-miniprogram/src/core/face.js": "cf9dcdd83b63173602999680291252bc1cc5f7eb6f9634d730af9d239769fa54",
     "idphoto-miniprogram/src/core/headCrop.js": "179f2b61a8c8d5031a7ea2c04ec029223b82e0af1436a790f7a4b0acf438190a",
     "idphoto-miniprogram/src/core/localPurge.js": "f227033deeb67ab4ee83b07cdf5edc34efbf41a6b5c81ce106335933dedeab66",
-    "idphoto-miniprogram/src/core/matting.js": "cd7db09131db8c0b61e2868e1caec8056bc13bcb11fd3699dfa88054d292d7e3",
-    "idphoto-miniprogram/src/core/mattingCloud.js": "727e21039d76febbac77f39dd4afd90838bfb98e96f02b2c49833f9eb8a97d43",
-    "idphoto-miniprogram/src/core/mattingLocal.js": "d54b1676ff753ed4b87d50deb40ec03bd7008cfe504c768f4d014704ebedd25a",
+    "idphoto-miniprogram/src/core/matting.js": "b92f51a458fcbe98030710775e3adbb627db8cdd669a154b9bd22829eeddee41",
+    "idphoto-miniprogram/src/core/mattingCloud.js": "18056bb76596b7f5242fd167c68bea2a892d1232d8c8603d9b6c96a38e19114b",
+    "idphoto-miniprogram/src/core/mattingLocal.js": "dc02891fd0ca3686c65024b193028fa43bd6224d7b638cf4824de7cf7ff3fb8f",
     "idphoto-miniprogram/src/core/paperLibrary.js": "4bab064efdbaf5b161e17fe8e02a8b71d5a96b21d3cdb2366c92652e1828c52c",
     "idphoto-miniprogram/src/core/printHandoff.js": "efca04058b6c6db40c7f401c0036fa054da9748d53dfb15823efd384326f4393",
     "idphoto-miniprogram/src/core/privacy.js": "345ea891c4d8de05adcb017d385eda24679b5f27110c8c1a34ffacc021dbb62d",
@@ -64,27 +64,30 @@
     "idphoto-miniprogram/src/pages/privacy/index.tsx": "fcda8d8d85731e0506952373157f97d1330b4a0e1097095d8c6d66f6328f826f",
     "idphoto-miniprogram/src/pages/tool-bg/index.tsx": "0c07c14b922d83a50aaae392f4928c164b90771131be04a6256f02f7c2ef3c1b",
     "idphoto-miniprogram/src/pages/tool-check/index.tsx": "32c9a9bbef2781490cbdca04e5ae5fcf737e1b9e4a35b74063f7464795396a45",
-    "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx": "d25e730f9ffd210a45e855e60ddf598b62790aed8b091b30a9a63f27455904d2",
+    "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx": "2e0cf45c5115618376e8bc32bd9a42fc16c6b4b3563e1f68cc81fbe7e1a885b1",
     "idphoto-miniprogram/src/pages/tool-print/index.tsx": "6cd1714651098a1b7acf04770dda0a734376cb2c97cf189e030b3a993c5f89a6",
     "idphoto-miniprogram/src/pages/tool-spec/index.tsx": "f1d54d02836b8d6c3d8aeeaca08598bd571bb395ed0371c42f7071e269579098",
     "idphoto-miniprogram/src/pages/tool-suit/index.tsx": "95665a0a40ab054e0d16a7d60c8751ee4d79b851ff2324c45a730e371e9b4a90",
     "idphoto-miniprogram/src/services/faceService.ts": "632ced63daf622c715113dcb309856cce020699c50724ed352837a681418845e",
-    "idphoto-miniprogram/src/services/modelService.ts": "ebd993acc2dbb70a18bb5ed7c67dd98e0d5232e18770006cd21e36382727659b",
+    "idphoto-miniprogram/src/services/modelService.ts": "020e71eaf8492de251af24ac4d33872bf2d8d862c6ed4b516e0798ef360ad53b",
     "idphoto-miniprogram/src/services/pipeline.ts": "29b9851b25eec8d891adb9b6357e09b724e7017847c0aa859b5a77bcc0c2a50c",
     "idphoto-miniprogram/src/services/poseService.ts": "78837c4d614b8877fca41e072f932f93d294db7d969b8505ac6ca3199bc39e7c",
     "idphoto-miniprogram/src/services/renderService.ts": "5619a0bbd02a05cb09902c7f89239e5d793ace9152371ec9f97339124c972e35",
     "idphoto-miniprogram/src/core/t1Workflow.js": "ea8491859815b70d1b0856f251043821fc735a4b9108342b16f917337aa20797",
-    "idphoto-miniprogram/src/services/t1Processing.ts": "78d3547786f0b271eaf9560b4c38ed3270b7fe6590542af40be3f25d54629478",
+    "idphoto-miniprogram/src/services/t1Processing.ts": "7c5dbc81372994550dbba2c42496bf4e3662e74d80292b7b018e623a76c1c4a0",
     "idphoto-miniprogram/src/hooks/useT1Workflow.ts": "b3462372b3baeaf6817635868d7ea284eb283d06fe5ecf24127cf6f716d819ff",
     "idphoto-miniprogram/src/core/consentSession.js": "d845f57a1cc64ece5ef04b777bb2297c63a25f75ad1256518a6ea31c3e67bfc7",
     "idphoto-miniprogram/src/hooks/useActionConsent.ts": "b59bb14462123218b7b439b1e936e25d8c7a43c89b0e19c0f43049c9c3b8f930",
-    "idphoto-miniprogram/src/services/cloudFnAdapter.ts": "b7f792b026a4edb83032b5140c1793cdd39199f1ab14f8a3195745eee451f6c5",
+    "idphoto-miniprogram/src/services/cloudFnAdapter.ts": "f29ec25eba42d26d52d548b6a80593edde205aaf0deca8a8cef646e52f0ef2fc",
     "idphoto-miniprogram/src/services/index.ts": "84a00bfba0fe241ba9f060043c8f9fd4fe63b76c3ea5e3f70fcb3cf0d8bc976c",
     "idphoto-miniprogram/src/components/BackgroundControl/index.tsx": "0a5e684dd3a8c9facbe665cc83beb21c5c368656150daaa2ea45f320b1726c3d",
-    "idphoto-miniprogram/src/components/PhotoTool/index.tsx": "55ad25b85fc1741bb460233c2dd247c1cd8216916e919f94c480b77d3d8c02c1",
+    "idphoto-miniprogram/src/components/PhotoTool/index.tsx": "728599646eaba9216bcf28e61282e397a2b99b2d8d80bb175ca57b5d1ebb8212",
     "idphoto-miniprogram/src/core/outputEvidence.js": "cd61e5f2f39f98a201df8dac912840f856dd8ddfbd27ef4da746b4f5a82adb49",
     "idphoto-miniprogram/src/core/printGeometry.js": "19e76eba88a25fa8d657e0c51c116b9f2aee98f55d8c45d086a3cfdfe9572fa7",
-    "idphoto-miniprogram/src/services/exportInspection.ts": "15fbbf568478aa5b3a277f1b66d1132fdc1aed22f9bbfe3597bd6334463de2f8"
+    "idphoto-miniprogram/src/services/exportInspection.ts": "15fbbf568478aa5b3a277f1b66d1132fdc1aed22f9bbfe3597bd6334463de2f8",
+    "idphoto-miniprogram/src/components/MattingStatus/index.tsx": "76b6f149931f80e3997566148eed38c160ee27454235f11e645f5736db075485",
+    "idphoto-miniprogram/src/core/mattingEvidence.js": "e1a9b6d2e408bd4ef32a5fced5d5dc528e7c0a61b73a3854f3c9ebf41422d65d",
+    "idphoto-miniprogram/src/core/sha256.js": "ed39c78a2e063d98f2f22273cdd61cb0e0b1485e7529bd1c3a6851e589b93e30"
   },
   "requirements": [
     {
@@ -223,9 +226,12 @@
         "idphoto-miniprogram/src/core/mattingLocal.js",
         "idphoto-miniprogram/src/core/mattingCloud.js",
         "idphoto-miniprogram/src/services/modelService.ts",
-        "idphoto-miniprogram/cloudfunctions/matting/index.js"
+        "idphoto-miniprogram/cloudfunctions/matting/index.js",
+        "idphoto-miniprogram/src/core/mattingEvidence.js",
+        "idphoto-miniprogram/src/core/sha256.js",
+        "idphoto-miniprogram/src/components/MattingStatus/index.tsx"
       ],
-      "gap": "端侧模型默认关闭，传统算法与云端 provider 路由存在；骨架不等于模型启用。",
+      "gap": "默认传统算法；模型初始化/规格已接线，固定SHA/许可引用/运行时版本缺失拒绝加载。来源区分传统、模拟、未知及模型自报，质量不由置信度证明。用户暂无权重/运行时/服务/真机，真实能力与发丝评审保留待验收。",
       "acceptance": "固定图集目视与边缘评估；真实/传统/影子分别统计，失败不冒充模型成功。",
       "tasks": [
         "RC-09"
@@ -1520,9 +1526,12 @@
         "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
         "idphoto-miniprogram/src/pages/tool-bg/index.tsx",
         "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
-        "idphoto-miniprogram/src/pages/tool-spec/index.tsx"
+        "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
+        "idphoto-miniprogram/src/core/mattingEvidence.js",
+        "idphoto-miniprogram/src/core/sha256.js",
+        "idphoto-miniprogram/src/components/MattingStatus/index.tsx"
       ],
-      "gap": "历史5/8秒目标与逐步人工操作时长混杂，计时起止需制定。",
+      "gap": "记录模型准备、抠图与云调用分别计时，Node/开发者工具不冒充真实设备；中端设备耗时与5/8秒目标仍待验收。",
       "acceptance": "记录机器处理段端侧≤3s、含云≤8s；用户思考/操作时间单列，不伪造选图5s。",
       "tasks": [
         "RC-09",
@@ -1658,9 +1667,13 @@
         "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
         "idphoto-miniprogram/src/core/outputEvidence.js",
         "idphoto-miniprogram/src/services/exportInspection.ts",
-        "idphoto-miniprogram/src/core/printGeometry.js"
+        "idphoto-miniprogram/src/core/printGeometry.js",
+        "idphoto-miniprogram/src/services/modelService.ts",
+        "idphoto-miniprogram/src/core/mattingEvidence.js",
+        "idphoto-miniprogram/src/core/sha256.js",
+        "idphoto-miniprogram/src/components/MattingStatus/index.tsx"
       ],
-      "gap": "原图有效裁剪/工作画布/分割入口/处理裁剪/目标分别记录；处理分辨率不足提示。未观测模型内部缩放，不宣称神经模型内部输入达标。",
+      "gap": "原图/有效窗/工作/处理/目标分离；真实执行的端侧模型另记录规格输入与固定权重SHA，服务自报与未知模型内部输入不冒充已验证。资源未提供，真实模型记录待补。",
       "acceptance": "大原图小裁剪、低像素放大工作图均能揭示警告。",
       "tasks": [
         "RC-08"
@@ -1889,9 +1902,12 @@
         "idphoto-miniprogram/src/core/suitDiff.js",
         "idphoto-miniprogram/src/services/poseService.ts",
         "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
-        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/core/mattingEvidence.js",
+        "idphoto-miniprogram/src/core/sha256.js",
+        "idphoto-miniprogram/src/components/MattingStatus/index.tsx"
       ],
-      "gap": "传统/云端路由存在，视觉质量需固定集。",
+      "gap": "合成复杂/浅衣/细线及授权REAL-111四个传统算法技术样本已运行；浅衣高置信仍低IoU，视觉通过0。缺固定真实图集标注与人工评审，真实模型质量不标完成。",
       "acceptance": "分层报告和原图/成品配对目视评审。",
       "tasks": [
         "RC-09",
@@ -1985,9 +2001,12 @@
         "idphoto-miniprogram/src/core/privacy.js",
         "idphoto-miniprogram/src/hooks/useConsentGate.ts",
         "idphoto-miniprogram/src/core/localPurge.js",
-        "idphoto-miniprogram/src/pages/privacy/index.tsx"
+        "idphoto-miniprogram/src/pages/privacy/index.tsx",
+        "idphoto-miniprogram/src/core/mattingEvidence.js",
+        "idphoto-miniprogram/src/core/sha256.js",
+        "idphoto-miniprogram/src/components/MattingStatus/index.tsx"
       ],
-      "gap": "本地模型未启用，传统算法可用性和授权耦合待验。",
+      "gap": "默认禁用模型不下载、传统路径及断网/额度/超时替身有验证；实体机断网和真实服务故障/模型可用性仍未验收。",
       "acceptance": "断网、云超时/额度/模型缺失分别测试，区分失败和受限结果。",
       "tasks": [
         "RC-06",
@@ -3766,6 +3785,118 @@
       "previous_sha256": "297803bd334fc972daa85baff0b6ee06f76b3f15fb95621bf69ede8d50b6533e",
       "sha256": "78d3547786f0b271eaf9560b4c38ed3270b7fe6590542af40be3f25d54629478",
       "reason": "有效原图像素/最终文件/相纸几何一致性；不缩减需求或宣称模型质量达标。"
+    },
+    {
+      "task": "RC-09可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/components/MattingStatus/index.tsx",
+      "previous_sha256": null,
+      "sha256": "76b6f149931f80e3997566148eed38c160ee27454235f11e645f5736db075485",
+      "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
+    },
+    {
+      "task": "RC-09可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+      "previous_sha256": "55ad25b85fc1741bb460233c2dd247c1cd8216916e919f94c480b77d3d8c02c1",
+      "sha256": "728599646eaba9216bcf28e61282e397a2b99b2d8d80bb175ca57b5d1ebb8212",
+      "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
+    },
+    {
+      "task": "RC-09可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/matting.js",
+      "previous_sha256": "cd7db09131db8c0b61e2868e1caec8056bc13bcb11fd3699dfa88054d292d7e3",
+      "sha256": "5bb87ba278bbddd4451857c89035239f53e23b8608e5352260893350f9ca48bd",
+      "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
+    },
+    {
+      "task": "RC-09可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/mattingCloud.js",
+      "previous_sha256": "727e21039d76febbac77f39dd4afd90838bfb98e96f02b2c49833f9eb8a97d43",
+      "sha256": "18056bb76596b7f5242fd167c68bea2a892d1232d8c8603d9b6c96a38e19114b",
+      "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
+    },
+    {
+      "task": "RC-09可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/mattingEvidence.js",
+      "previous_sha256": null,
+      "sha256": "c6f42e61defdc2d90fa126bcaff79aa0cd3bf9892291864476af0e1b07efa4e7",
+      "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
+    },
+    {
+      "task": "RC-09可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/mattingLocal.js",
+      "previous_sha256": "d54b1676ff753ed4b87d50deb40ec03bd7008cfe504c768f4d014704ebedd25a",
+      "sha256": "dc02891fd0ca3686c65024b193028fa43bd6224d7b638cf4824de7cf7ff3fb8f",
+      "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
+    },
+    {
+      "task": "RC-09可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/sha256.js",
+      "previous_sha256": null,
+      "sha256": "ed39c78a2e063d98f2f22273cdd61cb0e0b1485e7529bd1c3a6851e589b93e30",
+      "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
+    },
+    {
+      "task": "RC-09可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+      "previous_sha256": "d25e730f9ffd210a45e855e60ddf598b62790aed8b091b30a9a63f27455904d2",
+      "sha256": "2e0cf45c5115618376e8bc32bd9a42fc16c6b4b3563e1f68cc81fbe7e1a885b1",
+      "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
+    },
+    {
+      "task": "RC-09可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/cloudFnAdapter.ts",
+      "previous_sha256": "b7f792b026a4edb83032b5140c1793cdd39199f1ab14f8a3195745eee451f6c5",
+      "sha256": "f29ec25eba42d26d52d548b6a80593edde205aaf0deca8a8cef646e52f0ef2fc",
+      "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
+    },
+    {
+      "task": "RC-09可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/modelService.ts",
+      "previous_sha256": "ebd993acc2dbb70a18bb5ed7c67dd98e0d5232e18770006cd21e36382727659b",
+      "sha256": "020e71eaf8492de251af24ac4d33872bf2d8d862c6ed4b516e0798ef360ad53b",
+      "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
+    },
+    {
+      "task": "RC-09可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/t1Processing.ts",
+      "previous_sha256": "78d3547786f0b271eaf9560b4c38ed3270b7fe6590542af40be3f25d54629478",
+      "sha256": "2f83df5c098954256f03040d0dd96756037c42fc861b1f200254eebeb7068128",
+      "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
+    },
+    {
+      "task": "RC-09可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/matting.js",
+      "previous_sha256": "5bb87ba278bbddd4451857c89035239f53e23b8608e5352260893350f9ca48bd",
+      "sha256": "b92f51a458fcbe98030710775e3adbb627db8cdd669a154b9bd22829eeddee41",
+      "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
+    },
+    {
+      "task": "RC-09可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/t1Processing.ts",
+      "previous_sha256": "2f83df5c098954256f03040d0dd96756037c42fc861b1f200254eebeb7068128",
+      "sha256": "7c5dbc81372994550dbba2c42496bf4e3662e74d80292b7b018e623a76c1c4a0",
+      "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
+    },
+    {
+      "task": "RC-09可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/mattingEvidence.js",
+      "previous_sha256": "c6f42e61defdc2d90fa126bcaff79aa0cd3bf9892291864476af0e1b07efa4e7",
+      "sha256": "e1a9b6d2e408bd4ef32a5fced5d5dc528e7c0a61b73a3854f3c9ebf41422d65d",
+      "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
     }
   ]
 }

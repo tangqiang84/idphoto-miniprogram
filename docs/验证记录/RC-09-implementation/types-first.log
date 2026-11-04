@@ -1,0 +1,1 @@
+idphoto-miniprogram/src/services/t1Processing.ts(136,56): error TS2353: Object literal may only specify known properties, and 'rgba' does not exist in type '{ modelTimeoutMs?: number; }'.

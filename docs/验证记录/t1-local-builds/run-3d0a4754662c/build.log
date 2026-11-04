@@ -1,0 +1,191 @@
+
+> idphoto-miniprogram@0.1.0 build:weapp
+> taro build --type weapp
+
+👽 Taro v3.6.23
+
+Tips:
+1. 建议开启持久化缓存功能，能有效提升二次编译速度，详情请参考: https://docs.taro.zone/docs/config-detail#cache。
+
+
+
+● Webpack █████████████████████████  (0%)  
+ 
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ setup (2%)  
+ run
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ setup (9%) compilation 
+ NodeStuffPlugin
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (10%) 0/20 entries 20/20 dependen
+cies 0/20 modules 1 active 
+ babel-loader › src/app.config.ts
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (10%) 0/20 entries 20/20 dependen
+cies 0/20 modules 1 active 
+ babel-loader › src/app.config.ts
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (10%) 0/20 entries 20/20 dependen
+cies 1/20 modules 19 active 
+ .../idphoto-miniprogram/node_modules/@tarojs/webpack5-runner/dist/template/co
+mp.js
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (26%) 9/20 entries 32/108 depende
+ncies 9/32 modules 21 active 
+ ...s/run-3d0a4754662c/workspace/idphoto-miniprogram/src/assets/suits/suit_nav
+y.png
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%) 9/20 entries 72/108 depende
+ncies 9/43 modules 31 active 
+ ...ss
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%)  
+ ../../../../idphoto-miniprogram/node_modules/postcss-loader/dist/cjs.js
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%)  
+ ../../../../idphoto-miniprogram/node_modules/sass-loader/dist/cjs.js
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%) 9/20 entries 95/112 depende
+ncies 12/59 modules 40 active 
+ babel-loader › src/components/PhotoTool/index.tsx
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%) 9/20 entries 100/129 depend
+encies 12/62 modules 47 active 
+ babel-loader › src/components/AlphaPatch/index.tsx
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%) 9/20 entries 110/186 depend
+encies 12/63 modules 50 active 
+ ...› postcss-loader › resolve-url-loader › sass-loader › src/pages/home/index
+.scss
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%) 9/20 entries 137/199 depend
+encies 13/69 modules 51 active 
+ ...dphoto-miniprogram/node_modules/@babel/runtime/helpers/esm/toConsumableArr
+ay.js
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%) 9/20 entries 182/259 depend
+encies 14/70 modules 56 active 
+ ...-loader › resolve-url-loader › sass-loader › src/components/StepFlow/index
+.scss
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%) 9/20 entries 194/260 depend
+encies 14/74 modules 57 active 
+ ...s-loader › resolve-url-loader › sass-loader › src/components/DpiStep/index
+.scss
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%) 9/20 entries 220/273 depend
+encies 14/88 modules 63 active 
+ ...aoChengXu/idphoto-miniprogram/node_modules/@babel/runtime/helpers/esm/type
+of.js
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%) 9/20 entries 257/274 depend
+encies 17/119 modules 101 active 
+ babel-loader › src/components/QualityTip/index.tsx
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%) 9/20 entries 259/303 depend
+encies 22/120 modules 98 active 
+ ...-loader › resolve-url-loader › sass-loader › src/components/StepFlow/index
+.scss
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%) 9/20 entries 357/409 depend
+encies 35/145 modules 110 active 
+ .../../../../../idphoto-miniprogram/node_modules/@tarojs/shared/dist/shared.e
+sm.js
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%) 9/20 entries 378/432 depend
+encies 50/148 modules 98 active 
+ ...ader › resolve-url-loader › sass-loader › src/components/CameraGuide/index
+.scss
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (34%) 9/20 entries 438/445 depend
+encies 60/167 modules 107 active 
+ ... › ../../../../../../idphoto-miniprogram/node_modules/@tarojs/api/dist/ind
+ex.js
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (37%) 10/20 entries 454/455 depen
+dencies 78/174 modules 92 active 
+ babel-loader › src/core/sha256.js
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (40%) 11/20 entries 476/493 depen
+dencies 86/183 modules 90 active 
+ ...Xu/idphoto-miniprogram/node_modules/@babel/runtime/helpers/regeneratorDefi
+ne.js
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (40%) 11/20 entries 507/520 depen
+dencies 104/183 modules 79 active 
+ ...idphoto-miniprogram/node_modules/@babel/runtime/helpers/iterableToArrayLim
+it.js
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (40%) 11/20 entries 527/529 depen
+dencies 132/189 modules 57 active 
+ ...../../../idphoto-miniprogram/node_modules/@tarojs/api/dist/interceptor/ind
+ex.js
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (40%) 11/20 entries 537/537 depen
+dencies 143/194 modules 50 active 
+ .../../../idphoto-miniprogram/node_modules/css-loader/dist/runtime/noSourceMa
+ps.js
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (43%) 12/20 entries 546/548 depen
+dencies 152/197 modules 44 active 
+ ...tcss-loader › resolve-url-loader › sass-loader › src/pages/privacy/index.s
+css|0
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ building (56%) 17/20 entries 569/569 depen
+dencies 193/204 modules 11 active 
+ ...oader › resolve-url-loader › sass-loader › src/components/QualityTip/index
+.scss
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ sealing (73%)  
+ after chunk graph
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ sealing (80%)  
+ module ids
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ sealing (88%)  
+ runtime requirements
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ sealing (92%) asset processing 
+ CssMinimizerPlugin
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+● Webpack █████████████████████████ sealing (92%) asset processing 
+ RealContentHashPlugin
+
+[2K[1A[2K[1A[2K[1A[2K[1A[2K[G
+✔ Webpack
+  Compiled successfully in 14.71s
+
