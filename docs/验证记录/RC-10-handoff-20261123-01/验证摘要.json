@@ -1,0 +1,152 @@
+{
+  "RC-10-collar-production-20261123-01/backend-negative.json": {
+    "sha256": "1ceff993048e551aa14ec4a0d570301029637756164efbe175966864172e047a",
+    "result": [
+      {
+        "template": "research-navy",
+        "ok": false,
+        "code": "SUIT_COLLAR_UNSUPPORTED"
+      },
+      {
+        "template": "research-black",
+        "ok": false,
+        "code": "SUIT_COLLAR_UNSUPPORTED"
+      },
+      {
+        "template": "research-white",
+        "ok": true,
+        "code": null
+      }
+    ]
+  },
+  "RC-10-collar-production-20261123-01/chin-ab/backend-negative.json": {
+    "sha256": "8764d1dabcc83e20756ff0a5fa1e18201ed38d2c4d9a92cd7493368e33fd5296",
+    "result": [
+      {
+        "template": "research-navy",
+        "ok": false,
+        "code": "SUIT_COLLAR_UNSUPPORTED"
+      },
+      {
+        "template": "research-black",
+        "ok": false,
+        "code": "SUIT_COLLAR_UNSUPPORTED"
+      },
+      {
+        "template": "research-white",
+        "ok": false,
+        "code": "SUIT_COLLAR_UNSUPPORTED"
+      }
+    ]
+  },
+  "RC-10-collar-production-20261123-01/chin-ab/backend-results.json": {
+    "sha256": "f4ae901c2202fd04a8dcc46b61e3223b0e78000e599accb2434474d2717910ca",
+    "result": [
+      {
+        "template": "research-navy",
+        "ok": true,
+        "code": null
+      },
+      {
+        "template": "research-black",
+        "ok": true,
+        "code": null
+      },
+      {
+        "template": "research-white",
+        "ok": true,
+        "code": null
+      }
+    ]
+  },
+  "RC-10-collar-production-20261123-01/cloud-once-result.json": {
+    "sha256": "2061b48881ba8998d977f577e0384f0583a63e7d621c3c22b00294c6702d7dd9",
+    "result": {
+      "exitCode": 0,
+      "geometryMatches": true,
+      "ok": true
+    }
+  },
+  "RC-10-collar-production-20261123-01/cloud-hd-replay.json": {
+    "sha256": "757fd19529e5fd01cbf55e825baa7cafc906ab80e4dc77dc4e61dda2872839dd",
+    "result": [
+      {
+        "template": "research-black",
+        "faceChanges": 0
+      }
+    ]
+  },
+  "RC-10-collar-production-20261123-01/jpeg-final/report.json": {
+    "sha256": "f123ada7003cee9a9be91383ea086f4b933660e7ae336a6d72e968ee8b79c370",
+    "result": {
+      "PASS": 50,
+      "EXPECTED_REJECT": 4
+    }
+  },
+  "RC-10-ide-20261123-01/report.json": {
+    "sha256": "4a7bfe2fb93c7e889e77ef36e820a13096cf93d4a2eb70f37adf531a41fb5d7d",
+    "result": {
+      "rows": [
+        {
+          "quality": 0.95,
+          "width": 600,
+          "height": 600,
+          "type": "jpeg",
+          "size": 53846
+        },
+        {
+          "quality": 0.97,
+          "width": 600,
+          "height": 600,
+          "type": "jpeg",
+          "size": 61623
+        }
+      ],
+      "baseLibrary": "3.17.6",
+      "nativeFace": {
+        "visionKit": "function",
+        "faceDetect": "function"
+      },
+      "pass": true
+    }
+  },
+  "RC-10-ide-20261123-01/native-report.json": {
+    "sha256": "d21a0810b473265e53878db9a67042210ee06114cb963b4c5fbef663b2b66943",
+    "result": {
+      "rows": [
+        {
+          "id": "NASA-MORGAN-2014-768",
+          "code": "VK_START_FAILED",
+          "errCode": null
+        },
+        {
+          "id": "RC09-NET-04",
+          "code": "VK_START_FAILED",
+          "errCode": null
+        }
+      ],
+      "uploads": 0
+    }
+  },
+  "RC-10-mouth-contract-20261123-01/checks/run-20261123-045507-969837b1/report.json": {
+    "sha256": "4fe6f495e617c594e800ee4b41f2b120b41b38aadd2f684ff19858882a2ed9e7",
+    "result": {
+      "status": "PASS",
+      "counts": {
+        "PASS": 4,
+        "FAIL": 0,
+        "BLOCKED": 0,
+        "SKIPPED": 0,
+        "N/A": 8
+      }
+    }
+  },
+  "RC-10-mouth-contract-20261123-01/tools.log": {
+    "sha256": "7ba6e201a8a2539b2567b2772ddba81664b7778edc6f58e8b7c86a46219b710a",
+    "result": [
+      "ℹ tests 161",
+      "ℹ pass 161",
+      "ℹ fail 0"
+    ]
+  }
+}
