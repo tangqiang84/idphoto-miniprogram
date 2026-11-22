@@ -1,0 +1,32 @@
+{
+  "id": "selfie-clothing-6",
+  "asset": "selfie-clothing-6.onnx",
+  "bytes": 16454560,
+  "sha256": "35ec1ecd9ee7f85073c99c00020b7f6751b69506eeacf683bc8665f6117f85b0",
+  "revision": "6db8421a7150ac20558f2c24675078eb3a1a04d0",
+  "source": "https://huggingface.co/senty-au/selfie_multiclass_256x256-ONNX",
+  "upstream": "https://ai.google.dev/edge/mediapipe/solutions/vision/image_segmenter",
+  "license": "Apache-2.0",
+  "inputName": "input_29",
+  "inputShape": [
+    1,
+    256,
+    256,
+    3
+  ],
+  "outputName": "Identity",
+  "outputShape": [
+    1,
+    256,
+    256,
+    6
+  ],
+  "labels": [
+    "background",
+    "hair",
+    "body-skin",
+    "face-skin",
+    "clothes",
+    "others"
+  ]
+}

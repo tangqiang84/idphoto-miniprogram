@@ -1,3 +1,4 @@
+import { researchTemplates as templates } from '../../services/suitAssets';
 import MattingStatus from '../../components/MattingStatus';
 import { View, Text, Button, Image, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
@@ -19,11 +20,7 @@ export const T1_STEPS = [
   { key: 'dress', label: '换装(可选)' }, { key: 'check', label: '预审' },
   { key: 'dpi', label: '输出档位' }, { key: 'export', label: '导出' },
 ];
-const templates = [
-  { id: 'black', name: '黑西装', src: require('../../assets/suits/suit_black.png') },
-  { id: 'navy', name: '深蓝西装', src: require('../../assets/suits/suit_navy.png') },
-  { id: 'gray', name: '灰西装', src: require('../../assets/suits/suit_gray.png') },
-];
+
 export default function ToolIdPhoto() {
   const { flow, state, authorization } = useT1Workflow();
   const { session: snapshot, screen } = state;
@@ -57,6 +54,7 @@ export default function ToolIdPhoto() {
       if (flow.exportResult(expectedTrace).ok) Taro.showToast({ title: '操作失败，请检查权限后重试', icon: 'none' });
     }
   }
+  const suitAvailability = flow.suitAvailability();
   return (
     <View className='page t1-page' data-screen={screen}>
       <View className='t1-nav'>
@@ -120,13 +118,15 @@ export default function ToolIdPhoto() {
       {screen === 'dress' ? <View className='flow-screen screen-dress'>
         <Text className='t1-heading'>④ 换装（可选）</Text>
         {state.preview ? <Image src={state.preview.preview} className='preview' mode='aspectFit' /> : null}
-        <Text className='tag'>仅换装、不改五官；模板适配与视觉效果请核对</Text>
-        <View className='suit-consent' onClick={() => consent('suitSwap')}><Text>{p.consents.includes('suitSwap') ? '☑ ' : '☐ '}单独同意AI换装（可随时撤回）</Text></View>
+        <Text className='tag'>研究用途；仅换装、不改五官；首次需下载约16MB解析模型，请核对领口与双肩</Text>
+        {state.preview?.suitEvidence ? <Text className='suit-evidence'>信号来源：{state.preview.suitEvidence.source}；肩线{state.preview.suitEvidence.measuredShoulders ? `实测 ${state.preview.suitEvidence.shoulderAngleDeg}°` : '未可靠实测'}；脸部像素{state.preview.suitEvidence.pixelProtectionPassed ? '核验通过' : '未通过或未执行'}；视觉质量待人工验收</Text> : null}
+        {!suitAvailability.ok ? <Text className='suit-unavailable'>{suitAvailability.message}（{suitAvailability.code}）</Text> : null}
+        {suitAvailability.ok ? <View className='suit-consent' onClick={() => consent('suitSwap')}><Text>{p.consents.includes('suitSwap') ? '☑ ' : '☐ '}单独同意AI换装（可随时撤回）</Text></View> : null}
         <View className='suit-tpls'>{templates.map((tpl) => <View key={tpl.id} className={`suit-tpl${p.suit.templateId === tpl.id ? ' suit-tpl--sel' : ''}`}
           onClick={() => flow.update({ suit: { ...p.suit, templateId: tpl.id } })}>
           <Image src={tpl.src} className='suit-tpl__img' mode='aspectFit' /><Text>{tpl.name}</Text>
         </View>)}</View>
-        <Button className='flow-apply-suit' disabled={busy} onClick={() => flow.applySuit()}>应用换装并自检</Button>
+        <Button className='flow-apply-suit' disabled={busy || !suitAvailability.ok} onClick={() => flow.applySuit()}>应用换装并自检</Button>
         <Button className='flow-skip-suit' disabled={busy} onClick={() => flow.skipSuit()}>跳过换装，进入预审</Button>
       </View> : null}
 

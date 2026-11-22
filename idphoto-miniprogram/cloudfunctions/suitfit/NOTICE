@@ -1,0 +1,4 @@
+Adapted from no1yu/HivisionIDPhotosPro tools/clothes/processor.py
+https://github.com/no1yu/HivisionIDPhotosPro/tree/741e7c6215e3bc312ad8cec95b51bf5b16e36a0b
+Apache License 2.0.
+Changes: isolated CPU geometry service; measured chin input; local HD composition contract.

@@ -2442,6 +2442,188 @@
         "RC-12"
       ],
       "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC10-SIGNAL",
+      "requirements": [
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "AC6"
+      ],
+      "role": "partial",
+      "kind": "controller",
+      "implementation": "implemented",
+      "input": "可靠合成信号与多人/估算/无双肩反例、未批准生产模板及测试资源替身",
+      "action": "执行严格拒绝、九规格几何、旋转像素保护、T1/T3流程与资源门禁",
+      "expected": "缺信号/模板明确拒绝；脸部零变化；最终重生成须重新自检",
+      "negative": "多人/未知脸数/缺肩点/低分/横图/1级脸差异不能出换装成品",
+      "environment": "Node纯函数/页面控制替身；真实微信UI拒绝另记",
+      "limitations": "不是合格真实照片质量验收；7项资源仍BLOCKED",
+      "runner": {
+        "script": "idphoto-miniprogram/src/core/__tests__/suitFitV2.test.js",
+        "selector": "RC-10只有脸",
+        "command": "node --test idphoto-miniprogram/src/core/__tests__/suitFitV2.test.js"
+      },
+      "followup": [
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC10-PIXEL",
+      "requirements": [
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "AC6"
+      ],
+      "role": "partial",
+      "kind": "controller",
+      "implementation": "implemented",
+      "input": "可靠合成信号与多人/估算/无双肩反例、未批准生产模板及测试资源替身",
+      "action": "执行严格拒绝、九规格几何、旋转像素保护、T1/T3流程与资源门禁",
+      "expected": "缺信号/模板明确拒绝；脸部零变化；最终重生成须重新自检",
+      "negative": "多人/未知脸数/缺肩点/低分/横图/1级脸差异不能出换装成品",
+      "environment": "Node纯函数/页面控制替身；真实微信UI拒绝另记",
+      "limitations": "不是合格真实照片质量验收；7项资源仍BLOCKED",
+      "runner": {
+        "script": "idphoto-miniprogram/src/core/__tests__/suitSafety.test.js",
+        "selector": "RC-10",
+        "command": "node --test idphoto-miniprogram/src/core/__tests__/suitSafety.test.js"
+      },
+      "followup": [
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC10-PAGE",
+      "requirements": [
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "AC6"
+      ],
+      "role": "partial",
+      "kind": "controller",
+      "implementation": "implemented",
+      "input": "可靠合成信号与多人/估算/无双肩反例、未批准生产模板及测试资源替身",
+      "action": "执行严格拒绝、九规格几何、旋转像素保护、T1/T3流程与资源门禁",
+      "expected": "缺信号/模板明确拒绝；脸部零变化；最终重生成须重新自检",
+      "negative": "多人/未知脸数/缺肩点/低分/横图/1级脸差异不能出换装成品",
+      "environment": "Node纯函数/页面控制替身；真实微信UI拒绝另记",
+      "limitations": "不是合格真实照片质量验收；7项资源仍BLOCKED",
+      "runner": {
+        "script": "工具链/tests/suit_safety_page.test.js",
+        "selector": "RC-10生产模板门禁",
+        "command": "node --test 工具链/tests/suit_safety_page.test.js"
+      },
+      "followup": [
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC10-RESOURCE",
+      "requirements": [
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "AC6"
+      ],
+      "role": "partial",
+      "kind": "controller",
+      "implementation": "implemented",
+      "input": "可靠合成信号与多人/估算/无双肩反例、未批准生产模板及测试资源替身",
+      "action": "执行严格拒绝、九规格几何、旋转像素保护、T1/T3流程与资源门禁",
+      "expected": "缺信号/模板明确拒绝；脸部零变化；最终重生成须重新自检",
+      "negative": "多人/未知脸数/缺肩点/低分/横图/1级脸差异不能出换装成品",
+      "environment": "Node纯函数/页面控制替身；真实微信UI拒绝另记",
+      "limitations": "不是合格真实照片质量验收；7项资源仍BLOCKED",
+      "runner": {
+        "script": "工具链/tests/rc10_acceptance.test.js",
+        "selector": "RC-10资源状态须有依据",
+        "command": "node --test 工具链/tests/rc10_acceptance.test.js"
+      },
+      "followup": [
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC09-NATIVE",
+      "requirements": [
+        "B1",
+        "H2.2",
+        "NFR-QUALITY",
+        "NFR-OFFLINE",
+        "NFR-1"
+      ],
+      "role": "partial",
+      "kind": "controller",
+      "implementation": "implemented",
+      "input": "固定社区MODNet浮点文件、11张已授权照片、原生API控制替身与设备诊断",
+      "action": "运行真实CPU模型并记录失败，测试微信Tensor/加载/超时/释放，真机证据分层",
+      "expected": "缺资源明确拒绝；迟到/超时会话销毁；成功执行不等于质量或手机模型通过",
+      "negative": "暗光人像孔洞保留FAIL，卡通不计真实人像质量；缺真机推理不可标完成",
+      "environment": "真实CPU模型与微信API替身；手机仅接入证据另记，不能冒充真实原生推理",
+      "limitations": "iPhone传输中断、Android未测、明确视觉失败，RC-09仍未完成",
+      "runner": {
+        "script": "工具链/tests/wechat_inference.test.js",
+        "selector": "RC-09微信原生桥接",
+        "command": "node --test 工具链/tests/wechat_inference.test.js"
+      },
+      "followup": [
+        "RC-09",
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
+    },
+    {
+      "id": "PART-RC09-REALCPU",
+      "requirements": [
+        "B1",
+        "H2.2",
+        "NFR-QUALITY",
+        "NFR-OFFLINE",
+        "NFR-1"
+      ],
+      "role": "partial",
+      "kind": "artifact",
+      "implementation": "implemented",
+      "input": "固定社区MODNet浮点文件、11张已授权照片、原生API控制替身与设备诊断",
+      "action": "运行真实CPU模型并记录失败，测试微信Tensor/加载/超时/释放，真机证据分层",
+      "expected": "缺资源明确拒绝；迟到/超时会话销毁；成功执行不等于质量或手机模型通过",
+      "negative": "暗光人像孔洞保留FAIL，卡通不计真实人像质量；缺真机推理不可标完成",
+      "environment": "真实CPU模型与微信API替身；手机仅接入证据另记，不能冒充真实原生推理",
+      "limitations": "iPhone传输中断、Android未测、明确视觉失败，RC-09仍未完成",
+      "runner": {
+        "script": "工具链/rc09_real_model_probe.py",
+        "selector": "technicalPass",
+        "command": "python 工具链/rc09_real_model_probe.py --model <固定文件> --sha256 <固定摘要> --manifest <授权清单> --out <新目录>"
+      },
+      "followup": [
+        "RC-09",
+        "RC-10",
+        "RC-11",
+        "RC-12"
+      ],
+      "evidence_policy": "局部断言不认领整条跨工具/质量/真机需求通过"
     }
   ]
 }

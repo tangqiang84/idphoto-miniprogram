@@ -143,6 +143,9 @@ def run(event, decode=_decode, preprocess=_preprocess, load=_load_interpreter, i
 def main(event, context):
     """CloudBase 云函数入口（Python 运行时）"""
     try:
+        if os.environ.get('POSE_PROVIDER') == 'baidu':
+            from baidu_pose import run_baidu
+            return run_baidu(event or {}, os.environ)
         return run(event or {})
     except Exception as exc:  # 兜底：任何异常都以契约内的错误码返回，前端据此降级
         return {'error': 'infer_failed', 'message': str(exc)[:200], 'model': MODEL_NAME}

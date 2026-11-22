@@ -11,6 +11,8 @@ function load(name, callFunction) {
     if(name==='index') return request.endsWith('/mattingCloud') ? {makeHttpAdapter:()=>({call:callFunction})} : {};
     if(request==='@tarojs/taro')return {__esModule:true,default:{cloud:{callFunction}}};
     if(request.endsWith('/asyncUtils'))return {withTimeout:(promise)=>promise,CLOUD_CALL_TIMEOUT_MS:15000};
+    if(request==='./cloudFnAdapter')return load('cloudFnAdapter',callFunction);
+    if(request.endsWith('/suitImageSpace'))return require('../../idphoto-miniprogram/src/core/suitImageSpace');
     if(request.endsWith('/poseContract'))return require('../../idphoto-miniprogram/src/core/poseContract');
     throw new Error('UNSUPPORTED_IMPORT');
   }});

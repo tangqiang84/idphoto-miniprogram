@@ -1,3 +1,5 @@
+import { getSuitTemplateStatus } from '../core/suitTemplates';
+import { compareFaceRegion } from '../core/suitDiff';
 // 业务服务聚合：复用 core 纯逻辑 + UI 层辅助
 // core 为框架无关纯 JS，Taro(weapp) 与 Node 测试共用同一份实现。
 import { getSpec, getPixelSize, listSpecs, BG, BG_LABELS, DPI_STD, DPI_HD, specLabel } from '../core/specLibrary';
@@ -55,6 +57,7 @@ export function buildCloudFnAdapter(overrides = {}) {
 }
 
 export {
+  getSuitTemplateStatus, compareFaceRegion,
   // 规格库
   getSpec, getPixelSize, listSpecs, BG, BG_LABELS, DPI_STD, DPI_HD, specLabel,
   // 合规引擎

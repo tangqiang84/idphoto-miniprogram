@@ -38,6 +38,7 @@ export type FaceDetectResult = {
   rect: FaceRect | null;
   /** 置信度 0~1（无则 null） */
   confidence: number | null;
+  faceCount?: number | null;
   /** 失败原因（供日志，不给用户看技术细节） */
   reason?: string;
 };
@@ -138,8 +139,9 @@ function detectByVisionKit(
     const finish = (res: FaceDetectResult) => {
       if (settled) return;
       settled = true;
-      cleanup();
-      resolve(res);
+      clearTimeout(timer);
+      // 离开原生回调栈后再释放，避免 Android 回调中销毁会话阻塞微信。
+      setTimeout(() => { cleanup(); resolve(res); }, 0);
     };
 
     const onAnchors = (payload: any) => {
@@ -167,6 +169,7 @@ function detectByVisionKit(
         points: primary.points,
         rect: primary.rect,
         confidence: primary.confidence,
+        faceCount: anchors.length,
       });
     };
 
@@ -267,7 +270,7 @@ function detectByFaceDetect(
                 ? { x: dr.originX, y: dr.originY, width: dr.width, height: dr.height }
                 : null;
               const conf = r && r.confArray && typeof r.confArray.global === 'number' ? r.confArray.global : null;
-              finish({ ok: true, source: 'faceDetect', points, rect, confidence: conf });
+              finish({ ok: true, source: 'faceDetect', points, rect, confidence: conf, faceCount: Number.isInteger(r?.faceCount) ? r.faceCount : null });
             },
             fail: (e: any) => finish(emptyResult('原生人脸检测失败', 'faceDetect')),
           });
@@ -375,7 +378,7 @@ export async function measureHeadMetrics(
   width: number,
   height: number,
   bbox?: { x: number; y: number; w: number; h: number } | null
-): Promise<{ ok: boolean; headLengthPx: number | null; source: string; metrics: any; notes: string[] }> {
+): Promise<{ ok: boolean; headLengthPx: number | null; source: string; metrics: any; notes: string[]; faceRect?: {x:number;y:number;w:number;h:number} | null; faceCount?: number | null; facePoints?: FacePoint[] | null }> {
   const det = await detectFace(rgba, width, height);
   const an = analyzeFace({
     points: det.ok ? det.points : null,
@@ -390,6 +393,9 @@ export async function measureHeadMetrics(
   }
   return {
     ok: true,
+    faceRect: det.ok && det.rect ? { x: det.rect.x, y: det.rect.y, w: det.rect.width, h: det.rect.height } : null,
+    faceCount: det.faceCount ?? null,
+    facePoints: det.ok ? det.points : null,
     headLengthPx: an.metrics.headLengthPx,
     source: an.metrics.source,
     metrics: an.metrics,

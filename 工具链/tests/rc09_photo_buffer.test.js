@@ -1,0 +1,6 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict');const {createPhotoBuffer}=require('../rc09_photo_buffer');
+const spec=[{id:'RC09-USER-10',inputBytes:8}];
+test('授权输入必须按序完整传入才可封口，封口后禁止更改',()=>{const b=createPhotoBuffer(spec),t=b.begin(spec[0].id).ticket;b.append(t,0,new Uint8Array([1,2,3,4]));assert.throws(()=>b.seal(t),e=>e.code==='PHOTO_INPUT_INCOMPLETE');b.append(t,4,new Uint8Array([5,6,7,8]));assert.deepEqual(Array.from(b.seal(t).bytes),[1,2,3,4,5,6,7,8]);assert.throws(()=>b.append(t,8,new Uint8Array([1])),e=>e.code==='PHOTO_CHUNK_INVALID');});
+test('未授权ID、错位/重复/过量/超大块均拒绝',()=>{const b=createPhotoBuffer(spec);assert.throws(()=>b.begin('unknown'),e=>e.code==='PHOTO_NOT_AUTHORIZED');const t=b.begin(spec[0].id).ticket;for(const [offset,bytes]of[[1,new Uint8Array([1])],[0,new Uint8Array(9)],[0,new Uint8Array(32769)]])assert.throws(()=>b.append(t,offset,bytes),e=>e.code==='PHOTO_CHUNK_INVALID');});
+test('新输入或撤回使旧票据失效',()=>{const b=createPhotoBuffer(spec),old=b.begin(spec[0].id).ticket;b.begin(spec[0].id);assert.throws(()=>b.append(old,0,new Uint8Array([1])),e=>e.code==='PHOTO_TICKET_STALE');const t=b.begin(spec[0].id).ticket;b.clear();assert.throws(()=>b.seal(t),e=>e.code==='PHOTO_TICKET_STALE');});

@@ -1,0 +1,111 @@
+[
+  {
+    "id": "research-navy",
+    "name": "深蓝正装",
+    "asset": "research-navy.png",
+    "native": {
+      "width": 2500,
+      "height": 2500
+    },
+    "geometry": {
+      "width": 400,
+      "height": 400,
+      "shoulderWidthPx": 350.72,
+      "shoulderY": 155.48,
+      "collarTopY": 110.4,
+      "collarVy": 164.49599999999998
+    },
+    "approval": "research",
+    "usage": "research-only",
+    "usageDecision": "user-20261121-research",
+    "licenseEvidence": null,
+    "qualityEvidence": "synthetic-54-cases-only",
+    "geometrySource": "alpha-bounds-draft",
+    "sourceRevision": "pngtree-20379899",
+    "sha256": "ecdcc282203e8dc7d3415cd121e7eace4ba84e7374a672118d1e7f9fb51e3fc1",
+    "bytes": 2162503,
+    "specs": [
+      "one-inch",
+      "small-one-inch",
+      "driver-license",
+      "two-inch",
+      "small-two-inch",
+      "big-one-inch",
+      "passport-cn",
+      "visa-us"
+    ]
+  },
+  {
+    "id": "research-black",
+    "name": "黑色正装",
+    "asset": "research-black.png",
+    "native": {
+      "width": 2500,
+      "height": 2500
+    },
+    "geometry": {
+      "width": 400,
+      "height": 400,
+      "shoulderWidthPx": 390.72,
+      "shoulderY": 258.72,
+      "collarTopY": 211.68,
+      "collarVy": 268.128
+    },
+    "approval": "research",
+    "usage": "research-only",
+    "usageDecision": "user-20261121-research",
+    "licenseEvidence": null,
+    "qualityEvidence": "synthetic-54-cases-only",
+    "geometrySource": "alpha-bounds-draft",
+    "sourceRevision": "pngtree-20760821",
+    "sha256": "75c9846c0a683168b5b06b3b46d1049b353ac2f66876c2091c2cbdeeb70471af",
+    "bytes": 1781701,
+    "specs": [
+      "one-inch",
+      "small-one-inch",
+      "driver-license",
+      "two-inch",
+      "small-two-inch",
+      "big-one-inch",
+      "passport-cn",
+      "visa-us"
+    ]
+  },
+  {
+    "id": "research-white",
+    "name": "白色正装",
+    "asset": "research-white.png",
+    "native": {
+      "width": 4096,
+      "height": 4096
+    },
+    "geometry": {
+      "width": 400,
+      "height": 400,
+      "shoulderWidthPx": 373.53515625,
+      "shoulderY": 229.833984375,
+      "collarTopY": 173.14453125,
+      "collarVy": 241.171875
+    },
+    "approval": "research",
+    "usage": "research-only",
+    "usageDecision": "user-20261121-research",
+    "licenseEvidence": null,
+    "qualityEvidence": "synthetic-54-cases-only",
+    "geometrySource": "alpha-bounds-draft",
+    "sourceRevision": "pngtree-20495245",
+    "sha256": "7d2063ebf370f092d74f67f8f94d203e9eb2158911f23046abc9b73d9498fe75",
+    "bytes": 5935468,
+    "specs": [
+      "one-inch",
+      "small-one-inch",
+      "driver-license",
+      "two-inch",
+      "small-two-inch",
+      "big-one-inch",
+      "big-two-inch",
+      "passport-cn",
+      "visa-us"
+    ]
+  }
+]

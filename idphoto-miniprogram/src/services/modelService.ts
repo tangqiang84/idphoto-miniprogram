@@ -1,7 +1,8 @@
 // 端侧模型默认关闭；权重、许可引用、运行时版本未固定时不下载、不宣称模型可用。
 import Taro from '@tarojs/taro';
 import { getModelSpec, resolveWeightFileName, verifyWeight, shouldRetryDownload } from '../core/mattingModel';
-import { sha256 } from '../core/sha256';
+import { sha256Async } from '../core/sha256';
+import { createWechatRuntime } from './wechatInference';
 import { withTimeout } from '../core/asyncUtils';
 
 export interface EdgeModelConfig {
@@ -30,7 +31,8 @@ export interface OrtRuntime {
 let _ort: OrtRuntime | null = null;
 let generation = 0;
 const state = { failCount: 0, lastFailAt: 0, lastReason: '', session: null as any, sessionSpecId: null as string | null };
-function reset() { generation++; state.session = null; state.sessionSpecId = null; state.failCount = 0; state.lastFailAt = 0; state.lastReason = ''; }
+function releaseSession(session: any) { try { if (typeof session?.release === 'function') Promise.resolve(session.release()).catch(() => console.warn('[model]', { code: 'MODEL_RELEASE_FAILED', traceId: 'model-' + Date.now() })); } catch { console.warn('[model]', { code: 'MODEL_RELEASE_FAILED', traceId: 'model-' + Date.now() }); } }
+function reset() { generation++; releaseSession(state.session); state.session = null; state.sessionSpecId = null; state.failCount = 0; state.lastFailAt = 0; state.lastReason = ''; }
 export function configureEdgeModel(patch: Partial<EdgeModelConfig>) { Object.assign(EDGE_MODEL_CONFIG, patch); reset(); }
 export function setOrtRuntime(ort: OrtRuntime | null) { _ort = ort; reset(); }
 export function getOrtRuntime() { return _ort; }
@@ -43,8 +45,10 @@ export function getModelStatus() {
 }
 const fallback = (reason: string) => ({ session: null, spec: null, backend: 'classical', reason, reasonCode: reason });
 
-export async function getEdgeSession(options: { check?: () => void } = {}): Promise<any> {
-  const cfg = { ...EDGE_MODEL_CONFIG }, ort = _ort, version = generation;
+export async function getEdgeSession(options: { check?: () => void; cacheOnly?: boolean } = {}): Promise<any> {
+  const cfg = { ...EDGE_MODEL_CONFIG }, version = generation;
+  const nativeSpec = getModelSpec(cfg.modelId);
+  const ort = _ort || (cfg.enabled ? createWechatRuntime(Taro, { inputName: nativeSpec?.inputName, inputSize: nativeSpec?.inputSize, timeoutMs: cfg.timeoutMs }) : null);
   const timeout = cfg.timeoutMs && cfg.timeoutMs > 0 ? cfg.timeoutMs : 15000;
   const check = () => { options.check?.(); if (version !== generation) throw { code: 'MODEL_STALE' }; };
   check();
@@ -68,13 +72,14 @@ export async function getEdgeSession(options: { check?: () => void } = {}): Prom
     check();
     const bytes = new Uint8Array(file.data);
     if (bytes.length !== info.size) throw { code: 'MODEL_WEIGHT_INVALID' };
-    return { exists: true, size: info.size, sha256: sha256(bytes) };
+    return { exists: true, size: info.size, sha256: await sha256Async(bytes, { check }) };
   }
   try {
     let path = root + '/' + resolveWeightFileName(spec);
     let cached: any = null;
     try { cached = await inspect(path); } catch { check(); }
     if (!cached || !verifyWeight(cached, spec).ok) {
+      if(options.cacheOnly)return fallback(cached?'MODEL_CACHE_INVALID':'MODEL_CACHE_MISSING');
       const retry = shouldRetryDownload({ failCount: state.failCount, lastFailAt: state.lastFailAt, now: Date.now(), maxFail: cfg.maxFail, cooldownMs: cfg.cooldownMs });
       if (!retry.retry) return fallback('MODEL_RETRY_COOLDOWN');
       check();
@@ -86,15 +91,24 @@ export async function getEdgeSession(options: { check?: () => void } = {}): Prom
       if (!verifyWeight(await inspect(path), spec).ok) throw { code: 'MODEL_WEIGHT_INVALID' };
     }
     check();
-    const raw: any = await withTimeout(ort.InferenceSession.create(path, { executionProviders: ['wasm'], graphOptimizationLevel: 'all', executionMode: 'sequential' }), timeout, 'MODEL_SESSION_TIMEOUT');
-    try { check(); } catch (error) { if (typeof raw.release === 'function') Promise.resolve(raw.release()).catch(() => {}); throw error; }
-    if (typeof raw.run !== 'function') throw { code: 'MODEL_RUNTIME_INVALID' };
-    const session = { Tensor: ort.Tensor, inputNames: raw.inputNames, outputNames: raw.outputNames, run: raw.run.bind(raw) };
+    let abandoned = false;
+    const creation = Promise.resolve(ort.InferenceSession.create(path, { executionProviders: ['wasm'], graphOptimizationLevel: 'all', executionMode: 'sequential' }));
+    creation.then(raw => { if (abandoned) releaseSession(raw); }, () => {});
+    let raw: any;
+    try { raw = await withTimeout(creation, timeout, 'MODEL_SESSION_TIMEOUT'); }
+    catch (error) { abandoned = true; throw error; }
+    try { check(); } catch (error) { releaseSession(raw); throw error; }
+    if (typeof raw?.run !== 'function') { releaseSession(raw); throw { code: 'MODEL_RUNTIME_INVALID' }; }
+    const session = { Tensor: ort.Tensor, inputNames: raw.inputNames, outputNames: raw.outputNames, release: () => releaseSession(raw),
+      async run(feeds: any) {
+        try { return await raw.run(feeds); }
+        catch (error) { if (state.session === session) { releaseSession(raw); state.session = null; state.sessionSpecId = null; } throw error; }
+      } };
     state.session = session; state.sessionSpecId = spec.id; state.failCount = 0; state.lastReason = '';
     return { session, spec, backend: 'onnx:' + spec.id, reason: '', reasonCode: '', modelRevision: cfg.artifactRevision };
   } catch (error: any) {
     check();
-    const allowed = ['MODEL_WEIGHT_INVALID','MODEL_DOWNLOAD_FAILED','MODEL_RUNTIME_INVALID'];
+    const allowed = ['MODEL_WEIGHT_INVALID','MODEL_DOWNLOAD_FAILED','MODEL_RUNTIME_INVALID','MODEL_TIMEOUT'];
     const code = allowed.includes(error?.code) ? error.code : /TIMEOUT/.test(String(error?.message || '')) ? 'MODEL_TIMEOUT' : 'MODEL_UNAVAILABLE';
     state.failCount++; state.lastFailAt = Date.now(); state.lastReason = code;
     return fallback(code);

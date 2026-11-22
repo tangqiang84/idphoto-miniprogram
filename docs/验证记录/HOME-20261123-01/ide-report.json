@@ -1,0 +1,38 @@
+{
+  "title": "老唐标准照裁剪",
+  "windowWidth": 390,
+  "sizes": [
+    {
+      "width": 178,
+      "height": 124
+    },
+    {
+      "width": 178,
+      "height": 124
+    },
+    {
+      "width": 178,
+      "height": 124
+    },
+    {
+      "width": 178,
+      "height": 124
+    },
+    {
+      "width": 178,
+      "height": 124
+    },
+    {
+      "width": 178,
+      "height": 124
+    }
+  ],
+  "routes": [
+    "pages/tool-idphoto/index",
+    "pages/tool-bg/index",
+    "pages/tool-suit/index",
+    "pages/tool-check/index",
+    "pages/tool-spec/index",
+    "pages/tool-print/index"
+  ]
+}

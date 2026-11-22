@@ -2,7 +2,7 @@
   "miniprogramRoot": "dist/",
   "cloudfunctionRoot": "cloudfunctions/",
   "projectname": "idphoto-miniprogram",
-  "description": "证件照小程序 MVP",
+  "description": "老唐标准照裁剪",
   "appid": "wxd7ff2aaa541a62e4",
   "setting": {
     "urlCheck": false,

@@ -8,12 +8,14 @@ const ROOT = path.resolve(__dirname, '..');
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function main(args = process.argv.slice(2)) {
   if (args.includes('--help')) { console.log('node 工具链/smoke_t1_steps.js --app 禁云验证工程 [--port 9457] [--out 新目录]'); return 0; }
-  for (let i = 0; i < args.length; i += 2) if (!['--app', '--out', '--port', '--consents', '--withdraw', '--tool', '--matting'].includes(args[i]) || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('ARGUMENT_INVALID');
+  for (let i = 0; i < args.length; i += 2) if (!['--app', '--out', '--port', '--consents', '--withdraw', '--tool', '--matting', '--suit-mode'].includes(args[i]) || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('ARGUMENT_INVALID');
   const get = (key, fallback) => { const i = args.indexOf(key); return i < 0 ? fallback : args[i + 1]; };
   const app = path.resolve(get('--app', path.join(ROOT, 'idphoto-miniprogram')));
   const tool = get('--tool', 'T1');
   if (!['T1','T2','T3','T5'].includes(tool)) throw new Error('TOOL_INVALID');
   const port = Number(get('--port', '9457'));
+  const suitMode = get('--suit-mode', 'apply');
+  if (!['apply','reject'].includes(suitMode)) throw new Error('ARGUMENT_INVALID');
   const assertMatting = get('--matting', 'no') === 'yes';
   const consentMode = get('--consents', 'all'); const withdraw = get('--withdraw', 'no');
   if (!['all','local'].includes(consentMode) || !['yes','no'].includes(withdraw)) throw new Error('ARGUMENT_INVALID');
@@ -127,6 +129,17 @@ async function main(args = process.argv.slice(2)) {
       if (tool === 'T3') {
         await step('dress');
         if (await page.$('.flow-skip-suit')) throw new Error('T3_SKIP_EXPOSED');
+        if (suitMode === 'reject') {
+          const unavailable = await wait('.suit-unavailable');
+          const text = await unavailable.text();
+          const disabled = await (await page.$('.flow-apply-suit')).attribute('disabled');
+          if (!text.includes('suit:template_unapproved') || !disabled || await page.$('.suit-consent') || await page.$('.flow-save') || await page.$('.screen-dpi') || await page.$('.screen-export')) throw new Error('TEMPLATE_GATE_INVALID');
+          await tap('.flow-apply-suit');
+          if (!await page.$('.screen-dress') || await page.$('.t1-progress') || await page.$('.flow-save')) throw new Error('REJECTED_SUIT_ADVANCED');
+          checks.push({status:'PASS',step:'template-gate-disabled-action-no-export'});
+          report.outcome = 'expected-template-rejection'; report.evidenceCategory = 'negative-behavior'; report.photoProcessingSuccess = false;
+          await shot('template-rejected'); report.system = await mini.systemInfo(); report.status = report.runtimeErrors ? 'FAIL' : 'PASS'; write(); return report.status === 'PASS' ? 0 : 1;
+        }
         await tap('.suit-consent'); await tap('.flow-apply-suit');
         const started = Date.now();
         while (await (await mini.currentPage()).$('.t1-progress')) { if (Date.now()-started>90000) throw new Error('SUIT_TIMEOUT'); await delay(300); }

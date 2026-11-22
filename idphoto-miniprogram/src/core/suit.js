@@ -168,9 +168,10 @@ function suitPlacement(bbox, headH, chinY, maxW) {
 //   双线性在两个方向都做插值，放大后边缘平滑，代价仅是每像素多几次乘加（可接受）。
 // 注意：alpha 通道单独插值会���致半透明边界的颜色渗染（premultiplied 问题），
 //   故对 RGB 与 A 分别插值后按 A 加权混合，避免出现黑边。
-function suitCompose(rgba, alpha, width, height, tpl, tplW, tplH, place, rotateDeg) {
+function suitCompose(rgba, alpha, width, height, tpl, tplW, tplH, place, rotateDeg, protection) {
   if (!rgba || !alpha || !tpl) throw new Error('suitCompose: 缺少 rgba/alpha/tpl');
   const out = new Uint8ClampedArray(rgba);
+  if (protection && (!Number.isFinite(protection.protectUntilY) || protection.protectUntilY < 0 || protection.protectUntilY > height)) throw new Error('SUIT_PIXEL_GUARD_INVALID');
   // 【P1 新增 rotateDeg】suitFitV2 会按实测肩线给出模板旋转角（限位 ±15°）。
   // 旧调用不传 → 默认 0，行为与 v1 完全一致（零回归）。
   // 合成方式：画布像素 → 绕放置框中心**逆旋转** → 放置框局部坐标 → 模板像素（双线性）。
@@ -201,14 +202,19 @@ function suitCompose(rgba, alpha, width, height, tpl, tplW, tplH, place, rotateD
     const i10 = (y1i * tplW + x0i) * 4, i11 = (y1i * tplW + x1i) * 4;
     const w00 = (1 - tx) * (1 - ty), w01 = tx * (1 - ty);
     const w10 = (1 - tx) * ty, w11 = tx * ty;
+    // PNG透明像素的隐藏RGB不属于衣服；先预乘alpha插值，避免把灰底/肤色带进边缘。
+    const a00 = tpl[i00 + 3] * w00, a01 = tpl[i01 + 3] * w01;
+    const a10 = tpl[i10 + 3] * w10, a11 = tpl[i11 + 3] * w11;
+    const a = a00 + a01 + a10 + a11;
     return {
-      r: tpl[i00] * w00 + tpl[i01] * w01 + tpl[i10] * w10 + tpl[i11] * w11,
-      g: tpl[i00 + 1] * w00 + tpl[i01 + 1] * w01 + tpl[i10 + 1] * w10 + tpl[i11 + 1] * w11,
-      b: tpl[i00 + 2] * w00 + tpl[i01 + 2] * w01 + tpl[i10 + 2] * w10 + tpl[i11 + 2] * w11,
-      a: tpl[i00 + 3] * w00 + tpl[i01 + 3] * w01 + tpl[i10 + 3] * w10 + tpl[i11 + 3] * w11,
+      r: a ? (tpl[i00] * a00 + tpl[i01] * a01 + tpl[i10] * a10 + tpl[i11] * a11) / a : 0,
+      g: a ? (tpl[i00 + 1] * a00 + tpl[i01 + 1] * a01 + tpl[i10 + 1] * a10 + tpl[i11 + 1] * a11) / a : 0,
+      b: a ? (tpl[i00 + 2] * a00 + tpl[i01 + 2] * a01 + tpl[i10 + 2] * a10 + tpl[i11 + 2] * a11) / a : 0,
+      a,
     };
   };
   for (let y = y0; y < y1; y++) {
+    if (protection && y < protection.protectUntilY) continue;
     // 未旋转时：局部坐标就是「相对放置框左上角」（与 v1 口径逐像素一致，零回归）
     const fyNoRot = (y - place.y + 0.5) * ry - 0.5;
     for (let x = x0; x < x1; x++) {
@@ -228,15 +234,18 @@ function suitCompose(rgba, alpha, width, height, tpl, tplW, tplH, place, rotateD
         fx = (ux + place.w / 2) * rx - 0.5;
         fy = (uy + place.h / 2) * ry - 0.5;
       }
+      if (fx < -0.5 || fy < -0.5 || fx > tplW - 0.5 || fy > tplH - 0.5) continue;
       const t = sampleTpl(fx, fy);
       const ta = t.a / 255;
       if (ta <= 0.001) continue; // 模板透明处不覆盖
       const di4 = di * 4;
       // alpha 加权混合：避免半透明边界把背景黑色渗进前景
       const inv = 1 - ta;
-      out[di4] = t.r * ta + out[di4] * inv;
-      out[di4 + 1] = t.g * ta + out[di4 + 1] * inv;
-      out[di4 + 2] = t.b * ta + out[di4 + 2] * inv;
+      const removed = protection?.clothingMask?.[di] === 1;
+      out[di4] = removed ? t.r : t.r * ta + out[di4] * inv;
+      out[di4 + 1] = removed ? t.g : t.g * ta + out[di4 + 1] * inv;
+      out[di4 + 2] = removed ? t.b : t.b * ta + out[di4 + 2] * inv;
+      if (removed && protection.outputAlpha) protection.outputAlpha[di] = alpha[di] * ta;
     }
   }
   return out;

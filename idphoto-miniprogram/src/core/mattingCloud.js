@@ -595,7 +595,8 @@ function makeLocalBiRefStub({ trustedHosts, endpoint = 'https://cn-gpu-fn.exampl
 //   audit(stageMeta)        : 审计回调，仅收到元数据，绝不传像素(AC8)
 // 返回：
 //   { alpha, backend, confidence, degraded, cloudMeta }
-async function cloudMatting({ rgba, alpha, width, height, adapter, consents = [], audit, tool = 'T1', faceRegion = null } = {}) {
+async function cloudMatting({ rgba, alpha, width, height, adapter, consents = [], audit, tool = 'T1', faceRegion = null, check } = {}) {
+  check?.();
   if (!adapter) throw new Error('cloud: 未注入 adapter');
   if (!consents.includes('faceCloudEnhance')) {
     // AC5：缺少上云增强单独授权，阻断（绝不降级偷偷上传）
@@ -643,8 +644,12 @@ async function cloudMatting({ rgba, alpha, width, height, adapter, consents = []
   const t0 = Date.now();
   let resp;
   try {
+    check?.();
     resp = await adapter.call(req);
+    check?.();
   } catch (e) {
+    check?.();
+    if (/^(CONSENT_|SESSION_)/.test(String(e?.code || ''))) throw e;
     // 网络/鉴权失败 → 降级端侧（第258/292行：上云失败有降级提示）
     audit && audit({
       stage: 'cloud_fail',
@@ -657,7 +662,18 @@ async function cloudMatting({ rgba, alpha, width, height, adapter, consents = []
   }
   const dt = Date.now() - t0;
 
-  const subAlphaRaw = decodeAlphaB64(resp.alphaB64, upW * upH);
+  // 响应必须完整匹配上传尺寸，禁止用补零或截断掩盖传输/服务异常。
+  const b64 = resp && resp.alphaB64;
+  const expectedBytes = upW * upH;
+  const validBase64 = typeof b64 === 'string' && b64.length === 4 * Math.ceil(expectedBytes / 3)
+    && /^[A-Za-z0-9+/]*={0,2}$/.test(b64);
+  const subAlphaRaw = validBase64 ? decodeAlphaB64(b64, expectedBytes) : null;
+  if (!subAlphaRaw || subAlphaRaw.__len !== expectedBytes) {
+    audit && audit({ stage: 'cloud_fail', code: 'CLOUD_RESPONSE_INVALID', degraded: true, hasPixel: false });
+    return { alpha, backend: 'cloud->edge', confidence: estimateQuality(alpha).confidence,
+      degraded: true, reason: 'invalid_response', reasonCode: 'CLOUD_RESPONSE_INVALID',
+      cloudMeta: { latencyMs: dt } };
+  }
   // 若上传时降采样过，把 alpha 双线性放大回裁剪区原始尺寸再贴回全图
   const subAlphaUp = downSampled
     ? upscaleAlpha(subAlphaRaw, upW, upH, crop.w, crop.h)

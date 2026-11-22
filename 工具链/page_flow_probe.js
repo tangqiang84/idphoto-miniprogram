@@ -68,8 +68,8 @@ async function probePage(tool, options = {}) {
   };
   const record = (kind) => events.push({ kind, cropConfirmed: observedSession ? observedSession.getState().params.cropConfirmed : cropConfirmed });
   const stop = (kind) => { record(kind); throw new Error('RC03_PROBE_STOP_AFTER_CALL'); };
-  const canvas = () => ({
-    getContext: () => ({ drawImage() {}, putImageData() {}, getImageData: () => ({ data: new Uint8ClampedArray(640 * 800 * 4) }) }),
+  const canvas = ({width=640,height=800}={}) => ({
+    getContext: () => ({ drawImage() {}, putImageData() {}, getImageData: (_x,_y,w=width,h=height) => ({ data: new Uint8ClampedArray(w * h * 4) }) }),
     createImage() {
       const image = {};
       Object.defineProperty(image, 'src', { set() { queueMicrotask(() => image.onload && image.onload()); } });
@@ -89,6 +89,8 @@ async function probePage(tool, options = {}) {
     ...require('../idphoto-miniprogram/src/core/compliance'),
     ...require('../idphoto-miniprogram/src/core/suit'),
     ...require('../idphoto-miniprogram/src/core/suitFitV2'),
+    ...require('../idphoto-miniprogram/src/core/suitTemplates'),
+    ...require('../idphoto-miniprogram/src/core/suitDiff'),
     ...require('../idphoto-miniprogram/src/core/alphaPatch'),
     ...require('../idphoto-miniprogram/src/core/paperLibrary'),
     segment: async () => stop('segment'),
@@ -117,7 +119,13 @@ async function probePage(tool, options = {}) {
         w: 64, h: 80, rgba: new Uint8ClampedArray(64 * 80 * 4), canvas: canvas(),
         plan: { sx: 0, sy: 0, sw: 64, sh: 80 }, crop: null, srcMetrics: null,
       })) };
-      if (request.endsWith('/services/poseService') || request === './poseService') return { requestPoseKeypoints: async () => stop('pose'), encodeCanvasToJpegB64: () => null };
+      if (request.endsWith('/services/suitAssets') || request === './suitAssets') return options.suitAssets || { researchTemplates: [{id:'research-white',name:'白色正装',src:'fixture-white.png'},{id:'research-navy',name:'深蓝正装',src:'fixture-navy.png'},{id:'research-black',name:'黑色正装',src:'fixture-black.png'}], loadResearchTemplate: async () => 'fixture-research.png' };
+      if (request.endsWith('/services/poseService') || request === './poseService') return options.poseService || { requestPoseKeypoints: async () => stop('pose'), prepareSuitImage: (_canvas,width,height) => ({imageB64:null,width,height}) };
+      if (request.endsWith('/services/clothingService') || request === './clothingService') return options.clothingService || { parseSuitClothing: async () => stop('clothing') };
+      if (request.endsWith('/services/cloudClothingService') || request === './cloudClothingService') return options.cloudClothingService || { parseCloudSuitClothing: async () => stop('clothing') };
+      if (request === './collarFitService') return options.collarFitService || {fitCloudCollar:async()=>stop('collar-fit')};
+      if (request.endsWith('/core/suitCollarCompose') && options.suitCollarCompose) return options.suitCollarCompose;
+      if (request.endsWith('/services/cloudFaceService') || request === './cloudFaceService') return options.cloudFaceService || { measureCloudSuitFace: async () => stop('cloud-face') };
       if (request.endsWith('/hooks/useImagePicker') && options.actualPicker) return load(path.resolve(path.dirname(file), request + '.tsx'));
       if (request.endsWith('/hooks/useImagePicker')) return { useImagePicker(onImage) {
         imageHandler = onImage;
@@ -132,6 +140,7 @@ async function probePage(tool, options = {}) {
         loaded[path.relative(ROOT, modulePath)] = crypto.createHash('sha256').update(fs.readFileSync(modulePath)).digest('hex');
         if (!['processingSession', 't1Workflow'].includes(name)) return require(modulePath);
       }
+      if (request === './wechatInference') return require('../idphoto-miniprogram/src/services/wechatInference');
       if (request === './modelService') return load(path.resolve(ROOT, 'idphoto-miniprogram/src/services/modelService.ts'));
       if (request === './exportInspection' || request.endsWith('/services/exportInspection')) return load(path.resolve(ROOT, 'idphoto-miniprogram/src/services/exportInspection.ts'));
       if (request.endsWith('/services/t1Processing')) return load(path.resolve(path.dirname(file), request + '.ts'));

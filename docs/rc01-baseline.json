@@ -1,5 +1,5 @@
 {
-  "version": "RC-01-v1.10",
+  "version": "RC-01-v1.12",
   "date": "2026-10-28",
   "git_head": "f4d94b1de354fce7af90ac73540c2d536af385e3",
   "scope": "需求/现状基线；业务验收按各RC本轮报告分别记录，不代表全产品发布通过",
@@ -56,7 +56,7 @@
     "idphoto-miniprogram/src/core/quality.js": "7a45d49ab568325193360b452e8caa6d596f73fd74b744680d2feb723f3cda00",
     "idphoto-miniprogram/src/core/specLibrary.js": "860d7bfae2dfcdc8ce690199e63203d9ba76ff54286e4c95d2640b95e51b71a6",
     "idphoto-miniprogram/src/core/suitDiff.js": "0923a42487f78c1f2bf526181aca04de75c5840aab573a07940c697d47bd3ded",
-    "idphoto-miniprogram/src/core/suitFitV2.js": "50f71806acda7962564440c96d537bc5ba112784a2a16b7aa490a4c3827bcf2f",
+    "idphoto-miniprogram/src/core/suitFitV2.js": "a7ec1dd05be76c429ede5ba262f86a1bf5ef26bdff9112b829e6298505039cd3",
     "idphoto-miniprogram/src/core/validateFile.js": "1948b3b99c06f6af67a24bd0e8e0d6ad0bfd4d03a046d42c3f780d0a4e0ca457",
     "idphoto-miniprogram/src/hooks/useConsentGate.ts": "df474606820ead889f7f866de8cb76d724b401dc81353d1e9664833beb1f467d",
     "idphoto-miniprogram/src/hooks/useImagePicker.tsx": "c0d12deb9d4835844649ae297ab1f2ac3b48dbc50c14ffd5a3c128706f87ce48",
@@ -64,30 +64,37 @@
     "idphoto-miniprogram/src/pages/privacy/index.tsx": "fcda8d8d85731e0506952373157f97d1330b4a0e1097095d8c6d66f6328f826f",
     "idphoto-miniprogram/src/pages/tool-bg/index.tsx": "0c07c14b922d83a50aaae392f4928c164b90771131be04a6256f02f7c2ef3c1b",
     "idphoto-miniprogram/src/pages/tool-check/index.tsx": "32c9a9bbef2781490cbdca04e5ae5fcf737e1b9e4a35b74063f7464795396a45",
-    "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx": "2e0cf45c5115618376e8bc32bd9a42fc16c6b4b3563e1f68cc81fbe7e1a885b1",
+    "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx": "516fb87f5539c7d394c9548cecea7c197dfa2c381c30ead295f762400569a260",
     "idphoto-miniprogram/src/pages/tool-print/index.tsx": "6cd1714651098a1b7acf04770dda0a734376cb2c97cf189e030b3a993c5f89a6",
     "idphoto-miniprogram/src/pages/tool-spec/index.tsx": "f1d54d02836b8d6c3d8aeeaca08598bd571bb395ed0371c42f7071e269579098",
     "idphoto-miniprogram/src/pages/tool-suit/index.tsx": "95665a0a40ab054e0d16a7d60c8751ee4d79b851ff2324c45a730e371e9b4a90",
-    "idphoto-miniprogram/src/services/faceService.ts": "632ced63daf622c715113dcb309856cce020699c50724ed352837a681418845e",
-    "idphoto-miniprogram/src/services/modelService.ts": "020e71eaf8492de251af24ac4d33872bf2d8d862c6ed4b516e0798ef360ad53b",
+    "idphoto-miniprogram/src/services/faceService.ts": "c82b4f0e805ce70867ec3a65a5f0d1a425a24fc69020e43fa162c8f8abadc38e",
+    "idphoto-miniprogram/src/services/modelService.ts": "d3a287d22c285850141ccd9210f6e4c78fc3fc1f37497b34447a410f9f87f87d",
     "idphoto-miniprogram/src/services/pipeline.ts": "29b9851b25eec8d891adb9b6357e09b724e7017847c0aa859b5a77bcc0c2a50c",
-    "idphoto-miniprogram/src/services/poseService.ts": "78837c4d614b8877fca41e072f932f93d294db7d969b8505ac6ca3199bc39e7c",
+    "idphoto-miniprogram/src/services/poseService.ts": "35742d734ec055bb8bb41dd622ddd5a5b18f3cff8cf06d46c01e4a5b97326116",
     "idphoto-miniprogram/src/services/renderService.ts": "5619a0bbd02a05cb09902c7f89239e5d793ace9152371ec9f97339124c972e35",
-    "idphoto-miniprogram/src/core/t1Workflow.js": "ea8491859815b70d1b0856f251043821fc735a4b9108342b16f917337aa20797",
-    "idphoto-miniprogram/src/services/t1Processing.ts": "7c5dbc81372994550dbba2c42496bf4e3662e74d80292b7b018e623a76c1c4a0",
+    "idphoto-miniprogram/src/core/t1Workflow.js": "022f3bc761346f724f89c4810afba1b938028e4628fdd1ed7d378960e847effa",
+    "idphoto-miniprogram/src/services/t1Processing.ts": "0310cef9811162d679cc5361454c8e2742b20c2a428d229c8b57e11cf2b84125",
     "idphoto-miniprogram/src/hooks/useT1Workflow.ts": "b3462372b3baeaf6817635868d7ea284eb283d06fe5ecf24127cf6f716d819ff",
     "idphoto-miniprogram/src/core/consentSession.js": "d845f57a1cc64ece5ef04b777bb2297c63a25f75ad1256518a6ea31c3e67bfc7",
     "idphoto-miniprogram/src/hooks/useActionConsent.ts": "b59bb14462123218b7b439b1e936e25d8c7a43c89b0e19c0f43049c9c3b8f930",
     "idphoto-miniprogram/src/services/cloudFnAdapter.ts": "f29ec25eba42d26d52d548b6a80593edde205aaf0deca8a8cef646e52f0ef2fc",
-    "idphoto-miniprogram/src/services/index.ts": "84a00bfba0fe241ba9f060043c8f9fd4fe63b76c3ea5e3f70fcb3cf0d8bc976c",
+    "idphoto-miniprogram/src/services/index.ts": "eff4b185f9122f18058f9d4f5ffdc24c56f665e6fd3230b1223202c8d8965702",
     "idphoto-miniprogram/src/components/BackgroundControl/index.tsx": "0a5e684dd3a8c9facbe665cc83beb21c5c368656150daaa2ea45f320b1726c3d",
-    "idphoto-miniprogram/src/components/PhotoTool/index.tsx": "728599646eaba9216bcf28e61282e397a2b99b2d8d80bb175ca57b5d1ebb8212",
+    "idphoto-miniprogram/src/components/PhotoTool/index.tsx": "a6b5d7b6a7fcaef7e4c7ebad508f75b5b366767bb0bc17a9693fbb4521abc312",
     "idphoto-miniprogram/src/core/outputEvidence.js": "cd61e5f2f39f98a201df8dac912840f856dd8ddfbd27ef4da746b4f5a82adb49",
     "idphoto-miniprogram/src/core/printGeometry.js": "19e76eba88a25fa8d657e0c51c116b9f2aee98f55d8c45d086a3cfdfe9572fa7",
     "idphoto-miniprogram/src/services/exportInspection.ts": "15fbbf568478aa5b3a277f1b66d1132fdc1aed22f9bbfe3597bd6334463de2f8",
     "idphoto-miniprogram/src/components/MattingStatus/index.tsx": "76b6f149931f80e3997566148eed38c160ee27454235f11e645f5736db075485",
     "idphoto-miniprogram/src/core/mattingEvidence.js": "e1a9b6d2e408bd4ef32a5fced5d5dc528e7c0a61b73a3854f3c9ebf41422d65d",
-    "idphoto-miniprogram/src/core/sha256.js": "ed39c78a2e063d98f2f22273cdd61cb0e0b1485e7529bd1c3a6851e589b93e30"
+    "idphoto-miniprogram/src/core/sha256.js": "aeb1f9d20318dacb433956d26482ec8a3088329cc25d2cea02ae659402e5153a",
+    "idphoto-miniprogram/src/core/suitSafety.js": "66f039ad3867ac494b4dc0e2da8061268142b4c4107b6430481bc72bfcb494ba",
+    "idphoto-miniprogram/src/core/suitTemplates.js": "be2aac4d9c31029a6a79db22510eb8aec0eed68ef6a8dff423b600e2ba732047",
+    "工具链/tests/suit_safety_page.test.js": "9cf59abd9e0a1225f6e2e44650cd69ebdcd24945fb4810bb0f22f6673c66fa79",
+    "idphoto-miniprogram/src/services/wechatInference.js": "7415a6ab230a929ac6bfcbd038a1e186d5949c9b0eb34dfaba9636a8cfc0d762",
+    "工具链/rc09_real_model_probe.py": "0e178687f30ee4fab1fc9ae78d9cbd4bbb3cb37d9805e008e7fcc50e302bb9e1",
+    "工具链/tests/wechat_inference.test.js": "2db10df885c863373656be32838dba42ab55b2e5d36fa32ea8e34a9e83b8a989",
+    "idphoto-miniprogram/src/core/__tests__/sha256Async.test.js": "4c4a21a09899b4bd8d132448e334ac119e53ecef4fac6b8221421b90c7317181"
   },
   "requirements": [
     {
@@ -229,9 +236,13 @@
         "idphoto-miniprogram/cloudfunctions/matting/index.js",
         "idphoto-miniprogram/src/core/mattingEvidence.js",
         "idphoto-miniprogram/src/core/sha256.js",
-        "idphoto-miniprogram/src/components/MattingStatus/index.tsx"
+        "idphoto-miniprogram/src/components/MattingStatus/index.tsx",
+        "idphoto-miniprogram/src/services/wechatInference.js",
+        "工具链/tests/wechat_inference.test.js",
+        "工具链/rc09_real_model_probe.py",
+        "idphoto-miniprogram/src/core/__tests__/sha256Async.test.js"
       ],
-      "gap": "默认传统算法；模型初始化/规格已接线，固定SHA/许可引用/运行时版本缺失拒绝加载。来源区分传统、模拟、未知及模型自报，质量不由置信度证明。用户暂无权重/运行时/服务/真机，真实能力与发丝评审保留待验收。",
+      "gap": "普通预览完成前置SHA，原生调用返回后MODEL_OUTPUT_INVALID，总计79672ms，有效输出0。CPU相同全零输入有限且形状正确。已补输出合约元数据并去诊断重复校验、禁止诊断下载；400 core/87工具/类型/Lint/构建通过，待手机输出元数据；质量FAIL、Android/云验收未关闭。",
       "acceptance": "固定图集目视与边缘评估；真实/传统/影子分别统计，失败不冒充模型成功。",
       "tasks": [
         "RC-09"
@@ -411,9 +422,13 @@
         "idphoto-miniprogram/src/core/suitDiff.js",
         "idphoto-miniprogram/src/services/poseService.ts",
         "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
-        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/core/suitSafety.js",
+        "idphoto-miniprogram/src/core/suitTemplates.js",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "工具链/tests/suit_safety_page.test.js"
       ],
-      "gap": "现有三套过渡模板；质量、授权档案及九规格适配未完成验收。",
+      "gap": "RC-10可执行部分：可靠单人脸与双肩同时存在才合成；estimate/physical不出图且不计肩线通过；三旧模板未批准，T3明确拒绝，T1可跳过。像素保护/独立差分与九规格技术回归已接线，真实姿态、合格模板、历史实图和视觉/真机仍待验收。",
       "acceptance": "按九规格×领型检查透明底、像素、元数据、书面许可和自然度；数量建议不当硬指标。",
       "tasks": [
         "RC-10"
@@ -437,9 +452,13 @@
         "idphoto-miniprogram/src/core/suitDiff.js",
         "idphoto-miniprogram/src/services/poseService.ts",
         "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
-        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/core/suitSafety.js",
+        "idphoto-miniprogram/src/core/suitTemplates.js",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "工具链/tests/suit_safety_page.test.js"
       ],
-      "gap": "差分与几何代码存在，历史盖脸问题不能仅靠仿真结论关闭。",
+      "gap": "RC-10可执行部分：可靠单人脸与双肩同时存在才合成；estimate/physical不出图且不计肩线通过；三旧模板未批准，T3明确拒绝，T1可跳过。像素保护/独立差分与九规格技术回归已接线，真实姿态、合格模板、历史实图和视觉/真机仍待验收。",
       "acceptance": "同图同裁剪同底色前后比较脸部像素，并用人工标注脸框和目视交叉验证。",
       "tasks": [
         "RC-10"
@@ -466,9 +485,12 @@
         "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
         "idphoto-miniprogram/src/components/BackgroundControl/index.tsx",
         "idphoto-miniprogram/src/services/t1Processing.ts",
-        "idphoto-miniprogram/src/hooks/useT1Workflow.ts"
+        "idphoto-miniprogram/src/hooks/useT1Workflow.ts",
+        "idphoto-miniprogram/src/core/suitSafety.js",
+        "idphoto-miniprogram/src/core/suitTemplates.js",
+        "工具链/tests/suit_safety_page.test.js"
       ],
-      "gap": "T3换装无跳过，预览及最终新结果分别自检，未实际换装不能导出；Node及本地微信流程验证，模板质量仍归RC-10。",
+      "gap": "RC-10可执行部分：可靠单人脸与双肩同时存在才合成；estimate/physical不出图且不计肩线通过；三旧模板未批准，T3明确拒绝，T1可跳过。像素保护/独立差分与九规格技术回归已接线，真实姿态、合格模板、历史实图和视觉/真机仍待验收。",
       "acceptance": "未确认不可导出，确认后可保存；换图/重生成确认失效，不能绕过弹层。",
       "tasks": [
         "RC-05",
@@ -494,9 +516,13 @@
         "idphoto-miniprogram/src/core/suitDiff.js",
         "idphoto-miniprogram/src/services/poseService.ts",
         "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
-        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/core/suitSafety.js",
+        "idphoto-miniprogram/src/core/suitTemplates.js",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "工具链/tests/suit_safety_page.test.js"
       ],
-      "gap": "有构图检查但 estimate 可参与成功；无可靠双肩时拒绝链路待核实。",
+      "gap": "RC-10可执行部分：可靠单人脸与双肩同时存在才合成；estimate/physical不出图且不计肩线通过；三旧模板未批准，T3明确拒绝，T1可跳过。像素保护/独立差分与九规格技术回归已接线，真实姿态、合格模板、历史实图和视觉/真机仍待验收。",
       "acceptance": "无人脸/双肩/多人/横图等非目标明确原因码拒绝，九规格合法图不盖脸。",
       "tasks": [
         "RC-10"
@@ -1286,9 +1312,13 @@
         "idphoto-miniprogram/src/core/suitDiff.js",
         "idphoto-miniprogram/src/services/poseService.ts",
         "idphoto-miniprogram/src/pages/tool-suit/index.tsx",
-        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx"
+        "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+        "idphoto-miniprogram/src/core/suitSafety.js",
+        "idphoto-miniprogram/src/core/suitTemplates.js",
+        "idphoto-miniprogram/src/services/t1Processing.ts",
+        "工具链/tests/suit_safety_page.test.js"
       ],
-      "gap": "自检门控与差分模块存在，质量证据不足。",
+      "gap": "RC-10可执行部分：可靠单人脸与双肩同时存在才合成；estimate/physical不出图且不计肩线通过；三旧模板未批准，T3明确拒绝，T1可跳过。像素保护/独立差分与九规格技术回归已接线，真实姿态、合格模板、历史实图和视觉/真机仍待验收。",
       "acceptance": "真实前后脸区差分超阈值提示，未自检不可保存，重跑使自检失效。",
       "tasks": [
         "RC-10"
@@ -1529,9 +1559,13 @@
         "idphoto-miniprogram/src/pages/tool-spec/index.tsx",
         "idphoto-miniprogram/src/core/mattingEvidence.js",
         "idphoto-miniprogram/src/core/sha256.js",
-        "idphoto-miniprogram/src/components/MattingStatus/index.tsx"
+        "idphoto-miniprogram/src/components/MattingStatus/index.tsx",
+        "idphoto-miniprogram/src/services/wechatInference.js",
+        "工具链/tests/wechat_inference.test.js",
+        "工具链/rc09_real_model_probe.py",
+        "idphoto-miniprogram/src/core/__tests__/sha256Async.test.js"
       ],
-      "gap": "记录模型准备、抠图与云调用分别计时，Node/开发者工具不冒充真实设备；中端设备耗时与5/8秒目标仍待验收。",
+      "gap": "普通预览完成前置SHA，原生调用返回后MODEL_OUTPUT_INVALID，总计79672ms，有效输出0。CPU相同全零输入有限且形状正确。已补输出合约元数据并去诊断重复校验、禁止诊断下载；400 core/87工具/类型/Lint/构建通过，待手机输出元数据；质量FAIL、Android/云验收未关闭。",
       "acceptance": "记录机器处理段端侧≤3s、含云≤8s；用户思考/操作时间单列，不伪造选图5s。",
       "tasks": [
         "RC-09",
@@ -1671,9 +1705,13 @@
         "idphoto-miniprogram/src/services/modelService.ts",
         "idphoto-miniprogram/src/core/mattingEvidence.js",
         "idphoto-miniprogram/src/core/sha256.js",
-        "idphoto-miniprogram/src/components/MattingStatus/index.tsx"
+        "idphoto-miniprogram/src/components/MattingStatus/index.tsx",
+        "idphoto-miniprogram/src/services/wechatInference.js",
+        "工具链/tests/wechat_inference.test.js",
+        "工具链/rc09_real_model_probe.py",
+        "idphoto-miniprogram/src/core/__tests__/sha256Async.test.js"
       ],
-      "gap": "原图/有效窗/工作/处理/目标分离；真实执行的端侧模型另记录规格输入与固定权重SHA，服务自报与未知模型内部输入不冒充已验证。资源未提供，真实模型记录待补。",
+      "gap": "普通预览完成前置SHA，原生调用返回后MODEL_OUTPUT_INVALID，总计79672ms，有效输出0。CPU相同全零输入有限且形状正确。已补输出合约元数据并去诊断重复校验、禁止诊断下载；400 core/87工具/类型/Lint/构建通过，待手机输出元数据；质量FAIL、Android/云验收未关闭。",
       "acceptance": "大原图小裁剪、低像素放大工作图均能揭示警告。",
       "tasks": [
         "RC-08"
@@ -1905,9 +1943,13 @@
         "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
         "idphoto-miniprogram/src/core/mattingEvidence.js",
         "idphoto-miniprogram/src/core/sha256.js",
-        "idphoto-miniprogram/src/components/MattingStatus/index.tsx"
+        "idphoto-miniprogram/src/components/MattingStatus/index.tsx",
+        "idphoto-miniprogram/src/services/wechatInference.js",
+        "工具链/tests/wechat_inference.test.js",
+        "工具链/rc09_real_model_probe.py",
+        "idphoto-miniprogram/src/core/__tests__/sha256Async.test.js"
       ],
-      "gap": "合成复杂/浅衣/细线及授权REAL-111四个传统算法技术样本已运行；浅衣高置信仍低IoU，视觉通过0。缺固定真实图集标注与人工评审，真实模型质量不标完成。",
+      "gap": "普通预览完成前置SHA，原生调用返回后MODEL_OUTPUT_INVALID，总计79672ms，有效输出0。CPU相同全零输入有限且形状正确。已补输出合约元数据并去诊断重复校验、禁止诊断下载；400 core/87工具/类型/Lint/构建通过，待手机输出元数据；质量FAIL、Android/云验收未关闭。",
       "acceptance": "分层报告和原图/成品配对目视评审。",
       "tasks": [
         "RC-09",
@@ -2004,9 +2046,13 @@
         "idphoto-miniprogram/src/pages/privacy/index.tsx",
         "idphoto-miniprogram/src/core/mattingEvidence.js",
         "idphoto-miniprogram/src/core/sha256.js",
-        "idphoto-miniprogram/src/components/MattingStatus/index.tsx"
+        "idphoto-miniprogram/src/components/MattingStatus/index.tsx",
+        "idphoto-miniprogram/src/services/wechatInference.js",
+        "工具链/tests/wechat_inference.test.js",
+        "工具链/rc09_real_model_probe.py",
+        "idphoto-miniprogram/src/core/__tests__/sha256Async.test.js"
       ],
-      "gap": "默认禁用模型不下载、传统路径及断网/额度/超时替身有验证；实体机断网和真实服务故障/模型可用性仍未验收。",
+      "gap": "普通预览完成前置SHA，原生调用返回后MODEL_OUTPUT_INVALID，总计79672ms，有效输出0。CPU相同全零输入有限且形状正确。已补输出合约元数据并去诊断重复校验、禁止诊断下载；400 core/87工具/类型/Lint/构建通过，待手机输出元数据；质量FAIL、Android/云验收未关闭。",
       "acceptance": "断网、云超时/额度/模型缺失分别测试，区分失败和受限结果。",
       "tasks": [
         "RC-06",
@@ -3897,6 +3943,182 @@
       "previous_sha256": "c6f42e61defdc2d90fa126bcaff79aa0cd3bf9892291864476af0e1b07efa4e7",
       "sha256": "e1a9b6d2e408bd4ef32a5fced5d5dc528e7c0a61b73a3854f3c9ebf41422d65d",
       "reason": "模型接线、固定资产保护、来源/降级与未评审提示；真实模型/部署/真机资源缺口不变。"
+    },
+    {
+      "task": "RC-10可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/components/PhotoTool/index.tsx",
+      "previous_sha256": "728599646eaba9216bcf28e61282e397a2b99b2d8d80bb175ca57b5d1ebb8212",
+      "sha256": "a6b5d7b6a7fcaef7e4c7ebad508f75b5b366767bb0bc17a9693fbb4521abc312",
+      "reason": "严格信号与模板门禁、像素保护及来源分层；真实资源仍阻塞"
+    },
+    {
+      "task": "RC-10可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/suitFitV2.js",
+      "previous_sha256": "50f71806acda7962564440c96d537bc5ba112784a2a16b7aa490a4c3827bcf2f",
+      "sha256": "a7ec1dd05be76c429ede5ba262f86a1bf5ef26bdff9112b829e6298505039cd3",
+      "reason": "严格信号与模板门禁、像素保护及来源分层；真实资源仍阻塞"
+    },
+    {
+      "task": "RC-10可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/suitSafety.js",
+      "previous_sha256": null,
+      "sha256": "66f039ad3867ac494b4dc0e2da8061268142b4c4107b6430481bc72bfcb494ba",
+      "reason": "严格信号与模板门禁、像素保护及来源分层；真实资源仍阻塞"
+    },
+    {
+      "task": "RC-10可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/suitTemplates.js",
+      "previous_sha256": null,
+      "sha256": "be2aac4d9c31029a6a79db22510eb8aec0eed68ef6a8dff423b600e2ba732047",
+      "reason": "严格信号与模板门禁、像素保护及来源分层；真实资源仍阻塞"
+    },
+    {
+      "task": "RC-10可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/core/t1Workflow.js",
+      "previous_sha256": "ea8491859815b70d1b0856f251043821fc735a4b9108342b16f917337aa20797",
+      "sha256": "022f3bc761346f724f89c4810afba1b938028e4628fdd1ed7d378960e847effa",
+      "reason": "严格信号与模板门禁、像素保护及来源分层；真实资源仍阻塞"
+    },
+    {
+      "task": "RC-10可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/pages/tool-idphoto/index.tsx",
+      "previous_sha256": "2e0cf45c5115618376e8bc32bd9a42fc16c6b4b3563e1f68cc81fbe7e1a885b1",
+      "sha256": "516fb87f5539c7d394c9548cecea7c197dfa2c381c30ead295f762400569a260",
+      "reason": "严格信号与模板门禁、像素保护及来源分层；真实资源仍阻塞"
+    },
+    {
+      "task": "RC-10可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/faceService.ts",
+      "previous_sha256": "632ced63daf622c715113dcb309856cce020699c50724ed352837a681418845e",
+      "sha256": "c82b4f0e805ce70867ec3a65a5f0d1a425a24fc69020e43fa162c8f8abadc38e",
+      "reason": "严格信号与模板门禁、像素保护及来源分层；真实资源仍阻塞"
+    },
+    {
+      "task": "RC-10可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/index.ts",
+      "previous_sha256": "84a00bfba0fe241ba9f060043c8f9fd4fe63b76c3ea5e3f70fcb3cf0d8bc976c",
+      "sha256": "eff4b185f9122f18058f9d4f5ffdc24c56f665e6fd3230b1223202c8d8965702",
+      "reason": "严格信号与模板门禁、像素保护及来源分层；真实资源仍阻塞"
+    },
+    {
+      "task": "RC-10可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/poseService.ts",
+      "previous_sha256": "78837c4d614b8877fca41e072f932f93d294db7d969b8505ac6ca3199bc39e7c",
+      "sha256": "35742d734ec055bb8bb41dd622ddd5a5b18f3cff8cf06d46c01e4a5b97326116",
+      "reason": "严格信号与模板门禁、像素保护及来源分层；真实资源仍阻塞"
+    },
+    {
+      "task": "RC-10可执行部分",
+      "date": "2026-11-04",
+      "file": "idphoto-miniprogram/src/services/t1Processing.ts",
+      "previous_sha256": "7c5dbc81372994550dbba2c42496bf4e3662e74d80292b7b018e623a76c1c4a0",
+      "sha256": "0310cef9811162d679cc5361454c8e2742b20c2a428d229c8b57e11cf2b84125",
+      "reason": "严格信号与模板门禁、像素保护及来源分层；真实资源仍阻塞"
+    },
+    {
+      "task": "RC-10可执行部分",
+      "date": "2026-11-04",
+      "file": "工具链/tests/suit_safety_page.test.js",
+      "previous_sha256": null,
+      "sha256": "9cf59abd9e0a1225f6e2e44650cd69ebdcd24945fb4810bb0f22f6673c66fa79",
+      "reason": "严格信号与模板门禁、像素保护及来源分层；真实资源仍阻塞"
+    },
+    {
+      "task": "RC-09真实模型续作",
+      "date": "2026-11-05",
+      "file": "idphoto-miniprogram/src/services/modelService.ts",
+      "previous_sha256": "020e71eaf8492de251af24ac4d33872bf2d8d862c6ed4b516e0798ef360ad53b",
+      "sha256": "9c73f0992e00b548f46c5982f48c9c9eb97352f0de3d50a2129fafdb5f4eec29",
+      "reason": "微信原生桥接与生命周期、固定模型真实CPU样本及已知质量失败，真机推理尚未通过"
+    },
+    {
+      "task": "RC-09真实模型续作",
+      "date": "2026-11-05",
+      "file": "idphoto-miniprogram/src/services/wechatInference.js",
+      "previous_sha256": null,
+      "sha256": "6fd6049967cdbd623608928714bec2323ea0b82526f8db61002bad60f6eb94a6",
+      "reason": "微信原生桥接与生命周期、固定模型真实CPU样本及已知质量失败，真机推理尚未通过"
+    },
+    {
+      "task": "RC-09真实模型续作",
+      "date": "2026-11-05",
+      "file": "工具链/rc09_real_model_probe.py",
+      "previous_sha256": null,
+      "sha256": "0e178687f30ee4fab1fc9ae78d9cbd4bbb3cb37d9805e008e7fcc50e302bb9e1",
+      "reason": "微信原生桥接与生命周期、固定模型真实CPU样本及已知质量失败，真机推理尚未通过"
+    },
+    {
+      "task": "RC-09真实模型续作",
+      "date": "2026-11-05",
+      "file": "工具链/tests/wechat_inference.test.js",
+      "previous_sha256": null,
+      "sha256": "2db10df885c863373656be32838dba42ab55b2e5d36fa32ea8e34a9e83b8a989",
+      "reason": "微信原生桥接与生命周期、固定模型真实CPU样本及已知质量失败，真机推理尚未通过"
+    },
+    {
+      "task": "RC-09真实模型续作",
+      "date": "2026-11-05",
+      "file": "idphoto-miniprogram/src/services/wechatInference.js",
+      "previous_sha256": "6fd6049967cdbd623608928714bec2323ea0b82526f8db61002bad60f6eb94a6",
+      "sha256": "58ff4a9776573da3cb5af98993cb6da4c71ce1f7a2ce0261c185b4e402d3a35f",
+      "reason": "原生桥接结构化错误日志记录TraceID，不含原始载荷"
+    },
+    {
+      "task": "RC-09真机分段诊断",
+      "date": "2026-11-05",
+      "file": "idphoto-miniprogram/src/services/wechatInference.js",
+      "previous_sha256": "58ff4a9776573da3cb5af98993cb6da4c71ce1f7a2ce0261c185b4e402d3a35f",
+      "sha256": "c383457c72641a01568512eb88d0d848a3905c65cae44995e8a8a0e4a287a933",
+      "reason": "可选原生创建/加载/推理阶段观察，观察失败不影响处理，无载荷日志"
+    },
+    {
+      "task": "RC-09真机SHA阶段定位",
+      "date": "2026-11-05",
+      "file": "idphoto-miniprogram/src/core/sha256.js",
+      "previous_sha256": "ed39c78a2e063d98f2f22273cdd61cb0e0b1485e7529bd1c3a6851e589b93e30",
+      "sha256": "aeb1f9d20318dacb433956d26482ec8a3088329cc25d2cea02ae659402e5153a",
+      "reason": "真机本地记录最后到cache-sha256；改分块异步校验并保持独立摘要及取消断言，待手机复验"
+    },
+    {
+      "task": "RC-09真机SHA阶段定位",
+      "date": "2026-11-05",
+      "file": "idphoto-miniprogram/src/services/modelService.ts",
+      "previous_sha256": "9c73f0992e00b548f46c5982f48c9c9eb97352f0de3d50a2129fafdb5f4eec29",
+      "sha256": "227b5df5ecc1d09514b0e855d965c33acfe089fb2a7fa9a3a96c9796d26e5b3e",
+      "reason": "真机本地记录最后到cache-sha256；改分块异步校验并保持独立摘要及取消断言，待手机复验"
+    },
+    {
+      "task": "RC-09真机SHA阶段定位",
+      "date": "2026-11-05",
+      "file": "idphoto-miniprogram/src/core/__tests__/sha256Async.test.js",
+      "previous_sha256": null,
+      "sha256": "4c4a21a09899b4bd8d132448e334ac119e53ecef4fac6b8221421b90c7317181",
+      "reason": "真机本地记录最后到cache-sha256；改分块异步校验并保持独立摘要及取消断言，待手机复验"
+    },
+    {
+      "task": "RC-09原生输出合约定位",
+      "date": "2026-11-05",
+      "file": "idphoto-miniprogram/src/services/wechatInference.js",
+      "previous_sha256": "c383457c72641a01568512eb88d0d848a3905c65cae44995e8a8a0e4a287a933",
+      "sha256": "7415a6ab230a929ac6bfcbd038a1e186d5949c9b0eb34dfaba9636a8cfc0d762",
+      "reason": "输出元数据安全观察及cacheOnly诊断；不放宽形状/类型/数值校验，待手机元数据"
+    },
+    {
+      "task": "RC-09原生输出合约定位",
+      "date": "2026-11-05",
+      "file": "idphoto-miniprogram/src/services/modelService.ts",
+      "previous_sha256": "227b5df5ecc1d09514b0e855d965c33acfe089fb2a7fa9a3a96c9796d26e5b3e",
+      "sha256": "d3a287d22c285850141ccd9210f6e4c78fc3fc1f37497b34447a410f9f87f87d",
+      "reason": "输出元数据安全观察及cacheOnly诊断；不放宽形状/类型/数值校验，待手机元数据"
     }
   ]
 }

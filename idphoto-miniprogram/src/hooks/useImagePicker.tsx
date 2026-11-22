@@ -6,6 +6,7 @@ import MirrorCheck from '../components/MirrorCheck';
 import { assessQuality } from '../core/quality';
 import { selectAlbum } from '../services/imageSelection';
 import { validateUpload } from '../core/validateFile';
+import { withTimeout, IMG_LOAD_TIMEOUT_MS } from '../core/asyncUtils';
 
 export interface PickedImage {
   path: string;
@@ -52,11 +53,11 @@ async function samplePixels(path: string, token: { current(): boolean }): Promis
     });
     const cx = cv.getContext('2d');
     const im = cv.createImage();
-    await new Promise<void>((resolve, reject) => {
+    await withTimeout(new Promise<void>((resolve, reject) => {
       im.onload = () => resolve();
       im.onerror = (e: any) => reject(e || new Error('图片加载失败'));
       im.src = path;
-    });
+    }), IMG_LOAD_TIMEOUT_MS, 'IMAGE_SAMPLE_TIMEOUT');
     if (!token.current()) return null;
     cx.drawImage(im, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
     const id = cx.getImageData(0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
@@ -79,9 +80,9 @@ async function getFileSizeBytes(
   if (typeof fallback === 'number' && fallback >= 0) return fallback;
   try {
     const fs = taro.getFileSystemManager();
-    const info: any = await new Promise((resolve, reject) => {
+    const info: any = await withTimeout(new Promise((resolve, reject) => {
       fs.getFileInfo({ filePath: path, success: resolve, fail: reject });
-    });
+    }), IMG_LOAD_TIMEOUT_MS, 'IMAGE_FILE_INFO_TIMEOUT');
     return typeof info?.size === 'number' ? info.size : -1;
   } catch (e) {
     return -1;
@@ -147,7 +148,7 @@ export function useImagePicker(
         return;
       }
       const path = pick.image.path;
-      const info: any = await Taro.getImageInfo({ src: path });
+      const info: any = await withTimeout(Taro.getImageInfo({ src: path }), IMG_LOAD_TIMEOUT_MS, 'IMAGE_INFO_TIMEOUT');
       token.check();
       // —— PRD A2 硬校验（格式 / 大小）：不通过则拦截，绝不进入处理链路 ——
       const bytes = await getFileSizeBytes(Taro, path, pick.image.size);
@@ -180,7 +181,7 @@ export function useImagePicker(
     setCameraOpen(false);
     setMirrorConfirmed(false); // 重新取图须重新自查（AC1）
     try {
-      const info: any = await Taro.getImageInfo({ src: path });
+      const info: any = await withTimeout(Taro.getImageInfo({ src: path }), IMG_LOAD_TIMEOUT_MS, 'IMAGE_INFO_TIMEOUT');
       token.check();
       // —— PRD A2 硬校验（格式 / 大小）：不通过则拦截，绝不进入处理链路 ——
       const bytes = await getFileSizeBytes(Taro, path);

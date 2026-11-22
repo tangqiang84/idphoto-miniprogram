@@ -103,9 +103,12 @@ function createT1Workflow(session, adapters, options = {}) {
       if (!requireStep('preview') || (!current(preview) && !(reviewed === baseKey() && preview?.key === baseKey()))) return fail('FLOW_PREVIEW_REQUIRED', '请先生成当前参数的预览');
       screen = tool === 'T2' ? 'check' : 'dress'; failure = null; emit(); return { ok: true };
     },
+    suitAvailability() { return adapters.checkSuit?.(session.getState().params) || { ok: true }; },
     async applySuit() {
       if (!['T1', 'T3'].includes(tool)) return fail('FLOW_STEP', '此工具不支持换装');
       if (!requireStep('dress')) return fail('FLOW_STEP', '请在换装步骤操作');
+      const availability = adapters.checkSuit?.(session.getState().params);
+      if (availability && !availability.ok) return fail(availability.code, availability.message);
       if (!session.getState().params.consents.includes('suitSwap')) return fail('FLOW_CONSENT', '请先单独同意换装授权');
       session.update({ suit: { ...session.getState().params.suit, enabled: true } });
       const result = await process('preview', 'dress');

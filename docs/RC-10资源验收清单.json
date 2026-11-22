@@ -1,0 +1,100 @@
+{
+  "version": "RC10-resource-v4-cloud-parsing",
+  "date": "2026-11-22",
+  "userDecision": "三张用户素材直接用于研究；完成研究版开发；不要求真机验收，真实质量证据仍独立记录",
+  "items": [
+    {
+      "id": "RC09_DEPENDENCY",
+      "status": "PASS",
+      "reason": "按用户此前本机收尾范围满足前置，不代表历史手机故障根因已证实",
+      "evidence": [
+        "RC-09本机最终验收-20261121.md"
+      ]
+    },
+    {
+      "id": "POSE_DEPLOYMENT",
+      "status": "PASS",
+      "reason": "既有真实百度单人双肩返回及云端部署已证实；可靠性和完整模型链另在肩线/质量项记录",
+      "evidence": [
+        "验证记录/RC-10-closeout-20261121-01/验收报告.md",
+        "验证记录/RC-10-real-20261121-01/验收报告.md",
+        "验证记录/RC-10-anchor-20261121-01/验收报告.md",
+        "验证记录/RC-10-parsing-20261121-01/验收报告.md",
+        "验证记录/RC-10-complete-cloud-plan-20261122-01/验收报告.md"
+      ]
+    },
+    {
+      "id": "APPROVED_TEMPLATES",
+      "status": "PASS",
+      "reason": "按用户明确研究用途接入三张高清模板，云端摘要及原生资格门禁通过；不等于视觉质量通过，不作商用资质结论",
+      "evidence": [
+        "验证记录/RC-10-closeout-20261121-01/native-template-cases/research-report.json",
+        "验证记录/RC-10-closeout-20261121-01/验收报告.md",
+        "验证记录/RC-10-parsing-20261121-01/验收报告.md"
+      ],
+      "researchStatus": "PASS"
+    },
+    {
+      "id": "HISTORICAL_FACE_REGRESSION",
+      "status": "BLOCKED",
+      "reason": "合成基线及像素保护已测；历史盖脸真实样本的授权集合/固定版本与真实信号重测待补",
+      "evidence": [
+        "验证记录/RC-10-closeout-20261121-01/验收报告.md"
+      ]
+    },
+    {
+      "id": "VISUAL_QUALITY",
+      "status": "FAIL",
+      "reason": "新三服务真人调用均成功，25组像素保护通过；实际裁剪图颈侧不自然、服装露出不足，历史NET04遮挡及头发问题也未解除。",
+      "evidence": [
+        "验证记录/RC-10-closeout-20261121-01/验收报告.md",
+        "验证记录/RC-10-anchor-20261121-01/验收报告.md",
+        "验证记录/RC-10-parsing-20261121-01/验收报告.md",
+        "验证记录/RC-10-cloud-deploy-20261122-01/验收报告.md",
+        "验证记录/RC-10-complete-cloud-plan-20261122-01/验收报告.md"
+      ],
+      "observedResult": "FAIL-visual-not-pixel-invariants"
+    },
+    {
+      "id": "REAL_SHOULDER_ALIGNMENT",
+      "status": "BLOCKED",
+      "reason": "自动云人脸与真实百度双肩已实测并合成，无需再以人工脸点解释缺口；构图与视觉自然度仍未合格。",
+      "evidence": [
+        "验证记录/RC-10-closeout-20261121-01/验收报告.md",
+        "验证记录/RC-10-anchor-20261121-01/验收报告.md",
+        "验证记录/RC-10-parsing-20261121-01/验收报告.md",
+        "验证记录/RC-10-complete-cloud-plan-20261122-01/验收报告.md"
+      ]
+    },
+    {
+      "id": "PHYSICAL_DEVICE",
+      "status": "N/A",
+      "reason": "用户明确本轮无需真机验收；此范围裁决不代表iOS/Android兼容性通过",
+      "evidence": [
+        "验证记录/RC-10-closeout-20261121-01/开工记录.md"
+      ]
+    },
+    {
+      "id": "NATIVE_CLOTHING_MODEL",
+      "status": "N/A",
+      "reason": "T1/T3已改用部署成功的独立云CPU解析，原生衣物模型不再是当前主路径；不代表原生能力已修复",
+      "evidence": [
+        "验证记录/RC-10-parsing-20261121-01/验收报告.md",
+        "验证记录/RC-10-native-diagnosis-20261122-01/诊断结论.md",
+        "验证记录/RC-10-cloud-deploy-20261122-01/验收报告.md"
+      ]
+    },
+    {
+      "id": "CLOUD_CLOTHING_MODEL",
+      "status": "PASS",
+      "reason": "独立云函数Active；获批NASA真人调用成功，类别图与前次逐字节一致；质量另列。",
+      "evidence": [
+        "验证记录/RC-10-cloud-deploy-20261122-01/验收报告.md",
+        "验证记录/RC-10-cloud-deploy-20261122-01/function-info.json",
+        "验证记录/RC-10-cloud-deploy-20261122-01/cloud-probes.json",
+        "验证记录/RC-10-complete-cloud-plan-20261122-01/验收报告.md"
+      ]
+    }
+  ],
+  "developmentStatus": "三服务实际真人调用及T1/T3共用接线完成；此前154项工具及核心/类型/Lint/构建通过。新视觉检查FAIL，构图、颈侧和历史遮挡仍待修复，整体进行中。"
+}

@@ -1,17 +1,308 @@
 {
-  "version": "RC09-resource-v1",
-  "date": "2026-11-04",
-  "userDecision": "暂无资源，先完成可执行部分，缺项保留待验收",
+  "version": "RC09-resource-v2",
+  "date": "2026-11-05",
+  "userDecision": "由开发方选模型，沿用既有CloudBase/接入服务、11张既有照片授权，用户扫码开发方测试",
   "scope": "本清单是资源与人工验收门禁，不以代码标志或置信度代替证据",
   "items": [
-    {"id":"EDGE_ARTIFACT","status":"BLOCKED","reason":"缺具体权重/转换版本/真实SHA256及对应许可证据；规格表commercialOk不是权重证明","evidence":[]},
-    {"id":"EDGE_RUNTIME_DEVICE","status":"BLOCKED","reason":"缺微信可用运行时、WASM/推理兼容和真实设备模型成功记录；替身推理不计真实模型","evidence":[]},
-    {"id":"CLOUD_DEPLOYMENT","status":"BLOCKED","reason":"缺境内部署版本、地域及不留存/不训练独立证明；未调用外部收费服务","evidence":[]},
-    {"id":"QUALITY_COMPLEX","status":"BLOCKED","reason":"复杂背景只有技术合成样本，缺固定授权真实图集/标注与人工评审","evidence":[]},
-    {"id":"QUALITY_LIGHT_CLOTHES","status":"BLOCKED","reason":"浅衣合成反例置信度高仍丢失衣服，不能认作视觉通过；缺真实图集评审","evidence":[]},
-    {"id":"QUALITY_HAIR","status":"BLOCKED","reason":"细线合成样本不能证明真实发丝质量，缺对应图集和评审","evidence":[]},
-    {"id":"OFFLINE_DEVICE","status":"BLOCKED","reason":"断网替身只覆盖控制流，缺实体机断网本地操作记录","evidence":[]},
-    {"id":"LIVE_QUOTA_TIMEOUT","status":"SKIPPED","reason":"额度/超时替身已测；未提供真实服务且无收费调用授权，不执行真实配额消耗","evidence":[]},
-    {"id":"PHYSICAL_PERFORMANCE","status":"BLOCKED","reason":"Node/开发者工具计时不是中端真实设备耗时，待真机记录","evidence":[]}
+    {
+      "id": "EDGE_ARTIFACT",
+      "status": "BLOCKED",
+      "reason": "固定社区原图及稳定派生图已有来源/字节/SHA和变换证据；许可准入、允许的正式托管/生产接线未闭合，稳定候选质量仍FAIL，不启用默认生产。",
+      "evidence": [
+        {
+          "path": "docs/验证记录/RC-09-native-20261105/model-asset.json",
+          "sha256": "95ebfd2b827694793c8ff7a377e030697c5c9ac90c8c3831685d0aa697e043a1"
+        },
+        {
+          "path": "docs/验证记录/RC-09-stable-norm-20261105/cpu-axis-wise/candidate-report.json",
+          "sha256": "9e3c93d33e0b74509bc15ea577399368443f859765baa8e680ef568c589958b0"
+        }
+      ]
+    },
+    {
+      "id": "EDGE_RUNTIME_DEVICE",
+      "status": "FAIL",
+      "reason": "稳定候选在iPhone14Pro/微信8.0.80/基础库3.17.6调试通道11素材数值对照通过；原图NaN历史FAIL保留。正式配置/普通预览照片/Android适用验证未齐，整项未关闭；历史失败不意味着未来修复后永久无法关闭。 用户已确认Android真机可用，尚未连接/运行，不再登记为无设备；另有960×1280原件CPU成功，不能替代Android证据。",
+      "evidence": [
+        {
+          "path": "docs/验证记录/RC-09-output-contract-20261105/phone-evidence.json",
+          "sha256": "1726887263bbd05228f77dfc08ff182fce3df5f4ba48d13144037a3671119644"
+        },
+        {
+          "path": "docs/验证记录/RC-09-observed-phone-20261105/phone-record.json",
+          "sha256": "8019fd81685316cbef0b6cb7f10997cb1c17bc0f22e4ea7cc5b7be1542b7fc2d"
+        },
+        {
+          "path": "docs/验证记录/RC-09-branches-phone-20261105/phone-record.json",
+          "sha256": "95ac2e435f7580c17deb918726232b818a0ee5e14d1d1aa4a69a852dc8f4139d"
+        },
+        {
+          "path": "docs/验证记录/RC-09-stable-phone-20261105/phone-record.json",
+          "sha256": "33690ce1f35addd0e297a1c4994c757f8a822e6f220c3c47ec14250b0502c36c"
+        },
+        {
+          "path": "docs/验证记录/RC-09-photo-device-20261105/device-run-02/report.json",
+          "sha256": "273ef361843d644da99936e16145cc638348d44a242a26c34f8d6ab3a4ded40b"
+        },
+        {
+          "path": "docs/验证记录/RC-09-resource-search-20261106/owner-photo-manifest.json",
+          "sha256": "47c82b651fa9fed9a8ef0e798ce4025e047d71335b6ab1ee31a5b32973b9ebda"
+        },
+        {
+          "path": "docs/验证记录/RC-09-resource-search-20261106/cpu-owner-01/report.json",
+          "sha256": "1df2dee68f2a79081a090476dba6cd866b1a6e68bbdff289d5be63023204ecfe"
+        },
+        {
+          "path": "docs/验证记录/RC-09-resource-search-20261106/owner-visual-review.json",
+          "sha256": "409998d0ef43233f78b44edf705af7665c7bc055725ac1e81f1d309bb9ca0b22"
+        },
+        {
+          "path": "docs/验证记录/RC-09-resource-search-20261106/device-availability.json",
+          "sha256": "68c5e146cdf5933eae3018c43270ca7198b8ed4db6aa857d9d3da6c9f0916521"
+        }
+      ]
+    },
+    {
+      "id": "CLOUD_DEPLOYMENT",
+      "status": "BLOCKED",
+      "reason": "现有matting只读入口已部署且SHA回读通过，百度配置启用；已授权三份裁剪实际百度3/3成功、无重试/降级。CloudBase实际地域、百度处理/留存/训练条款尚无独立证据，整项BLOCKED；历史403/事件字段失败及回退证据保留。",
+      "evidence": [
+        {
+          "path": "docs/验证记录/RC-09-cloud-audit-20261105/deployed-source-comparison.json",
+          "sha256": "b8c737f36e9911bfacab4fe31779ebf43adbace679224ce5d0c9f5a89a70d742"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-audit-20261105/simulator-cloud-probe.json",
+          "sha256": "59f0503d0ff743c583fbdb70dec75d1cb169b3d42b5fb04795347b71bb5d2601"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-event-20261105/diagnostic-response.json",
+          "sha256": "108aa2480d5e9e5ace24efaea97097b5df8e7e01c228b69c96845981d419e92e"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-event-20261105/final-readback-verification.json",
+          "sha256": "ff3ff7cc554ed794c1c5892cff2391374230819a5706c1c4518b6814bdc7c59a"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-event-20261105/final-live-probe/report.json",
+          "sha256": "05a684860a23dc342f2941b6bdc07067aeb43323b31b250b9910d29f10582d56"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-event-20261105/live-negative-checks.json",
+          "sha256": "c6012bab616fc42975b231b3f30d031b87fd4f365a5c1d4bd9820040d4dddfc5"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-event-20261105/执行绑定.json",
+          "sha256": "89e17d469dcba2b94149dded02e70bd35588e822057f8b95e677c3720eb0d8c9"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-photo-plan-20261105/live-run-01/report.json",
+          "sha256": "c8bb900df8e86572cb05538144955ea8556d2ecc4d285067e1567efe377eab3b"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-photo-plan-20261105/live-run-01/视觉预审.json",
+          "sha256": "4927ff2dd4fe967977a5f61c20bd8b7a63da12924e81cddccf9bfa63f242175a"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-photo-plan-20261105/live-run-01/执行与完整性核验.json",
+          "sha256": "428ed88206dee9de4b36e4d66599c793e625e16650941744cb6e39b31626973a"
+        }
+      ]
+    },
+    {
+      "id": "QUALITY_COMPLEX",
+      "status": "FAIL",
+      "reason": "USER08端侧及百度同ROI均有绿色背景/颜色残留；离线回放确认原始云结果已有、去斑与产品core接受后仍FAIL。未区分错分与RGB污染，不靠阈值/删样本获得通过。 2026-11-06已依用户要求补充公开摄影样本（4主要/1镜面压力），来源/许可/输入SHA固定，测试输入均满足推荐尺寸；尚未运行新模型/独立alpha评审，不再登记为完全无推荐尺寸补充照片，原FAIL及其他验收缺口保留。 推荐尺寸公开样本NET03出现明确窗框/暗背景误保留FAIL，一次保持比例的几何对照仍失败；不能再将质量缺口归因仅低分辨率或仅方形拉伸。",
+      "evidence": [
+        {
+          "path": "docs/验证记录/RC-09-photo-device-20261105/native-visual-review.json",
+          "sha256": "a5a24f3222d416a96bcb40135c5418d2cce85748544b7c491c5901cadab4be79"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-photo-plan-20261105/live-run-01/report.json",
+          "sha256": "c8bb900df8e86572cb05538144955ea8556d2ecc4d285067e1567efe377eab3b"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-photo-plan-20261105/live-run-01/视觉预审.json",
+          "sha256": "4927ff2dd4fe967977a5f61c20bd8b7a63da12924e81cddccf9bfa63f242175a"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-photo-plan-20261105/live-run-01/执行与完整性核验.json",
+          "sha256": "428ed88206dee9de4b36e4d66599c793e625e16650941744cb6e39b31626973a"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-replay-20261105/replay-01/report.json",
+          "sha256": "ccb3ce4951c08d56796298c074feacd62b7bc0511774a43f4924c178700e4379"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-replay-20261105/视觉分段评审.json",
+          "sha256": "e0f79e87772c0c268d22d2cf500ec25362e1b4521d953efb21d70cea5d145045"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-replay-20261105/执行绑定.json",
+          "sha256": "82995f0d099642936c393caaa4bae8409e4073e4bcec4671aa8b61ea67bc61df"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-replay-20261105/source-check.json",
+          "sha256": "ca44e9fe93d610b23780841bc82c61679617e2bfdd96068f6435b48db169ecae"
+        },
+        {
+          "path": "素材/RC09公开样本/unsplash-20261106/样本清单.json",
+          "sha256": "056afc78769d8f1dd7b2c823a596a92ca2e9fe3b09c154f92211e13a6f24016d"
+        },
+        {
+          "path": "docs/验证记录/RC-09-web-samples-20261106/ingestion-report.json",
+          "sha256": "458ce4691d367ba84ed311ee2df11bcb5d81dfd21568e83ec2d4adaf3f5bece2"
+        },
+        {
+          "path": "docs/验证记录/RC-09-public-quality-20261106/run-01/report.json",
+          "sha256": "8bf066d2bd8b4f85d084ca6ec0f6051239a26936f0b2cf93aab68e7c038023e7"
+        },
+        {
+          "path": "docs/验证记录/RC-09-public-quality-20261106/geometry-01/report.json",
+          "sha256": "d03631f3ce150780f16fb67cd3449e861fab6dd03f7b7f8228e226b022aede0b"
+        },
+        {
+          "path": "docs/验证记录/RC-09-public-quality-20261106/视觉与候选结论.json",
+          "sha256": "16fa11636f6ba2b3f5f4ebfe44662c26b957052bf2f6750dbc55e63a9a2a3056"
+        },
+        {
+          "path": "docs/验证记录/RC-09-public-quality-20261106/geometry-control.json",
+          "sha256": "ff7b06742ff838a01e5097f2610a698d72adf1ad40ded722cbd1d4e8275c17f0"
+        }
+      ]
+    },
+    {
+      "id": "QUALITY_LIGHT_CLOTHES",
+      "status": "BLOCKED",
+      "reason": "USER06实际iOS及百度结果已有，百度ROI浅衣主体保留预审通过；细边、推荐尺寸原图、完整产品成品评审未齐，不能以主体保留当整项通过。 2026-11-06已依用户要求补充公开摄影样本（4主要/1镜面压力），来源/许可/输入SHA固定，测试输入均满足推荐尺寸；尚未运行新模型/独立alpha评审，不再登记为完全无推荐尺寸补充照片，原FAIL及其他验收缺口保留。",
+      "evidence": [
+        {
+          "path": "docs/验证记录/RC-09-cloud-photo-plan-20261105/live-run-01/report.json",
+          "sha256": "c8bb900df8e86572cb05538144955ea8556d2ecc4d285067e1567efe377eab3b"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-photo-plan-20261105/live-run-01/视觉预审.json",
+          "sha256": "4927ff2dd4fe967977a5f61c20bd8b7a63da12924e81cddccf9bfa63f242175a"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-photo-plan-20261105/live-run-01/执行与完整性核验.json",
+          "sha256": "428ed88206dee9de4b36e4d66599c793e625e16650941744cb6e39b31626973a"
+        },
+        {
+          "path": "素材/RC09公开样本/unsplash-20261106/样本清单.json",
+          "sha256": "056afc78769d8f1dd7b2c823a596a92ca2e9fe3b09c154f92211e13a6f24016d"
+        },
+        {
+          "path": "docs/验证记录/RC-09-web-samples-20261106/ingestion-report.json",
+          "sha256": "458ce4691d367ba84ed311ee2df11bcb5d81dfd21568e83ec2d4adaf3f5bece2"
+        },
+        {
+          "path": "docs/验证记录/RC-09-public-quality-20261106/run-01/report.json",
+          "sha256": "8bf066d2bd8b4f85d084ca6ec0f6051239a26936f0b2cf93aab68e7c038023e7"
+        },
+        {
+          "path": "docs/验证记录/RC-09-public-quality-20261106/geometry-01/report.json",
+          "sha256": "d03631f3ce150780f16fb67cd3449e861fab6dd03f7b7f8228e226b022aede0b"
+        },
+        {
+          "path": "docs/验证记录/RC-09-public-quality-20261106/视觉与候选结论.json",
+          "sha256": "16fa11636f6ba2b3f5f4ebfe44662c26b957052bf2f6750dbc55e63a9a2a3056"
+        },
+        {
+          "path": "docs/验证记录/RC-09-public-quality-20261106/geometry-control.json",
+          "sha256": "ff7b06742ff838a01e5097f2610a698d72adf1ad40ded722cbd1d4e8275c17f0"
+        }
+      ]
+    },
+    {
+      "id": "QUALITY_HAIR",
+      "status": "FAIL",
+      "reason": "稳定候选USER10暗光脸/发丝孔洞FAIL；真实百度同ROI改善大块孔洞，但发丝细边/原尺寸产品成品尚未完整评审，原失败保留。 新补早前owner原件11.jpg(960×1280)CPU有限输出，主体无大块透明孔预审；不撤销USER10原FAIL，不视为完整发丝验收。 2026-11-06已依用户要求补充公开摄影样本（4主要/1镜面压力），来源/许可/输入SHA固定，测试输入均满足推荐尺寸；尚未运行新模型/独立alpha评审，不再登记为完全无推荐尺寸补充照片，原FAIL及其他验收缺口保留。",
+      "evidence": [
+        {
+          "path": "docs/验证记录/RC-09-native-20261105/visual-initial-review.json",
+          "sha256": "42249b9893fe6df7bc93eedf4ed7fca08865f254d2085655d72b9eae79151e9f"
+        },
+        {
+          "path": "docs/验证记录/RC-09-stable-photos-20261105/visual-review.json",
+          "sha256": "d6c4cf112b8983b77deba045a94cc51ade02a9df94949beab116815b11104b94"
+        },
+        {
+          "path": "docs/验证记录/RC-09-photo-device-20261105/native-visual-review.json",
+          "sha256": "a5a24f3222d416a96bcb40135c5418d2cce85748544b7c491c5901cadab4be79"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-photo-plan-20261105/live-run-01/report.json",
+          "sha256": "c8bb900df8e86572cb05538144955ea8556d2ecc4d285067e1567efe377eab3b"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-photo-plan-20261105/live-run-01/视觉预审.json",
+          "sha256": "4927ff2dd4fe967977a5f61c20bd8b7a63da12924e81cddccf9bfa63f242175a"
+        },
+        {
+          "path": "docs/验证记录/RC-09-cloud-photo-plan-20261105/live-run-01/执行与完整性核验.json",
+          "sha256": "428ed88206dee9de4b36e4d66599c793e625e16650941744cb6e39b31626973a"
+        },
+        {
+          "path": "docs/验证记录/RC-09-resource-search-20261106/owner-photo-manifest.json",
+          "sha256": "47c82b651fa9fed9a8ef0e798ce4025e047d71335b6ab1ee31a5b32973b9ebda"
+        },
+        {
+          "path": "docs/验证记录/RC-09-resource-search-20261106/cpu-owner-01/report.json",
+          "sha256": "1df2dee68f2a79081a090476dba6cd866b1a6e68bbdff289d5be63023204ecfe"
+        },
+        {
+          "path": "docs/验证记录/RC-09-resource-search-20261106/owner-visual-review.json",
+          "sha256": "409998d0ef43233f78b44edf705af7665c7bc055725ac1e81f1d309bb9ca0b22"
+        },
+        {
+          "path": "docs/验证记录/RC-09-resource-search-20261106/device-availability.json",
+          "sha256": "68c5e146cdf5933eae3018c43270ca7198b8ed4db6aa857d9d3da6c9f0916521"
+        },
+        {
+          "path": "素材/RC09公开样本/unsplash-20261106/样本清单.json",
+          "sha256": "056afc78769d8f1dd7b2c823a596a92ca2e9fe3b09c154f92211e13a6f24016d"
+        },
+        {
+          "path": "docs/验证记录/RC-09-web-samples-20261106/ingestion-report.json",
+          "sha256": "458ce4691d367ba84ed311ee2df11bcb5d81dfd21568e83ec2d4adaf3f5bece2"
+        },
+        {
+          "path": "docs/验证记录/RC-09-public-quality-20261106/run-01/report.json",
+          "sha256": "8bf066d2bd8b4f85d084ca6ec0f6051239a26936f0b2cf93aab68e7c038023e7"
+        },
+        {
+          "path": "docs/验证记录/RC-09-public-quality-20261106/geometry-01/report.json",
+          "sha256": "d03631f3ce150780f16fb67cd3449e861fab6dd03f7b7f8228e226b022aede0b"
+        },
+        {
+          "path": "docs/验证记录/RC-09-public-quality-20261106/视觉与候选结论.json",
+          "sha256": "16fa11636f6ba2b3f5f4ebfe44662c26b957052bf2f6750dbc55e63a9a2a3056"
+        },
+        {
+          "path": "docs/验证记录/RC-09-public-quality-20261106/geometry-control.json",
+          "sha256": "ff7b06742ff838a01e5097f2610a698d72adf1ad40ded722cbd1d4e8275c17f0"
+        }
+      ]
+    },
+    {
+      "id": "OFFLINE_DEVICE",
+      "status": "BLOCKED",
+      "reason": "断网替身只覆盖控制流，缺实体机断网本地操作记录",
+      "evidence": []
+    },
+    {
+      "id": "LIVE_QUOTA_TIMEOUT",
+      "status": "SKIPPED",
+      "reason": "替身额度/超时控制流已测，真实服务已配置且三次授权已执行完；本轮未授权也不主动耗尽账户额度，真实配额/超时场景仍未验，SKIPPED不算PASS。",
+      "evidence": []
+    },
+    {
+      "id": "PHYSICAL_PERFORMANCE",
+      "status": "BLOCKED",
+      "reason": "已取得iPhone14Pro调试API原生调用/检查1703–1988ms记录，但不含全部SHA/传输、非中端机端到端或脱离调试性能；准备校验慢尚待剖析，正式性能未验",
+      "evidence": []
+    }
   ]
 }

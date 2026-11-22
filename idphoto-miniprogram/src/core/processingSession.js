@@ -18,7 +18,7 @@ function createProcessingSession(options = {}) {
   let state = { revision: 0, sourceId: 0, status: 'empty', stage: 'crop', error: null, traceId: null,
     selfChecked: false, output: null, changed: [], params: {
       source: null, specId: listSpecs()[0].id, dpi: 300, bg: 'white',
-      beauty: copy(DEFAULT_BEAUTY), suit: { enabled: false, templateId: 'black' },
+      beauty: copy(DEFAULT_BEAUTY), suit: { enabled: false, templateId: 'research-white' },
       consents: [], cropWindow: null, cropConfirmed: false,
       ...(options.tool === 'T5' ? { customTarget: null, kbLimit: 200 } : {}),
     } };
@@ -47,7 +47,7 @@ function createProcessingSession(options = {}) {
         || (next.kbLimit != null && (!Number.isFinite(next.kbLimit) || next.kbLimit < 0 || next.kbLimit > 20000))
         || !next.beauty || !['smooth', 'whiten', 'brighten'].every((key) => Number.isFinite(next.beauty[key]) && next.beauty[key] >= 0 && next.beauty[key] <= 1)
         || typeof next.beauty.enabled !== 'boolean' || Object.keys(next.beauty).some((key) => !['enabled', 'smooth', 'whiten', 'brighten'].includes(key))
-        || !next.suit || typeof next.suit.enabled !== 'boolean' || !['black', 'navy', 'gray'].includes(next.suit.templateId)
+        || !next.suit || typeof next.suit.enabled !== 'boolean' || !['black', 'navy', 'gray', 'research-white', 'research-navy', 'research-black'].includes(next.suit.templateId)
         || !Array.isArray(next.consents) || next.consents.some((id) => typeof id !== 'string')
         || (next.source && (!next.source.path || !Number.isFinite(next.source.width) || !Number.isFinite(next.source.height) || next.source.width <= 0 || next.source.height <= 0))) {
       return { ok: false, error: error('SESSION_PARAM', '照片、规格或处理参数无效，请重新选择') };
@@ -66,7 +66,7 @@ function createProcessingSession(options = {}) {
     }
     if (changed.includes('source')) {
       next.beauty = copy(DEFAULT_BEAUTY);
-      next.suit = { enabled: false, templateId: 'black' };
+      next.suit = { enabled: false, templateId: 'research-white' };
     }
     stop('SESSION_STALE');
     state = { ...state, revision: state.revision + 1, sourceId: state.sourceId + (changed.includes('source') ? 1 : 0),

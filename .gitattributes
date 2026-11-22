@@ -1,2 +1,4 @@
 # 原始像素夹具不得作为文本差异输出。
 *.rgba binary
+*.float32 binary
+*.onnx binary

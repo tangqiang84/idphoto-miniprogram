@@ -225,7 +225,9 @@ async function localMatting(rgba, w, h, opts = {}) {
     alpha = await runRealModel(opts.session, rgba, w, h, opts.spec);
     backend = 'onnx:' + ((opts.spec && opts.spec.id) || 'unknown');
   } else {
-    alpha = runClassicalFallback(rgba, w, h, { bgSamples: opts.bgSamples });
+    alpha = opts.cooperative
+      ? await require('./mattingCooperative').runCooperative(rgba, w, h, opts)
+      : runClassicalFallback(rgba, w, h, { bgSamples: opts.bgSamples });
     backend = 'classical';
   }
   const quality = estimateQuality(alpha);

@@ -1,4 +1,5 @@
 'use strict';
+// 换装资源和信号是流程测试替身，不作为生产素材/姿态质量验收。
 const test=require('node:test');const assert=require('node:assert/strict');
 const {probePage}=require('../page_flow_probe');
 const nodes=(h,p)=>h.nodes(h.render(),p);
@@ -6,10 +7,10 @@ const component=(h,name)=>nodes(h,n=>n.type===name)[0];
 const button=(h,name)=>nodes(h,n=>n.type==='Button'&&n.props.className===name)[0];
 function fixture(){
  const f={prepare:0,segment:0,beauty:0,save:[],files:new Map(),renders:[],pixels:[]};
- f.options={prepareWorkCanvas:async()=>{f.prepare++;return {w:64,h:80,rgba:new Uint8ClampedArray(64*80*4),plan:{sx:0,sy:0,sw:64,sh:80},crop:null,srcMetrics:null};},
+ f.options={collarFitService:{fitCloudCollar:async()=>({geometry:{left:0,top:30,scale:.16,scaleX:.16,protectY:260,templateWidth:400,templateHeight:400},evidence:{provider:'synthetic-collar-fixture'}})},cloudClothingService:{parseCloudSuitClothing:async()=>({clothing:new Uint8Array(5120).fill(1),background:new Uint8Array(5120),evidence:{provider:"synthetic-mask-fixture"}})},prepareWorkCanvas:async()=>{f.prepare++;return {w:64,h:80,rgba:new Uint8ClampedArray(64*80*4),plan:{sx:0,sy:0,sw:64,sh:80},crop:null,srcMetrics:null};},
  services:{segment:async()=>{f.segment++;return {alpha:new Float32Array(64*80),backend:'fixture'};},applyBeauty:()=>{f.beauty++;},
-  tightBBox:()=>({}),measureHeadMetrics:async()=>({ok:true,headLengthPx:20,source:'estimate',metrics:{chinY:30,crownY:10,faceCenterX:32}}),
-  checkComposition:()=>({ok:true}),fitSuitV2:()=>({ok:true,place:{},rotateDeg:0,audit:{source:'fixture'}}),suitCompose:rgba=>rgba},
+  tightBBox:()=>({}),getSuitTemplateStatus:()=>({ok:true,template:{usage:'research-only',native:{width:400,height:400},geometry:{}}}),measureHeadMetrics:async()=>({ok:true,headLengthPx:20,source:'landmarks',faceRect:{x:20,y:10,w:20,h:20},faceCount:1,metrics:{quality:'good',chinY:30,crownY:10,faceCenterX:32}}),
+  checkComposition:()=>({ok:true}),fitSuitV2:()=>({ok:true,place:{x:0,y:30,w:64,h:64},rotateDeg:0,audit:{source:'fixture'}}),suitCompose:rgba=>rgba},
  taro:{createOffscreenCanvas:({width,height})=>({getContext:()=>({drawImage(){},getImageData:()=>({data:new Uint8ClampedArray(width*height*4)}),putImageData(d){f.pixels.push(Array.from(d.data));}}),
    createImage(){const img={};Object.defineProperty(img,'src',{set(){queueMicrotask(()=>img.onload());}});return img;}}),
   canvasToTempFilePath:async(p)=>{const path='fixture://'+f.renders.length;f.renders.push(p);f.files.set(path,{width:p.destWidth,height:p.destHeight,type:p.fileType});return {tempFilePath:path};},

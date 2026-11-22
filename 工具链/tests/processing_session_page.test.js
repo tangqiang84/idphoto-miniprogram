@@ -37,8 +37,9 @@ async function preview(h) { find(h, 'CropStep').props.onApplyCrop(); await find(
 async function dpi(h) { await preview(h); button(h, 'flow-next-dress').props.onClick(); await button(h, 'flow-skip-suit').props.onClick(); button(h, 'flow-next-dpi').props.onClick(); }
 async function finalize(h) { find(h, 'MirrorCheck').props.onChange(true); await button(h, 'flow-confirm-dpi').props.onClick(); }
 async function run(f, exercise) { return probePage('T1', { ...f.options, exercise: async (h) => { f.session = h.session; return exercise(h); } }); }
-function suitFixture(f) { Object.assign(f.options.services, { tightBBox: () => ({}), measureHeadMetrics: async () => ({ ok: false }),
-  checkComposition: () => ({ ok: true }), fitSuitV2: () => ({ ok: true, place: {}, audit: { source: 'mock' } }), suitCompose: (rgba) => rgba }); }
+// 仅验证流程与自检，资源批准和信号使用测试替身。
+function suitFixture(f) { f.options.collarFitService={fitCloudCollar:async()=>({geometry:{left:0,top:30,scale:.16,scaleX:.16,protectY:260,templateWidth:400,templateHeight:400},evidence:{provider:'synthetic-collar-fixture'}})}; f.options.cloudClothingService={parseCloudSuitClothing:async()=>({clothing:new Uint8Array(5120).fill(1),background:new Uint8Array(5120),evidence:{provider:'synthetic-mask-fixture'}})}; Object.assign(f.options.services, { tightBBox: () => ({}), getSuitTemplateStatus:()=>({ok:true,template:{usage:'research-only',native:{width:400,height:400},geometry:{}}}),measureHeadMetrics:async()=>({ok:true,headLengthPx:20,source:'landmarks',faceRect:{x:20,y:10,w:20,h:20},faceCount:1,metrics:{quality:'good',chinY:30,crownY:10,faceCenterX:32}}),
+  checkComposition: () => ({ ok: true }), fitSuitV2: () => ({ ok: true, place: {x:0,y:30,w:64,h:64}, audit: { source: 'mock' } }), suitCompose: (rgba) => rgba }); }
 async function suit(h) {
   await preview(h); button(h, 'flow-next-dress').props.onClick();
   h.nodes(h.render(), (n) => n.props.className === 'suit-consent')[0].props.onClick();

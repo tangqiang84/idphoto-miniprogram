@@ -1,16 +1,9 @@
-// L1 姿态信号：posekey 云函数（P1 / 台账 #72+#74）
-//
-// 【定位】换装信号三级降级的第一级（L1）。L2 = faceDetect 关键点（services/faceService），
-// L3 = 几何估算（core/face.js headMetricsFromBBox）。三条路径**同权**（#74 纪律）：
-//   · 都有独立超时（#70 纪律：跨设备异步边界必须有硬闸门）
-//   · 都返回原因码（#67 纪律：UI 失败提示必须带原因码，否则现场无法定位）
-//   · 结果都带 source，批量验收按 source 分层统计（不再让"模拟器没测过"变成盲区）
-//
-// 【未部署时的行为】云函数未部署/模型缺失 → 返回 ok:false + reason（如 posekey:not_deployed），
-// 调用方降级到 L2/L3 + 物理标尺通道；**绝不静默造点**（v1 的病根就是猜）。
 import Taro from '@tarojs/taro';
-import { withTimeout, CLOUD_CALL_TIMEOUT_MS } from '../core/asyncUtils';
+import { planSuitImage } from '../core/suitImageSpace';
+// 实测双肩通过matting的pose路由获取，复用已有百度配置；缺少可靠信号时拒绝换装。
+import { CLOUD_CALL_TIMEOUT_MS } from '../core/asyncUtils';
 import { parsePoseResult, mapPoseToCanvas, REASON } from '../core/poseContract';
+import { makeCloudFnAdapter } from './cloudFnAdapter';
 
 // pose 调用超时：与云端抠图同档（15s）。实测 CPU 上 MoveNet Lightning 单次推理百毫秒级，
 // 余量主要给云函数冷启动与网络（真机冷启动可能数秒，#70 事故就是没这个闸门）。
@@ -31,48 +24,44 @@ export interface PoseRequest {
 export interface PoseResult {
   ok: boolean;
   /** 换算到工作画布像素坐标的关键点（无则 null） */
-  pose: { points: { name: string; x: number; y: number; score: number }[]; model: string | null; latencyMs: number | null } | null;
+  pose: { personCount?: number; points: { name: string; x: number; y: number; score: number }[]; model: string | null; latencyMs: number | null } | null;
   /** 失败原因码（posekey:xxx） */
   reason: string | null;
   message: string;
 }
 
 /**
- * 取 pose 关键点（L1）。任何失败都以原因码返回，不抛异常给调用方（便于三级降级串联）。
+ * 取 pose 关键点（L1）。任何失败都以原因码返回，不抛异常给调用方（缺少可靠信号时拒绝换装）。
  */
 export async function requestPoseKeypoints(req: PoseRequest, authorization?: { check(): void; traceId?: string }): Promise<PoseResult> {
   try { if (!authorization) throw new Error('consent'); authorization.check(); }
-  catch { return { ok: false, pose: null, reason: 'posekey:consent_required', message: '未同意上云姿态分析，使用本地信号' }; }
+  catch { return { ok: false, pose: null, reason: 'posekey:consent_required', message: '未同意上云姿态分析；缺少可靠双肩时不换装' }; }
   const { imageB64, width, height, region, canvasW, canvasH } = req;
   if (!imageB64) {
     return { ok: false, pose: null, reason: REASON.CALL_FAILED, message: '人像区域编码为空' };
   }
   try {
-    const res: any = await withTimeout(
-      Taro.cloud.callFunction({
-        name: 'posekey',
-        data: {
+    const res: any = await makeCloudFnAdapter({ authorization, resultType: 'raw' }).call({
+          action: 'pose',
           region: 'CN',
           purpose: 'pose_keypoints',
+          consent: 'faceCloudEnhance',
+          suitConsent: 'suitSwap',
           retain: false,
           train: false,
           width,
           height,
           image: imageB64,
-        },
-      }),
-      POSE_TIMEOUT_MS,
-      'posekey: 云端响应超时',
-    );
+    });
     authorization.check();
-    const parsed = parsePoseResult((res && res.result) || null);
+    const parsed = parsePoseResult(res);
     if (!parsed.ok) {
       return { ok: false, pose: null, reason: parsed.reason, message: parsed.message };
     }
-    const points = mapPoseToCanvas(parsed.points, region, { canvasW, canvasH });
+    const points = mapPoseToCanvas(parsed.points, region, { canvasW, canvasH, clamp: false });
     return {
       ok: true,
-      pose: { points, model: parsed.model, latencyMs: parsed.latencyMs },
+      pose: { personCount: parsed.raw.personCount, points, model: parsed.model, latencyMs: parsed.latencyMs },
       reason: null,
       message: '',
     };
@@ -81,7 +70,7 @@ export async function requestPoseKeypoints(req: PoseRequest, authorization?: { c
     console.warn('[pose]', { code: e?.code || 'POSE_FAILED', traceId: e?.traceId || 'pose-' + Date.now() });
     // withTimeout 的错误消息形如「posekey: 云端响应超时（超时 15s）」
     const reason = m.indexOf('超时') >= 0 ? REASON.TIMEOUT : REASON.CALL_FAILED;
-    return { ok: false, pose: null, reason, message: '姿态分析不可用，使用本地信号' };
+    return { ok: false, pose: null, reason, message: '姿态分析不可用；缺少可靠双肩时不换装' };
   }
 }
 
@@ -98,4 +87,15 @@ export function encodeCanvasToJpegB64(canvas: any, quality = 0.8): string | null
   } catch (e) {
     return null;
   }
+}
+
+/** 三项换装识别共用等比缩图；保留工作画布及已确认裁剪。 */
+export function prepareSuitImage(canvas: any, width: number, height: number) {
+  const size = planSuitImage(width, height);
+  let input = canvas;
+  if (size.width !== width || size.height !== height) {
+    input = (Taro as any).createOffscreenCanvas({type:'2d',width:size.width,height:size.height});
+    input.getContext('2d').drawImage(canvas,0,0,width,height,0,0,size.width,size.height);
+  }
+  return {...size,imageB64:encodeCanvasToJpegB64(input)};
 }

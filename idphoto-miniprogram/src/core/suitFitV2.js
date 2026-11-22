@@ -1,4 +1,6 @@
 'use strict';
+const {assessSuitSignals,POSE_MIN_SCORE,ROTATE_LIMIT_DEG}=require('./suitSafety');
+const {fitShoulderAnchors}=require('./suitAnchors');
 // 换装几何引擎 v2（P1 / 台账 #73）—— 实测信号驱动，替代 v1 的「猜测信号」
 //
 // 【为什么重写】四轮失败的共同结构：v1（core/suit.js 的 suitPlacement）问的是
@@ -12,7 +14,8 @@
 //     pose 实测信号只做校准（双通道，不再单靠猜系数）；
 //   → 非标准构图（全身/多人/横图/无人脸且无 pose）**明确拒绝 + 原因码**，不猜着摆（契约 7）。
 //
-// 【三级信号（与 services/poseService.ts 的分层一一对应）】
+// 【历史三级信号说明；RC-10要求可靠单人脸与双肩同时存在】
+// 当前入口先经suitSafety拒绝低可靠性信号；以下L2/L3/物理推导保留历史公式追溯，不授权出图。
 //   L1 pose  ：云函数 posekey 的实测双肩点（source='pose'）
 //   L2 face  ：faceDetect 关键点实测 chinY/headH，肩宽走物理标尺（source='face'）
 //   L3 est   ：几何估算（bbox 比例），仅兜底，肩宽走物理标尺（source='estimate'）
@@ -22,7 +25,7 @@
 // ---------- 常量（口径集中定义，禁止散落硬编码） ----------
 
 // pose 关键点可用门槛（可见性分数）。MoveNet 输出的 score 为 0~1 置信度。
-const POSE_MIN_SCORE = 0.5;
+
 
 // 肩宽（两肩峰水平距离）÷ 头长（头顶→下巴）的人体测量学工程值。
 // 依据：成人肩宽 ≈ 2 个头宽，头宽 ≈ 0.75~0.8 头长 → 肩宽 ≈ 1.5~1.6 头长。
@@ -37,7 +40,7 @@ const SCALE_MAX = 1.8;
 
 // 模板旋转限位（度）。肩线倾斜超过 ±15° 基本不是证件照构图（歪头/侧身），
 // 强行跟随会出怪图，故限位后按限位值出图 + WARN。
-const ROTATE_LIMIT_DEG = 15;
+
 
 // 西装顶端 = 下巴 + 该比例 × 头长（#69 修复口径：脖子根）。
 // 与 headH 的来源解耦（landmarks/estimate/physical 都成立），不再用会冲过下巴的 0.85×headH。
@@ -101,7 +104,7 @@ function pickPoint(points, name) {
     const x = num(p.x);
     const y = num(p.y);
     if (x === null || y === null) continue;
-    const score = typeof p.score === 'number' && isFinite(p.score) ? p.score : 1;
+    const score = typeof p.score === 'number' && isFinite(p.score) ? p.score : 0;
     return { x, y, score };
   }
   return null;
@@ -113,7 +116,8 @@ function shoulderPair(points) {
   const r = pickPoint(points, 'right_shoulder');
   if (!l || !r) return null;
   if (l.score < POSE_MIN_SCORE || r.score < POSE_MIN_SCORE) return null;
-  return { l, r };
+  if (l.x === r.x) return null;
+  return l.x < r.x ? { l, r } : { l: r, r: l };
 }
 
 /**
@@ -133,7 +137,8 @@ function shoulderPair(points) {
  *           {ok:false, reason:string, message:string, audit:object}}
  */
 function fitSuitV2(p = {}) {
-  const { spec, canvasW, canvasH, face, pose, bbox } = p;
+  const { canvasW, canvasH, face, pose, bbox } = p;
+  const spec = require('./specLibrary').getSpec(p.spec?.id);
   const tpl = p.template || TEMPLATE_META;
   const warnings = [];
 
@@ -146,8 +151,23 @@ function fitSuitV2(p = {}) {
   if (!(cw > 0) || !(ch > 0)) {
     return fail(REASON.BAD_CANVAS, '画布尺寸非法', { canvasW, canvasH });
   }
-  if (!(tpl.width > 0) || !(tpl.height > 0) || !(tpl.shoulderWidthPx > 0)) {
+  if (![tpl.width, tpl.height, tpl.shoulderWidthPx, tpl.collarTopY].every(Number.isFinite) || !(tpl.width > 0) || !(tpl.height > 0) || !(tpl.shoulderWidthPx > 0) || tpl.collarTopY < 0 || tpl.collarTopY >= tpl.height) {
     return fail(REASON.NO_TEMPLATE, '模板元数据缺失（shoulderWidthPx/collarTopY）', { tpl });
+  }
+
+  const safety = assessSuitSignals(p);
+  if (!safety.ok) return { ...fail(safety.reason, safety.message, safety), source: safety.source, measuredShoulders: safety.measuredShoulders, shoulderAngleDeg: safety.shoulderAngleDeg };
+
+  if (Object.prototype.hasOwnProperty.call(tpl, 'shoulderAnchors')) {
+    const fitted = fitShoulderAnchors(tpl, safety, face);
+    if (!fitted.ok) return fail(fitted.reason, fitted.message);
+    return {...fitted, reason: null, message: '', source: 'pose', measuredShoulders: true,
+      shoulderAngleDeg: safety.shoulderAngleDeg, protectedRect: safety.protectedRect,
+      protectUntilY: safety.protectUntilY, basis: {head: 'landmarks', shoulder: 'pose'}, warnings: [],
+      audit: {spec: spec.id, canvasW: cw, canvasH: ch, alignment: 'two-shoulder-anchors',
+        measuredShoulders: true, shoulderAngleDeg: safety.shoulderAngleDeg,
+        scale: fitted.scale, garmentTop: fitted.garmentTop, widthClamped: false,
+        bottomOverflowPx: Math.max(0, fitted.place.y + fitted.place.h - ch), source: 'pose'}};
   }
 
   // ---- 1. 头长 headH：实测优先，其次物理标尺 ----
@@ -248,7 +268,9 @@ function fitSuitV2(p = {}) {
   // ---- 5. 模板缩放：实测肩宽 ÷ 模板肩宽（限位 0.6~1.8）----
   let scale = shoulderSpan / tpl.shoulderWidthPx;
   const rawScale = scale;
-  scale = clamp(scale, SCALE_MIN, SCALE_MAX);
+  // 限位以400px参考画布归一，不能让相同构图在600dpi被固定像素倍率截小。
+  const canvasScale = cw / 400;
+  scale = clamp(scale, SCALE_MIN * canvasScale, SCALE_MAX * canvasScale);
   if (Math.abs(scale - rawScale) > 1e-9) warnings.push('scale_limited:' + rawScale.toFixed(2));
 
   // ---- 6. 放置框 ----
@@ -288,6 +310,10 @@ function fitSuitV2(p = {}) {
 
   return {
     ok: true,
+    measuredShoulders: true,
+    shoulderAngleDeg: safety.shoulderAngleDeg,
+    protectedRect: safety.protectedRect,
+    protectUntilY: safety.protectUntilY,
     place,
     rotateDeg,
     scale,
@@ -307,6 +333,8 @@ function fitSuitV2(p = {}) {
       shoulderSpan,
       shoulderSpanPhys,
       rotateDeg,
+      measuredShoulders: true,
+      shoulderAngleDeg: safety.shoulderAngleDeg,
       scale,
       garmentTop,
       widthClamped,
@@ -338,20 +366,9 @@ function fail(reason, message, extra) {
  * 与 fitSuitV2 分离，便于调用方在跑重链路前先做一次便宜的拦截。
  *
  * @param {object} p { face, pose, bbox }
- * @returns {{ok:boolean, reason:string|null, message:string}}
+ * @returns {ReturnType<typeof assessSuitSignals>}
  */
-function checkComposition(p = {}) {
-  const { face, pose, bbox } = p;
-  const hasFace = !!(face && (num(face.chinY) !== null || num(face.headH) > 0));
-  const hasPose = !!shoulderPair(pose && pose.points);
-  const hasBbox = !!(bbox && num(bbox.h) > 0 && num(bbox.w) > 0);
-  if (hasFace || hasPose || hasBbox) return { ok: true, reason: null, message: '' };
-  return {
-    ok: false,
-    reason: REASON.UNSUPPORTED,
-    message: '未检测到人像/双肩，无法换装。请使用正面标准证件照（全身照、多人合照、横图等非证件照构图不支持）',
-  };
-}
+function checkComposition(p = {}) { return assessSuitSignals(p); }
 
 module.exports = {
   fitSuitV2,

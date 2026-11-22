@@ -57,7 +57,7 @@ function parsePoseResult(res) {
     // 云函数侧错误码 → 前端原因码（统一 posekey: 前缀，便于 UI 与状态行直接显示）
     const known = ['no_person', 'decode_failed', 'infer_failed', 'not_deployed', 'model_missing'];
     const reason = known.indexOf(code) >= 0 ? 'posekey:' + code : REASON.CALL_FAILED;
-    return { ok: false, reason, message: 'posekey 返回错误：' + code };
+    return { ok: false, reason, message: '姿态分析未通过，请使用单人正面且双肩完整的照片' };
   }
   const raw = Array.isArray(res.keypoints) ? res.keypoints : null;
   if (!raw || !raw.length) {
@@ -75,7 +75,7 @@ function parsePoseResult(res) {
       ? k.name
       : (typeof k.index === 'number' && KEYPOINT_NAMES[k.index] ? KEYPOINT_NAMES[k.index] : null);
     if (!name) continue;
-    const score = num(k.score) === null ? 0 : clamp01(num(k.score));
+    const score = num(k.score) === null ? 0 : num(k.score);
     points.push({ name, x, y, score });
   }
   if (!points.length) {

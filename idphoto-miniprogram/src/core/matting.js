@@ -33,18 +33,21 @@ function decideRoute(confidence, forceCloud = false) {
 async function segment(input = {}) {
   const { rgba, width, height, session, spec, modelInfo, cloud, consents, audit, tool, bgSamples, forceCloud, modelTimeoutMs = 15000 } = input;
   if (!rgba || !width || !height) throw new Error('segment: 缺少 rgba/width/height');
+  input.check?.();
   const start = Date.now();
   const reasons = modelInfo?.reasonCode ? [modelInfo.reasonCode] : [];
   let res;
   try {
-    res = await withTimeout(localMatting(rgba, width, height, { session, spec, bgSamples }), modelTimeoutMs, 'MODEL_INFERENCE_TIMEOUT');
+    res = await withTimeout(localMatting(rgba, width, height, { session, spec, bgSamples, cooperative: !!input.check, check: input.check }), modelTimeoutMs, 'MODEL_INFERENCE_TIMEOUT');
     if (res.alpha.length !== width * height || res.alpha.some((v) => !Number.isFinite(v) || v < 0 || v > 1)) throw new Error('MODEL_ALPHA_INVALID');
   } catch (error) {
     if (!session) throw error;
     reasons.push(/TIMEOUT/.test(String(error?.message || '')) ? 'MODEL_INFERENCE_TIMEOUT' : 'MODEL_INFERENCE_FAILED');
     audit?.({ stage: 'model_fallback', code: reasons[reasons.length - 1], hasPixel: false });
-    res = await localMatting(rgba, width, height, { bgSamples });
+    input.check?.();
+    res = await localMatting(rgba, width, height, { bgSamples, cooperative: !!input.check, check: input.check });
   }
+  input.check?.();
   const canForce = !!forceCloud && !!cloud?.adapter && (consents || []).includes('faceCloudEnhance');
   const route = decideRoute(res.quality.confidence, canForce);
   const base = { width, height, maskSize: width * height, confidence: res.quality.confidence,
@@ -66,9 +69,10 @@ async function segment(input = {}) {
   if (!(consents || []).includes('faceCloudEnhance')) return finish({ ...base, degraded: true, cloudError: 'cloud_consent_missing', reasonCode: 'CLOUD_CONSENT_MISSING' });
   if (!cloud?.adapter) return finish({ ...base, degraded: true, cloudError: 'cloud_unavailable', reasonCode: 'CLOUD_UNAVAILABLE' });
   let cloudRes;
-  try { cloudRes = await cloudMatting({ rgba, alpha: res.alpha, width, height, adapter: cloud.adapter, consents: consents || [], audit, tool }); }
+  try { cloudRes = await cloudMatting({ rgba, alpha: res.alpha, width, height, adapter: cloud.adapter, consents: consents || [], audit, tool, check: input.check }); input.check?.(); }
   catch (error) {
-    if (String(error?.message || '').startsWith('AC5')) throw error;
+    input.check?.();
+    if (/^(CONSENT_|SESSION_)/.test(String(error?.code || '')) || String(error?.message || '').startsWith('AC5')) throw error;
     const code = failureCode(error);
     audit?.({ stage: 'cloud_fallback', code, hasPixel: false });
     return finish({ ...base, degraded: true, cloudError: code, reasonCode: code }, true);

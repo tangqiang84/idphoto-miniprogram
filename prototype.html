@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>证件照小程序 · 工具箱原型</title>
+<title>老唐标准照裁剪 · 工具箱原型</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #e9eef3; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 20px; }
@@ -18,11 +18,11 @@
   .hero h1 { font-size: 21px; margin-bottom: 6px; }
   .hero p { font-size: 12px; opacity: .92; line-height: 1.5; }
   .badge { display: inline-block; background: rgba(255,255,255,.22); padding: 4px 10px; border-radius: 20px; font-size: 11px; margin-top: 10px; }
-  .toolgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
-  .toolcard { background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.04); cursor: pointer; border: 1px solid #eef1f4; }
+  .toolgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+  .toolcard { min-width: 0; min-height: 120px; box-sizing: border-box; background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.04); cursor: pointer; border: 1px solid #eef1f4; }
   .toolcard .ico { font-size: 26px; }
-  .toolcard .t { font-size: 14px; font-weight: 600; margin-top: 6px; }
-  .toolcard .d { font-size: 11px; color: #8a94a3; margin-top: 3px; line-height: 1.4; }
+  .toolcard .t { font-size: 16px; font-weight: 600; margin-top: 6px; }
+  .toolcard .d { font-size: 12px; color: #596577; margin-top: 3px; line-height: 1.4; }
   .toolcard .free { font-size: 11px; color: #07c160; margin-top: 6px; }
   .card { background: #fff; border-radius: 14px; padding: 16px; margin-top: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
   .card h3 { font-size: 15px; margin-bottom: 8px; }
@@ -92,8 +92,8 @@
   <div class="screen active" id="s_home">
     <div class="body">
       <div class="hero">
-        <h1>证件照工具箱</h1>
-        <p>五大工具，即点即用 · 隐私优先</p>
+        <h1>老唐标准照裁剪</h1>
+        <p>六项工具，即点即用 · 隐私优先</p>
         <span class="badge">🔒 人脸端侧处理 · 不留存 · 数据不出境</span>
       </div>
       <div class="toolgrid">

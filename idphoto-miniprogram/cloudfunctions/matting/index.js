@@ -3,20 +3,20 @@
 // 入参契约（与前端 src/core/mattingCloud.cloudMatting 一致）：
 //   { region, purpose, retain, train, consent, width, height, image(base64 裁剪人像区域) }
 // 返回：{ alphaB64, region }
-// 合规：仅处理裁剪人像区域(非全图)、retain:false 处理完销毁、train:false 不留存、region 固定 CN（数据不出境）。
+// 调用约定包含裁剪人像、retain/train=false及region=CN；地域和第三方数据承诺另需独立证据。
 //
-// ⚠️⚠️ 算法：本文件支持**三条 provider**，入参/出参契约完全一致（RGBA 像素 → alphaB64）：
+// 本文件当前接入 baidu/shadow 两条 provider；BiRefNet部署包未接入此路由。
 //
 //    1) `baidu`  —— **百度智能云「人像分割」商用 API**（真模型，2026-10-23 接入）
 //       实现见 ./baiduSeg.js；需配置云函数环境变量 BAIDU_API_KEY / BAIDU_SECRET_KEY。
-//       取 scoremap（灰度=置信度×255）作软 alpha。免费额度：个人 1 万次/QPS 2，企业 5 万次/QPS 5。
+//       取 scoremap（灰度=置信度×255）作软 alpha；额度/计费以实际账户和服务规则为准。
 //       **现在就是默认路径**：配了 Key 就走真模型，没配自动回落影子实现。
 //
 //    2) `shadow` —— 多高斯 + 引导滤波保边的 **CPU 影子实现**（本文件 strongSegment）。
 //       为什么还要留：微信 CloudBase 云函数是 CPU 环境、无 GPU，且外部 API 有额度/网络风险，
-//       影子实现保证「任何情况下都能出图」。百度失败时也一律降级到这里。
+//       百度失败时回落为传统候选alpha；是否可用仍需质量核对。
 //
-//    3) `birefnet` —— 自有境内 GPU 实例上的真 BiRefNet，见 **`部署/birefnet/`**
+//    另行部署候选 `birefnet`，见 **`部署/birefnet/`**，当前函数不支持选择它。
 //       （server.py + Dockerfile + 部署手册，《小程序发布准备包》第八节「形态 B」）。
 //       适合日调用量上万、想摆脱按次计费之后切换。
 //
@@ -25,6 +25,7 @@
 //    本项目策略是「端侧优先，置信不足才上云」（core/matting.js decideRoute，阈值 0.85）。
 
 const { resolveProvider, makeBaiduSegClient } = require('./baiduSeg');
+const { randomBytes } = require('crypto');
 
 // ---------- 基础序列化 ----------
 function toBase64(bytes) {
@@ -174,7 +175,7 @@ function strongSegment(rgba, w, h) {
 // ---------- provider 路由 ----------
 // 两条实现，契约完全一致（入 RGBA 像素 → 出 alphaB64），可随时切换/回退：
 //   1) 'baidu'  —— 百度智能云人像分割（真模型，需配置 BAIDU_API_KEY / BAIDU_SECRET_KEY）
-//   2) 'shadow' —— 本地多高斯 + 引导滤波（CPU 影子实现，无外部依赖、永不失败）
+//   2) 'shadow' —— 本地多高斯 + 引导滤波（CPU 影子实现，无外部依赖，质量未保证）
 // 选择逻辑：event.provider 显式指定 > 环境变量配置自动判定 > 影子兜底。
 // 【铁律】百度这条路失败**一律降级影子实现**，绝不让用户拿不到图；降级原因随结果回传，便于排查。
 function pickProvider(event, env) {
@@ -193,6 +194,32 @@ function pickProvider(event, env) {
   return plan;
 }
 
+// 只检查配置；不读取照片、不创建第三方client，也不推断部署地域或服务条款。
+function capabilities(event, env) {
+  const traceId = 'matting-cap-' + Date.now() + '-' + randomBytes(4).toString('hex');
+  // CloudBase实测会注入tcbContext；平台附加信息不读取、不用于授权或provider选择。
+  const extra = Object.keys(event).filter(key => !['action', 'userInfo', 'tcbContext'].includes(key));
+  if (extra.length) {
+    console.warn('[matting.capabilities]', { traceId, code: 'CAPABILITIES_PAYLOAD_INVALID' });
+    return { ok: false, code: 'CAPABILITIES_PAYLOAD_INVALID', error: '能力检查仅接收action，不接收照片或业务参数', traceId,
+      imageProcessingPerformed: false, externalModelCalls: 0 };
+  }
+  const selected = pickProvider({}, env);
+  const baiduEnabled = String(env.BAIDU_ENABLED || 'true').toLowerCase() !== 'false';
+  const baiduConfigured = !!(String(env.BAIDU_API_KEY || '').trim() && String(env.BAIDU_SECRET_KEY || '').trim());
+  console.info('[matting.capabilities]', { traceId, code: 'OK', configuredProvider: selected.provider });
+  return { ok: true, code: 'OK', traceId, contractVersion: 'rc09-matting-capabilities-v1',
+    serviceVersion: 'rc09-capabilities-20261105', verification: 'configuration-only',
+    configuredProvider: selected.provider,
+    providers: {
+      baidu: { supported: true, kind: 'model', configured: baiduConfigured, enabled: baiduEnabled, attemptable: selected.provider === 'baidu', availability: 'not-probed' },
+      shadow: { supported: true, kind: 'traditional', configured: true, availability: 'local-code-present' },
+      birefnet: { supported: false, kind: 'model', configured: false, availability: 'not-integrated' },
+    },
+    complianceEvidence: { regionVerified: false, retentionVerified: false, trainingUseVerified: false },
+    imageProcessingPerformed: false, externalModelCalls: 0 };
+}
+
 // 百度 API 的输入尺寸边界（最短边 15px / 最长边 4096px）；越界没必要浪费一次调用
 function baiduSizeOk(w, h) {
   const min = Math.min(w, h), max = Math.max(w, h);
@@ -203,8 +230,13 @@ function baiduSizeOk(w, h) {
 // 抽成独立函数并支持注入 clientFactory：单测可在**不联网**的前提下覆盖
 // 「百度成功 / 百度失败降级 / 未配置凭据」三条完整路径（项目约束：改完必实跑验证）。
 async function handleMatting(event, opts) {
+  const traceId = 'matting-' + Date.now() + '-' + randomBytes(4).toString('hex');
   const o = opts || {};
+  event = event || {};
   const env = o.env || process.env;
+  if (event.action === 'pose') return require('./baiduPose').handlePose(event, { ...o, env });
+  if (event.action === 'suit-template' || event.action === 'suit-parsing-model') return require('./suitAssets').handleSuitAsset(event);
+  if (event && event.action === 'capabilities') return capabilities(event, env);
   const makeClient = o.clientFactory || ((cfg) => makeBaiduSegClient(cfg));
   // 合规闸门：仅处理裁剪后人像区域、境内、不留存
   if (event.consent !== 'faceCloudEnhance') {
@@ -238,7 +270,7 @@ async function handleMatting(event, opts) {
       if (!baiduSizeOk(w, h)) {
         const enhanced = strongSegment(rgba, w, h);
         return {
-          alphaB64: encodeAlphaB64(enhanced), region: 'CN',
+          alphaB64: encodeAlphaB64(enhanced), region: 'CN', traceId,
           provider: 'shadow', providerMeta: { fallbackFrom: 'baidu', reason: `尺寸越界 ${w}x${h}（百度要求最短边≥15、最长边≤4096）` },
         };
       }
@@ -249,21 +281,23 @@ async function handleMatting(event, opts) {
         });
         const r = await client.segment(rgba, w, h);
         return {
-          alphaB64: encodeAlphaB64(r.alpha), region: 'CN',
+          alphaB64: encodeAlphaB64(r.alpha), region: 'CN', traceId,
           provider: 'baidu',
           providerMeta: { ...r.meta, host: client.host },
         };
       } catch (e) {
         // 降级：绝不让上云失败导致无图。日志只记错误码与原因，不记任何像素（AC8）
-        const reason = String((e && e.message) || e);
-        console.warn('[matting] baidu 失败，降级影子实现：' + reason);
+        const reason = '百度服务暂不可用，已降级为传统算法';
+        const rawCode = e && e.code;
+        const code = typeof rawCode === 'number' && Number.isSafeInteger(rawCode) ? rawCode : null;
+        console.warn('[matting]', { traceId, code, stage: 'baidu_fallback' });
         const enhanced = strongSegment(rgba, w, h);
         return {
-          alphaB64: encodeAlphaB64(enhanced), region: 'CN',
+          alphaB64: encodeAlphaB64(enhanced), region: 'CN', traceId,
           provider: 'shadow',
           providerMeta: {
             fallbackFrom: 'baidu', reason,
-            code: e && e.code != null ? e.code : null,
+            code,
             retryable: !!(e && e.retryable),
           },
         };
@@ -272,11 +306,12 @@ async function handleMatting(event, opts) {
 
     const enhanced = strongSegment(rgba, w, h);
     return {
-      alphaB64: encodeAlphaB64(enhanced), region: 'CN',
+      alphaB64: encodeAlphaB64(enhanced), region: 'CN', traceId,
       provider: 'shadow', providerMeta: { reason: plan.reason },
     };
   } catch (e) {
-    return { error: String((e && e.message) || e), code: 500 };
+    console.warn('[matting]', { traceId, code: 500, stage: 'processing_failed' });
+    return { error: '云端处理暂不可用，请稍后重试', code: 500, traceId };
   }
 }
 

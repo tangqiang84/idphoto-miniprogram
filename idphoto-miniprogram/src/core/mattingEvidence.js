@@ -3,7 +3,7 @@ const safeId=v=>typeof v==='string'&&/^[a-zA-Z0-9_.:-]{1,100}$/.test(v)?v:null;
 function failureCode(error){
  const code=String(error?.code??error?.errCode??error?.statusCode??'');
  const message=String(error?.message||error?.errMsg||'');
- if(['18','19','429','QUOTA_EXCEEDED'].includes(code)||/quota|额度|限额/i.test(message))return 'CLOUD_QUOTA';
+ if(['17','18','19','429','QUOTA_EXCEEDED'].includes(code)||/quota|额度|限额/i.test(message))return 'CLOUD_QUOTA';
  if(['401','403','AUTH_FAILED'].includes(code))return 'CLOUD_AUTH';
  if(/timeout|超时/i.test(code+' '+message))return 'CLOUD_TIMEOUT';
  return 'CLOUD_UNAVAILABLE';
