@@ -1,0 +1,36 @@
+{
+  "tests": [
+    {
+      "case": "denied",
+      "exitCode": 0,
+      "results": [
+        {
+          "ok": false,
+          "code": "CONSENT_REQUIRED",
+          "message": "请分别同意上云处理和换装",
+          "traceId": "suitparse-7fd10ee7941444e692c9112780a31ace"
+        }
+      ]
+    },
+    {
+      "case": "synthetic",
+      "exitCode": 0,
+      "results": [
+        {
+          "ok": true,
+          "width": 16,
+          "height": 16,
+          "provider": "segformer-b2-clothes-onnx-cpu",
+          "modelSha256": "a93a8dac171b5c1fcc53632a8bfc180bfd9759ea69a3e207451bb07f76add54f",
+          "latencyMs": 3881,
+          "traceId": "suitparse-8088bbac8f3c4916b3873e1b9f1c9d9c",
+          "classesBytes": 256,
+          "classesValid": true,
+          "classesSha256": "5341e6b2646979a70e57653007a1f310169421ec9bdd9f1a5648f75ade005af1"
+        }
+      ]
+    }
+  ],
+  "realPortraitUploads": 0,
+  "syntheticImageUploads": 1
+}

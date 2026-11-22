@@ -1,0 +1,19 @@
+{
+  "exitCode": 0,
+  "fields": [
+    {
+      "FunctionName": "suitparse",
+      "MemorySize": 1536,
+      "Runtime": "Python3.11",
+      "Status": "Active",
+      "Timeout": 30,
+      "Type": "Event"
+    },
+    {
+      "Type": ""
+    },
+    {
+      "Type": ""
+    }
+  ]
+}

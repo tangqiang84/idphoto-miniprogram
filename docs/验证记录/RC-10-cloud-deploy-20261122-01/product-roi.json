@@ -1,0 +1,19 @@
+{
+  "successfulReplays": 25,
+  "expectedRejections": 2,
+  "cases": [
+    {
+      "id": "research-navy",
+      "blueResidues": 0
+    },
+    {
+      "id": "research-black",
+      "blueResidues": 0
+    },
+    {
+      "id": "research-white",
+      "blueResidues": 0
+    }
+  ],
+  "completeProductChain": false
+}
