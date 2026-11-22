@@ -672,16 +672,14 @@ async function cloudMatting({ rgba, alpha, width, height, adapter, consents = []
   // 云端身份：真模型（baidu/birefnet）走「前景占比合理性」判据，避免软 alpha 被误杀
   // （详见 shouldAcceptCloudAlpha 的函数级注释）
   const provider = resp.provider || (adapter.kind === 'local-stub' ? 'local-stub' : null);
+  const auditProvider = ['baidu', 'birefnet', 'shadow', 'local-stub'].includes(provider) ? provider : null;
   const verdict = shouldAcceptCloudAlpha({ cloudAlpha: subAlpha, localAlpha: crop.alpha, provider });
   if (!verdict.accept) {
     // 上云结果异常 → 降级，避免变差
     audit && audit({
-      stage: 'cloud_degraded_quality', reason: verdict.reason, provider,
+      stage: 'cloud_degraded_quality', reason: verdict.reason, provider: auditProvider,
       cloudConf: verdict.cloudConf, localConf: verdict.localConf,
       cloudFg: verdict.cloudFg, localFg: verdict.localFg,
-      // 云端返回的元数据（source=scoremap/foreground、personNum=是否检测到人、图尺寸）——
-      // 排查「云端说没人」到底是模型没认出人还是我们解码口径不对（2026-10-27 真机排障）
-      providerMeta: safeProviderMeta(resp.providerMeta),
       uploadPx: upW * upH,
       cloudAlphaBytes: subAlphaRaw.__len || 0,
       expectedAlphaBytes: upW * upH,
@@ -694,7 +692,8 @@ async function cloudMatting({ rgba, alpha, width, height, adapter, consents = []
     };
   }
   // AC8：审计只记元数据，无像素
-  audit && audit({ stage: 'cloud_ok', latencyMs: dt, region: resp.region || 'CN', confidence: verdict.cloudConf, retained: false, provider, hasPixel: false });
+  audit && audit({ stage: 'cloud_ok', latencyMs: dt, region: resp.region === 'CN' ? 'CN' : null,
+    confidence: verdict.cloudConf, provider: auditProvider, hasPixel: false });
   return {
     alpha: enhanced, backend: 'cloud', confidence: estimateQuality(enhanced).confidence, degraded: false,
     cloudMeta: { latencyMs: dt, region: resp.region || 'CN', retained: false, provider, providerMeta: safeProviderMeta(resp.providerMeta) },

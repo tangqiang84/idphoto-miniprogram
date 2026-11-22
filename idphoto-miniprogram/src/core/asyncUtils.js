@@ -40,7 +40,7 @@ function withTimeout(p, ms, code) {
   }
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
-      reject(new Error(String(code) + '（超时 ' + Math.round(ms / 1000) + 's）'));
+      reject(Object.assign(new Error(String(code) + '（超时 ' + Math.round(ms / 1000) + 's）'), { code: 'ASYNC_TIMEOUT' }));
     }, ms);
     p.then(
       (v) => { clearTimeout(timer); resolve(v); },

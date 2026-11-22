@@ -189,8 +189,8 @@ export default function PhotoTool({ tool = 'T1' }: { tool?: string }) {
       </View> : null}
 
       {busy ? <View className='t1-progress'><Text>处理中，请稍候…</Text><Button className='flow-cancel' onClick={() => flow.cancel()}>取消处理</Button></View> : null}
-      {state.error ? <View className='flow-error'><Text className='status-line'>{state.error.message}（{state.error.code}）</Text>
-        <Button className='flow-retry' disabled={busy} onClick={() => flow.retry()}>重试当前步骤</Button></View> : null}
+      {state.error ? <View className='flow-error'><Text className='status-line'>{state.error.message}（{state.error.code}{state.error.traceId ? `，${state.error.traceId}` : ''}）</Text>
+        {state.error.retryable !== false ? <Button className='flow-retry' disabled={busy} onClick={() => flow.retry()}>重试当前步骤</Button> : null}</View> : null}
     </View>
   );
 }

@@ -1,4 +1,5 @@
 'use strict';
+const { withTimeout } = require('./asyncUtils');
 // 处理完成后本地临时文件销毁（PRD I2「处理完成后本地销毁」）
 //
 // 【为什么需要它】小程序里每一步图像处理都会落临时文件：
@@ -67,6 +68,7 @@ function collectTempPaths(paths, opts = {}) {
     if (typeof p !== 'string') continue;
     const s = p.trim();
     if (!s) continue;
+    if (/[\\%?#\x00-\x20]/.test(s) || s.split('/').some(part => part === '..' || part === '.')) continue;
     if (seen.has(s)) continue;
     const hitPrefix = prefixes.some((pre) => s.startsWith(pre));
     if (!hitPrefix) continue;
@@ -89,7 +91,8 @@ function collectTempPaths(paths, opts = {}) {
 async function purgeTempFiles(paths, fsAdapter) {
   const deleted = [];
   const failed = [];
-  if (!Array.isArray(paths) || !paths.length) return { deleted, failed };
+  paths = collectTempPaths(paths);
+  if (!paths.length) return { deleted, failed };
   if (!fsAdapter || typeof fsAdapter.unlink !== 'function') {
     // 没有适配器 → 一个都删不掉，但**如实报告**，不假装成功
     for (const p of paths) failed.push({ path: p, error: 'no_fs_adapter' });
@@ -102,7 +105,7 @@ async function purgeTempFiles(paths, fsAdapter) {
       deleted.push(p);
     } catch (e) {
       // 单个失败不阻断：记录后继续删下一个
-      failed.push({ path: p, error: e && e.message ? String(e.message) : String(e) });
+      failed.push({ path: p, error: e?.code === 'ASYNC_TIMEOUT' ? 'unlink_timeout' : 'unlink_failed' });
     }
   }
   return { deleted, failed };
@@ -119,6 +122,8 @@ async function purgeTempFiles(paths, fsAdapter) {
  * @returns {Promise<{deleted:string[], failed:Array<{path:string,error:string}>}>}
  */
 async function purgeWithWx(paths, wxApi) {
+  paths = collectTempPaths(paths);
+  if (!paths.length) return { deleted: [], failed: [] };
   const api =
     wxApi ||
     (typeof globalThis !== 'undefined' && globalThis.wx ? globalThis.wx : null);
@@ -128,16 +133,18 @@ async function purgeWithWx(paths, wxApi) {
     for (const p of list) failed.push({ path: p, error: 'no_wx_api' });
     return { deleted: [], failed };
   }
-  const fs = api.getFileSystemManager();
+  let fs;
+  try { fs = api.getFileSystemManager(); } catch { return purgeTempFiles(paths, null); }
+  if (typeof fs?.unlink !== 'function') return purgeTempFiles(paths, null);
   const adapter = {
     unlink(filePath) {
-      return new Promise((resolve, reject) => {
+      return withTimeout(new Promise((resolve, reject) => {
         fs.unlink({
           filePath,
           success: () => resolve(),
-          fail: (err) => reject(new Error((err && err.errMsg) || 'unlink failed')),
+          fail: reject,
         });
-      });
+      }), 3000, 'unlink:timeout');
     },
   };
   return purgeTempFiles(paths, adapter);

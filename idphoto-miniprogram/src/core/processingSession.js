@@ -24,13 +24,17 @@ function createProcessingSession(options = {}) {
     } };
   const snapshot = () => ({ ...state, changed: [...state.changed], params: copy(state.params) });
   const emit = () => { for (const listener of listeners) listener(snapshot()); };
-  const error = (code, message, traceId = state.traceId) => ({ code, message, traceId });
-  const log = (value) => (options.logger || ((meta) => console.warn('[processing-session]', meta)))(value);
+  const error = (code, message, traceId = state.traceId) => ({ code, message, traceId,
+    retryable: ['SESSION_TIMEOUT', 'SESSION_PROCESS_FAILED', 'SESSION_CANCELLED'].includes(code) });
+  const log = (value) => {
+    try { (options.logger || ((meta) => console.warn('[processing-session]', meta)))(value); } catch { /* 诊断失败不阻断状态更新。 */ }
+  };
   function stop(code) {
     if (!active) return;
     const old = active; active = null;
     clearTimeout(old.timer);
-    old.reject(error(code, '任务已结束，结果不会继续使用', old.traceId));
+    old.interruption = error(code, '任务已结束，结果不会继续使用', old.traceId);
+    old.reject(old.interruption);
     for (const cancel of old.cancellers) { try { cancel(); } catch { log({ code: 'SESSION_CANCEL_ADAPTER', traceId: old.traceId }); } }
   }
   function update(change) {
@@ -79,6 +83,7 @@ function createProcessingSession(options = {}) {
     emit(); return { ok: true, state: snapshot() };
   }
   function cancel() {
+    if (disposed) return;
     stop('SESSION_CANCELLED');
     state = { ...state, revision: state.revision + 1, changed: ['cancel'], status: 'cancelled', output: null,
       selfChecked: false, error: error('SESSION_CANCELLED', '已取消，可以修改参数或重试') };
@@ -88,7 +93,7 @@ function createProcessingSession(options = {}) {
     if (disposed) return { ok: false, error: error('SESSION_DISPOSED', '页面已离开') };
     if (active) return { ok: false, error: error('SESSION_BUSY', '正在处理，请等待或取消') };
     if (!state.params.source || (!state.params.cropConfirmed && kind !== 'crop-suggestion')) return { ok: false, error: error('SESSION_CROP_REQUIRED', '请先确认当前规格的裁剪范围') };
-    const token = { id: ++serial, revision: state.revision, traceId: `T1-${Date.now()}-${sessionId}-${serial}`, cancellers: [], timer: null, reject: null };
+    const token = { id: ++serial, revision: state.revision, traceId: `${options.tool || 'T1'}-${Date.now()}-${sessionId}-${serial}`, cancellers: [], timer: null, reject: null, interruption: null };
     active = token;
     const current = () => active === token && state.revision === token.revision && !disposed;
     const check = () => { if (!current()) throw error('SESSION_STALE', '旧任务已失效', token.traceId); };
@@ -110,9 +115,12 @@ function createProcessingSession(options = {}) {
         stage: kind === 'crop-suggestion' ? 'crop' : 'export', output: kind === 'crop-suggestion' ? null : output, error: null }; emit();
       return { ok: true, output };
     } catch (cause) {
-      if (!current()) return { ok: false, error: state.error || error('SESSION_STALE', '旧任务结果已丢弃', token.traceId) };
-      const code = cause && String(cause.message || '').startsWith('AC5') ? 'SESSION_CONSENT' : 'SESSION_PROCESS_FAILED';
-      const wrapped = error(code, code === 'SESSION_CONSENT' ? '端侧质量不足，请确认上云增强授权后重试' : '处理失败，请重试或更换照片', token.traceId);
+      if (!current()) return { ok: false, error: token.interruption || error('SESSION_STALE', '旧任务结果已丢弃', token.traceId) };
+      const code = cause?.code === 'ASYNC_TIMEOUT' || cause?.code === 'CLOUD_TIMEOUT' ? 'SESSION_TIMEOUT'
+        : ['CONSENT_REQUIRED','CONSENT_REVOKED'].includes(cause?.code) || String(cause?.message || '').startsWith('AC5') ? 'SESSION_CONSENT'
+        : 'SESSION_PROCESS_FAILED';
+      const wrapped = error(code, code === 'SESSION_CONSENT' ? '请确认所需授权后再操作'
+        : code === 'SESSION_TIMEOUT' ? '处理超时，请重试' : '处理失败，请重试或更换照片', token.traceId);
       log({ code, traceId: token.traceId, kind, stage: state.stage });
       state = { ...state, status: 'error', output: null, selfChecked: false, error: wrapped }; emit();
       return { ok: false, error: wrapped };
@@ -121,6 +129,10 @@ function createProcessingSession(options = {}) {
   return { getState: snapshot, update, confirmCrop, cancel, execute,
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
     confirmSelfCheck(value) { if (state.status !== 'success') return false; state = { ...state, selfChecked: !!value }; emit(); return true; },
-    dispose() { stop('SESSION_CANCELLED'); disposed = true; state = { ...state, revision: state.revision + 1, status: 'cancelled', output: null }; listeners.clear(); } };
+    dispose() { if (disposed) return; disposed = true; stop('SESSION_CANCELLED');
+      state = { ...state, revision: state.revision + 1, status: 'cancelled', output: null, selfChecked: false,
+        params: { ...state.params, source: null, cropWindow: null, cropConfirmed: false, consents: [] } };
+      listeners.clear();
+    } };
 }
 module.exports = { createProcessingSession };

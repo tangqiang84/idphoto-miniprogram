@@ -92,7 +92,7 @@ test('purgeTempFiles：部分失败 → 成功的仍记录，失败的带原因�
   assert.deepStrictEqual(r.deleted, ['wxfile://tmp_a.jpg', 'wxfile://tmp_c.jpg']);
   assert.strictEqual(r.failed.length, 1);
   assert.strictEqual(r.failed[0].path, 'wxfile://tmp_bad.jpg');
-  assert.ok(r.failed[0].error.includes('EBUSY'));
+  assert.strictEqual(r.failed[0].error, 'unlink_failed');
 });
 
 test('purgeTempFiles：适配器抛错不中断后续文件（同步 throw 也一样）', async () => {
@@ -105,7 +105,7 @@ test('purgeTempFiles：适配器抛错不中断后续文件（同步 throw 也�
   const r = await purgeTempFiles(['wxfile://tmp_x.jpg', 'wxfile://tmp_y.jpg'], adapter);
   assert.deepStrictEqual(r.deleted, ['wxfile://tmp_y.jpg']);
   assert.strictEqual(r.failed.length, 1);
-  assert.strictEqual(r.failed[0].error, 'boom');
+  assert.strictEqual(r.failed[0].error, 'unlink_failed');
 });
 
 test('purgeTempFiles：空输入 → 空结果，不调适配器', async () => {
@@ -154,7 +154,7 @@ test('purgeWithWx：注入 wx 适配器 → 走 unlink 并汇总结果', async (
   ]);
   assert.deepStrictEqual(r.deleted, ['wxfile://tmp_a.jpg', 'wxfile://tmp_c.jpg']);
   assert.strictEqual(r.failed.length, 1);
-  assert.ok(r.failed[0].error.includes('unlink:fail'));
+  assert.strictEqual(r.failed[0].error, 'unlink_failed');
 });
 
 test('purgeWithWx：环境没有 wx → 如实报告失败，不抛异常', async () => {
@@ -176,4 +176,19 @@ test('端到端：collectTempPaths → purgeTempFiles 只删临时图', async ()
   const r = await purgeTempFiles(target, adapter);
   assert.deepStrictEqual(r.deleted, ['wxfile://tmp_work.jpg', 'wxfile://tmp_export.png']);
   assert.deepStrictEqual(deleted, r.deleted);
+});
+
+test('RC-11 直接调用清理接口也拒绝持久目录、路径穿越和带查询的文件', async () => {
+  const calls = [];
+  const result = await purgeWithWx([
+    'wxfile://usr/keep.jpg', '/tmp/../private.jpg', 'http://tmp/%2e%2e/private.jpg',
+    'http://tmp/work.jpg?private_token=x', 'http://tmp/work.jpg', 'http://tmp/work.jpg',
+  ], { getFileSystemManager: () => ({ unlink: ({filePath, success}) => { calls.push(filePath); success(); } }) });
+  assert.deepStrictEqual(calls, ['http://tmp/work.jpg']);
+  assert.deepStrictEqual(result.deleted, calls);
+});
+
+test('RC-11 文件系统初始化失败不会泄露平台异常', async () => {
+  const result = await purgeWithWx(['http://tmp/work.jpg'], { getFileSystemManager() { throw new Error('private_token'); } });
+  assert.deepStrictEqual(result, { deleted: [], failed: [{ path: 'http://tmp/work.jpg', error: 'no_fs_adapter' }] });
 });

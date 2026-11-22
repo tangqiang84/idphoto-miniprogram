@@ -25,12 +25,14 @@ function createT1Workflow(session, adapters, options = {}) {
   const getState = () => ({ screen, preview, finalResult, pendingSelf, mirrorConfirmed: !!mirror && mirror === beautyKey(),
     error: failure || session.getState().error, session: session.getState() });
   const emit = () => { if (!disposed) for (const fn of listeners) fn(getState()); };
-  const fail = (code, message) => { failure = { code, message, traceId: session.getState().traceId }; emit(); return { ok: false, error: failure }; };
+  const fail = (code, message) => { failure = { code, message, traceId: session.getState().traceId,
+    retryable: code === 'FLOW_OUTPUT' }; emit(); return { ok: false, error: failure }; };
   const requireStep = (...allowed) => !disposed && allowed.includes(screen) && session.getState().status !== 'processing';
   const unsubscribe = session.subscribe((s) => {
     if (s.revision !== revision) {
       revision = s.revision; finalResult = null; pendingSelf = false; failure = null;
       const changed = s.changed;
+      if (changed.some(x => ['source', 'consents', 'cancel'].includes(x))) adapters.release?.();
       if (changed.includes('source')) { screen = s.params.source ? 'crop' : 'upload'; approvedBeauty = ''; reviewed = ''; mirror = ''; preview = null; }
       else if (changed.some((x) => ['specId', 'customTarget', 'cropWindow', 'cropConfirmed'].includes(x))) { screen = s.params.source ? 'crop' : 'upload'; approvedBeauty = ''; reviewed = ''; mirror = ''; preview = null; }
       else if (changed.includes('beauty')) { screen = 'beauty'; approvedBeauty = ''; reviewed = ''; mirror = ''; preview = null; }
@@ -48,7 +50,11 @@ function createT1Workflow(session, adapters, options = {}) {
     failure = null; finalResult = null; pendingSelf = false;
     const result = await session.execute(mode === 'final' ? 't1-final' : 't1-preview', (task) => adapters.process(task, mode, strokes));
     if (disposed) return { ok: false };
-    if (!result.ok) { if (session.getState().status === 'error') failure = result.error; emit(); return result; }
+    if (!result.ok) {
+      const state = session.getState();
+      if (state.status === 'error' && state.traceId === result.error?.traceId) failure = state.error;
+      emit(); return result;
+    }
     failure = null;
     if (!result.output || typeof result.output.preview !== 'string' || result.output.isFinal !== (mode === 'final')) return fail('FLOW_OUTPUT', '处理结果缺少预览/成品标识，请重试');
     if (mode === 'final') {
@@ -156,6 +162,10 @@ function createT1Workflow(session, adapters, options = {}) {
     },
     cancel() { session.cancel(); emit(); },
     retry() { if (screen === 'beauty' || screen === 'preview') return process('preview', 'preview'); if (screen === 'dress') return process('preview', 'dress'); if (screen === 'dpi') return this.export(); return this.suggest(); },
-    dispose() { disposed = true; unsubscribe(); listeners.clear(); } };
+    dispose() {
+      disposed = true; unsubscribe(); listeners.clear(); adapters.release?.();
+      preview = null; finalResult = null; pendingSelf = false; failure = null;
+      approvedBeauty = ''; reviewed = ''; mirror = '';
+    } };
 }
 module.exports = { createT1Workflow, hardFailures };

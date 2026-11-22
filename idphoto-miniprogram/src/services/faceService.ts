@@ -186,11 +186,11 @@ function detectByVisionKit(
             modelMode: 1,
           });
         } catch (e: any) {
-          finish(emptyResult('detectFace 调用异常：' + String((e && e.message) || e), 'visionkit'));
+          finish(emptyResult('VisionKit 人脸检测失败', 'visionkit'));
         }
       });
     } catch (e: any) {
-      finish(emptyResult('VisionKit 初始化异常：' + String((e && e.message) || e), 'visionkit'));
+      finish(emptyResult('VisionKit 初始化失败', 'visionkit'));
     }
   });
 }
@@ -269,13 +269,13 @@ function detectByFaceDetect(
               const conf = r && r.confArray && typeof r.confArray.global === 'number' ? r.confArray.global : null;
               finish({ ok: true, source: 'faceDetect', points, rect, confidence: conf });
             },
-            fail: (e: any) => finish(emptyResult('faceDetect 调用失败：' + String((e && e.errMsg) || e), 'faceDetect')),
+            fail: (e: any) => finish(emptyResult('原生人脸检测失败', 'faceDetect')),
           });
         } catch (e: any) {
-          finish(emptyResult('faceDetect 调用异常：' + String((e && e.message) || e), 'faceDetect'));
+          finish(emptyResult('原生人脸检测失败', 'faceDetect'));
         }
       },
-      fail: (e: any) => finish(emptyResult('initFaceDetect 失败：' + String((e && e.errMsg) || e), 'faceDetect')),
+      fail: (e: any) => finish(emptyResult('原生人脸检测初始化失败', 'faceDetect')),
     });
   });
 }

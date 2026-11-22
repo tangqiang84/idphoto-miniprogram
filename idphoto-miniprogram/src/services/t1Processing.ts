@@ -130,7 +130,7 @@ export function createT1Processing(tool = 'T1') {
       task.step('beauty');
       if (p.beauty.enabled) applyBeauty(rgba, w, h, p.beauty);
       task.step('matting');
-      const cloudPermission = { check() { task.check(); if (!buildConsentRecord(tool, p.consents, 'cloud').ready) throw { code: 'CONSENT_REQUIRED', message: '未同意上云增强', traceId: task.traceId }; } };
+      const cloudPermission = { traceId: task.traceId, check() { task.check(); if (!buildConsentRecord(tool, p.consents, 'cloud').ready) throw { code: 'CONSENT_REQUIRED', message: '未同意上云增强', traceId: task.traceId }; } };
       const adapter = buildCloudFnAdapter({ authorization: cloudPermission });
       const model = await task.call(() => prepareModelForSegment({ check: () => task.check() }));
       if (model.reasonCode && model.reasonCode !== 'MODEL_DISABLED') console.warn('[model-fallback]', { code: model.reasonCode, traceId: task.traceId });
@@ -171,15 +171,15 @@ export function createT1Processing(tool = 'T1') {
             const pr = await task.call(() => requestPoseKeypoints({
               imageB64: jpegB64, width: w, height: h,
               region: { x: 0, y: 0, w, h }, canvasW: w, canvasH: h,
-            }, { check() { cloudPermission.check(); if (!buildConsentRecord(tool, granted, 'suit').ready) throw { code: 'CONSENT_REQUIRED', message: '未同意换装', traceId: task.traceId }; } }));
+            }, { traceId: task.traceId, check() { cloudPermission.check(); if (!buildConsentRecord(tool, granted, 'suit').ready) throw { code: 'CONSENT_REQUIRED', message: '未同意换装', traceId: task.traceId }; } }));
             if (pr.ok && pr.pose) poseSig = pr.pose;
             else poseReason = pr.reason;
           } else {
             poseReason = 'posekey:encode_failed';
           }
           console.log('[audit]', {
-            stage: 'pose_signal', ok: !!poseSig, reason: poseReason,
-            model: poseSig ? poseSig.model : null, latencyMs: poseSig ? poseSig.latencyMs : null,
+            stage: 'pose_signal', traceId: task.traceId, ok: !!poseSig, reason: poseReason,
+            model: poseSig?.model === 'baidu-body-analysis' ? poseSig.model : null, latencyMs: poseSig ? poseSig.latencyMs : null,
           });
 
           const comp = checkComposition({ face: faceSig, pose: poseSig, bbox });
@@ -218,5 +218,5 @@ export function createT1Processing(tool = 'T1') {
     task.check(); cache = data;
     return result;
   }
-  return { suggest, process };
+  return { suggest, process, release() { cache = null; } };
 }

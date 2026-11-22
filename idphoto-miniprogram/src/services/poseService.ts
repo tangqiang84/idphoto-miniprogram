@@ -40,7 +40,7 @@ export interface PoseResult {
 /**
  * 取 pose 关键点（L1）。任何失败都以原因码返回，不抛异常给调用方（便于三级降级串联）。
  */
-export async function requestPoseKeypoints(req: PoseRequest, authorization?: { check(): void }): Promise<PoseResult> {
+export async function requestPoseKeypoints(req: PoseRequest, authorization?: { check(): void; traceId?: string }): Promise<PoseResult> {
   try { if (!authorization) throw new Error('consent'); authorization.check(); }
   catch { return { ok: false, pose: null, reason: 'posekey:consent_required', message: '未同意上云姿态分析，使用本地信号' }; }
   const { imageB64, width, height, region, canvasW, canvasH } = req;

@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import { requiredConsents, BG, listSpecs, getSpec, check, specLabel, measureHeadRatio } from '../../services';
 import { useImagePicker } from '../../hooks/useImagePicker';
 import { useConsentGate } from '../../hooks/useConsentGate';
+import { withTimeout, IMG_LOAD_TIMEOUT_MS, EXPORT_TIMEOUT_MS } from '../../core/asyncUtils';
 
 // T4 合规检测：只读检测，不生成、不改动原图（PRD J2 / AC10）——无保存相册入口。
 // 检测项与口径（2026-10-23 与 owner 确认）：
@@ -49,7 +50,7 @@ function detectBgKey(rgba: Uint8ClampedArray, w: number, h: number): string | nu
 
 export default function ToolCheck() {
   const consentItems = requiredConsents(TOOL);
-  const resultPermission = useRef<any>(null);
+  const latestRun = useRef(0);
   const { granted, setGranted, authorization } = useActionConsent(TOOL, () => { setResult(null); setPreview(''); setBusy(false); setMsg('授权已变化，请重新检测'); });
 
   // 【P1 #77 / RC-7】T4 补人脸处理协议闸门：未勾选时上传区不可点
@@ -77,10 +78,26 @@ export default function ToolCheck() {
       Taro.showToast({ title: '请先勾选所需授权', icon: 'none' });
       return;
     }
-    const token = authorization.capture('local');
+    const permission = authorization.capture('local');
+    const runId = ++latestRun.current;
+    const token = {
+      traceId: permission.traceId,
+      current: () => latestRun.current === runId && permission.current(),
+      check: () => {
+        permission.check();
+        if (latestRun.current !== runId) throw { code: 'CHECK_STALE' };
+      },
+      async call<T>(fn: () => Promise<T>, ms = IMG_LOAD_TIMEOUT_MS) {
+        this.check();
+        const value = await withTimeout(fn(), ms, 'check:timeout');
+        this.check();
+        return value;
+      },
+    };
     if (!token.current()) { Taro.showToast({ title: '请先同意本地处理授权', icon: 'none' }); return; }
     setBusy(true);
     setResult(null);
+    setPreview('');
     setMsg('读取图片…');
     try {
       const anyTaro: any = Taro;
@@ -91,9 +108,12 @@ export default function ToolCheck() {
       // 2. 真实尺寸 + 真实 KB（取图已剥离到 useImagePicker，PRD A1 引导框在拍摄路径叠加）
       let fileKb = 0;
       try {
-        const fi: any = await token.call(() => Taro.getFileInfo({ filePath: path }));
+        const fi: any = await token.call(() => Taro.getFileInfo({ filePath: path }), EXPORT_TIMEOUT_MS);
         fileKb = Math.max(1, Math.round((fi.size || 0) / 1024));
-      } catch (_) { fileKb = 0; }
+      } catch (e: any) {
+        if (e?.code === 'ASYNC_TIMEOUT') throw e;
+        fileKb = 0;
+      }
       token.check();
 
       // 3. 工作图（长边 ≤ MAX_EDGE）用于底色采样与人脸检测
@@ -149,8 +169,9 @@ export default function ToolCheck() {
       );
     } catch (e: any) {
       if (!token.current()) return;
-      setMsg('检测失败，请重试（CHECK_FAILED）');
-      console.warn('[T4]', { code: e?.code || 'CHECK_FAILED', traceId: token.traceId });
+      const code = e?.code === 'ASYNC_TIMEOUT' ? 'CHECK_TIMEOUT' : 'CHECK_FAILED';
+      setMsg(`${code === 'CHECK_TIMEOUT' ? '检测超时' : '检测失败'}，请重试（${code}，${token.traceId}）`);
+      console.warn('[T4]', { code, traceId: token.traceId });
     } finally {
       if (token.current()) setBusy(false);
     }

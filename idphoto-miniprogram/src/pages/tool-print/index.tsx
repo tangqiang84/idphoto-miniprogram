@@ -1,8 +1,9 @@
 import { printGeometry } from '../../core/printGeometry';
+import { withTimeout, IMG_LOAD_TIMEOUT_MS, EXPORT_TIMEOUT_MS } from '../../core/asyncUtils';
 import { inspectExportedFile } from '../../services/exportInspection';
 import { View, Text, Button, Image, Switch } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   listSpecs,
   getSpec,
@@ -78,7 +79,8 @@ export default function ToolPrint() {
   const [result, setResult] = useState<T6Result | null>(null);
   const [incoming, setIncoming] = useState('');
 
-  const pick = useImagePicker((img: PickedImage) => setSrcImg(img));
+  const selectedManually = useRef(false);
+  const pick = useImagePicker((img: PickedImage) => { selectedManually.current = true; setSrcImg(img); });
   const paperLabel = getPaper(paperId);
 
   // 承接上一步成品图：读不到（路径失效/被清理）时静默降级为「手动从相册选择」，绝不阻断
@@ -86,45 +88,54 @@ export default function ToolPrint() {
   useEffect(() => {
     const raw = readSrcParam();
     if (!raw) return;
+    let disposed = false;
     (async () => {
       let info: any = null;
       try {
         const decoded = decodeSrcParam(raw);
-        if (decoded) info = await Taro.getImageInfo({ src: decoded });
+        if (decoded) info = await withTimeout(Taro.getImageInfo({ src: decoded }), IMG_LOAD_TIMEOUT_MS, 'print:handoff_timeout');
       } catch (e) {
         info = null;
       }
+      if (disposed || selectedManually.current) return;
       const r = resolveHandoff(raw, info);
       if (r.ok && r.width && r.height) {
         setSrcImg({ path: r.src, width: r.width, height: r.height });
       }
       setIncoming(r.message);
     })();
+    return () => { disposed = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 实时拼版：源图 / 规格 / 相纸 / 参考线任一变化即重算（带竞态保护）
   useEffect(() => {
     if (!srcImg) {
+      setBusy(false);
       setPreview('');
       setResult(null);
       setMsg('');
       return;
     }
     let cancelled = false;
+    const traceId = `print-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     setBusy(true);
     setPreview('');
     setResult(null);
     (async () => {
       try {
-        const out = await compose(srcImg, specId, paperId, showGuide);
+        const out = await compose(srcImg, specId, paperId, showGuide, () => !cancelled);
         if (!cancelled) {
           setPreview(out.preview);
           setResult(out.result);
           setMsg(out.msg);
         }
       } catch (e: any) {
-        if (!cancelled) { const traceId = `print-${Date.now()}`; console.warn('[T6]', { code: e?.code || 'PRINT_EXPORT_FAILED', traceId }); setMsg(`生成失败，请重试（PRINT_EXPORT_FAILED，${traceId}）`); }
+        if (!cancelled) {
+          const code = e?.code === 'ASYNC_TIMEOUT' ? 'PRINT_TIMEOUT' : 'PRINT_EXPORT_FAILED';
+          console.warn('[T6]', { code, traceId });
+          setMsg(`${code === 'PRINT_TIMEOUT' ? '生成超时' : '生成失败'}，请重试（${code}，${traceId}）`);
+        }
       } finally {
         if (!cancelled) setBusy(false);
       }
@@ -141,6 +152,7 @@ export default function ToolPrint() {
     sid: string,
     pid: string,
     guide: boolean,
+    current: () => boolean,
   ): Promise<{ preview: string; result: T6Result; msg: string }> {
     const spec = getSpec(sid);
     const paper = getPaper(pid);
@@ -173,11 +185,12 @@ export default function ToolPrint() {
     const fwp = layout.placements[0].width, fhp = layout.placements[0].height;
 
     const image = cv.createImage();
-    await new Promise<void>((resolve, reject) => {
+    await withTimeout(new Promise<void>((resolve, reject) => {
       image.onload = () => resolve();
       image.onerror = (e: any) => reject(e || new Error('图片加载失败'));
       image.src = img.path;
-    });
+    }), IMG_LOAD_TIMEOUT_MS, 'print:image_timeout');
+    if (!current()) throw { code: 'PRINT_STALE' };
 
     const drawOne = (dx: number, dy: number) => {
       // cover 缩放：等比填满 footprint，居中裁剪，避免比例失真
@@ -210,12 +223,13 @@ export default function ToolPrint() {
 
     for (const placement of layout.placements) drawOne(placement.x, placement.y);
 
-    const exported: any = await Taro.canvasToTempFilePath({
+    const exported: any = await withTimeout(Taro.canvasToTempFilePath({
       canvas: cv,
       x: 0, y: 0, width: canvasW, height: canvasH,
       destWidth: canvasW, destHeight: canvasH,
       fileType: 'jpg', quality: 0.95,
-    });
+    }), EXPORT_TIMEOUT_MS, 'print:export_timeout');
+    if (!current()) throw { code: 'PRINT_STALE' };
     const artifact = await inspectExportedFile(exported.tempFilePath, { width: canvasW, height: canvasH }, 'jpg');
     const fileKb = Number(artifact.fileKb.toFixed(2));
 

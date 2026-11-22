@@ -11,7 +11,7 @@ export interface SessionParams {
   cropWindow: { x: number; y: number; w: number; h: number; ratio?: number } | null;
   cropConfirmed: boolean;
 }
-export interface SessionError { code: string; message: string; traceId: string | null }
+export interface SessionError { code: string; message: string; traceId: string | null; retryable?: boolean }
 export interface SessionState {
   revision: number;
   sourceId: number;

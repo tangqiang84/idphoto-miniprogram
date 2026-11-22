@@ -112,3 +112,34 @@ test('未确认裁剪只允许本地建议任务，建议不算成品成功且�
   assert.equal((await session.execute('process', async () => null)).error.code, 'SESSION_CROP_REQUIRED');
   session.dispose();
 });
+
+test('RC-11 超时和授权错误使用固定文案，诊断失败不阻止恢复', async () => {
+  const session = ready({ tool: 'T3', logger() { throw Error('observer'); } });
+  const timeout = await session.execute('preview', async () => { throw {code:'ASYNC_TIMEOUT', message:'private_photo'}; });
+  assert.equal(timeout.error.code, 'SESSION_TIMEOUT');
+  assert.equal(timeout.error.retryable, true);
+  assert.match(timeout.error.traceId, /^T3-/);
+  const denied = await session.execute('preview', async () => { throw {code:'CONSENT_REVOKED', message:'private_token'}; });
+  assert.equal(denied.error.code, 'SESSION_CONSENT');
+  assert.equal(denied.error.retryable, false);
+  assert.doesNotMatch(JSON.stringify([timeout,denied]), /private_/);
+  assert.equal(session.getState().status, 'error');
+});
+
+test('RC-11 离页清空照片和成品引用，旧调用只带自己的 TraceID 结束', async () => {
+  const session = ready();
+  session.update({consents:['faceLocal']});
+  const wait = deferred();
+  const pending = session.execute('preview', (ctx) => ctx.call(() => wait.promise));
+  const traceId = session.getState().traceId;
+  await Promise.resolve();
+  session.dispose();
+  const state = session.getState();
+  assert.equal(state.params.source, null);
+  assert.equal(state.params.cropWindow, null);
+  assert.deepEqual(state.params.consents, []);
+  assert.equal(state.output, null);
+  wait.resolve({preview:'late'});
+  assert.equal((await pending).error.traceId, traceId);
+  assert.equal(session.getState().output, null);
+});
