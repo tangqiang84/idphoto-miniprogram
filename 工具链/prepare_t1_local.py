@@ -23,20 +23,20 @@ def main():
     write_json(out / 'production-inputs.json', inputs)
     app = out / 'workspace/idphoto-miniprogram'
     # 仅隔离工程替换网络适配器：真实微信UI/本地图像算法，绝不上传样本人像。
-    (app / 'src/services/cloudFnAdapter.ts').write_text('''export interface CloudFnAdapterOpts { name?: string; authToken?: string }
-export function makeCloudFnAdapter(_opts: CloudFnAdapterOpts = {}) {
- return { endpoint: 'cloud://CN', trustedHosts: ['cloud://CN'], kind: 'cloudfn',
- async call(_req: any) { throw new Error('RC05_NETWORK_BLOCKED'); } };
-}
-''')
-    (app / 'src/services/poseService.ts').write_text('''export const POSE_TIMEOUT_MS = 15000;
-export interface PoseRequest { imageB64: string; width: number; height: number; region: any; canvasW: number; canvasH: number }
-export interface PoseResult { ok: boolean; pose: any; reason: string | null; message: string }
-export async function requestPoseKeypoints(_req: PoseRequest): Promise<PoseResult> {
- return { ok: false, pose: null, reason: 'RC05_NETWORK_BLOCKED', message: '本地UI验证不请求云端' };
-}
-export function encodeCanvasToJpegB64(_canvas: any, _quality = 0.8): string | null { return null; }
-''')
+    adapter = app / 'src/services/cloudFnAdapter.ts'
+    adapter_source = adapter.read_text(encoding='utf-8')
+    guard = 'const pending: unknown = Taro.cloud.callFunction'
+    if adapter_source.count(guard) != 1:
+        raise ValueError('CLOUD_GUARD_ANCHOR_CHANGED')
+    adapter.write_text(adapter_source.replace(guard,
+        "throw new Error('RC05_NETWORK_BLOCKED');\n          " + guard), encoding='utf-8')
+    pose = app / 'src/services/poseService.ts'
+    pose_source = pose.read_text(encoding='utf-8')
+    guard = 'const res: any = await makeCloudFnAdapter'
+    if pose_source.count(guard) != 1:
+        raise ValueError('POSE_GUARD_ANCHOR_CHANGED')
+    pose.write_text(pose_source.replace(guard,
+        "throw new Error('RC05_NETWORK_BLOCKED');\n    " + guard), encoding='utf-8')
     write_json(app / 'rc05-local-only.json', {'mode': 'network-blocked/local-algorithm/real-wechat-ui',
         'source_root': str(source), 'timestamp': datetime.datetime.now(datetime.timezone.utc).isoformat(),
         'changed_adapters': ['src/services/cloudFnAdapter.ts', 'src/services/poseService.ts']})

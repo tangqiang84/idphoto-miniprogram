@@ -39,14 +39,15 @@ async function main(args = process.argv.slice(2)) {
     const stack = await mini.pageStack();
     if (!stack.length) throw new Error('PAGE_NOT_READY');
     page = await mini.currentPage();
-    if (page.path !== 'pages/home/index') { await mini.callWxMethod('navigateBack', { delta: 10 }); await delay(2000); await reconnect(); page = await mini.currentPage(); }
+    if (page.path !== 'pages/home/index') { await mini.reLaunch('/pages/home/index'); await delay(1000); await reconnect(); page = await mini.currentPage(); }
     const cards = await page.$$('.tool-card');
     if (!cards.length) throw new Error('HOME_CARDS_MISSING');
-    try { await cards[({T1:0,T2:1,T3:2,T5:4})[tool]].tap(); } catch {
-      await delay(500);
-      if ((await mini.currentPage()).path !== ({T1:'pages/tool-idphoto/index',T2:'pages/tool-bg/index',T3:'pages/tool-suit/index',T5:'pages/tool-spec/index'})[tool]) throw new Error('T1_ROUTE_FAILED');
-    }
-    await delay(2000); await reconnect(); page = await mini.currentPage();
+    const expectedPath = ({T1:'pages/tool-idphoto/index',T2:'pages/tool-bg/index',T3:'pages/tool-suit/index',T5:'pages/tool-spec/index'})[tool];
+    try { await cards[({T1:0,T2:1,T3:2,T5:4})[tool]].tap(); } catch { /* 以切换后的实际页面判定。 */ }
+    const routeDeadline = Date.now() + 5000;
+    do { await delay(250); page = await mini.currentPage(); } while (page.path !== expectedPath && Date.now() < routeDeadline);
+    if (page.path !== expectedPath) throw new Error('TOOL_ROUTE_FAILED');
+    await reconnect(); page = await mini.currentPage();
     const shot = async (name) => { const artifact = name + '-' + (report.artifacts.length + 1) + '.png'; const file = path.join(out, artifact); if (fs.existsSync(file)) throw new Error('OUTPUT_EXISTS'); await mini.pageScrollTo(0); await delay(200); await mini.screenshot({ path: file }); report.artifacts.push(artifact); };
     const wait = async (selector, ms = 45000) => {
       const start = Date.now();

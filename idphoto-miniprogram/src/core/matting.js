@@ -139,7 +139,7 @@ function compositeTransparent(rgba, alpha, width, height) {
 /** 后端名 → 用户可读标签（'classical'/'edge' → 端侧；'cloud' → 云端精修） */
 function backendLabel(backend) {
   if (backend === 'cloud') return '云端来源待核验';
-  if (backend === 'classical' || backend === 'edge') return '本地传统算法（非AI模型）';
+  if (backend === 'classical' || backend === 'edge') return '本地传统算法';
   return String(backend || '');
 }
 

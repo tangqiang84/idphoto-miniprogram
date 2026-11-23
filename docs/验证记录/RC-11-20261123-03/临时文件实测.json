@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "scope": "本机实际 unlink，微信接口桥接",
+  "observedAt": "2026-11-22T22:01:49.261Z",
+  "platform": "darwin",
+  "deletedPathAbsent": true,
+  "otherFilePreserved": true,
+  "missingFileReported": true,
+  "duplicateProcessedOnce": true
+}

@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "buildId": "3cf413b4e41c5438bcc6ce2a13f2f4d3a7d9df5e45d90788f4d917b8de1c21ae",
+  "pages": [
+    "pages/home/index",
+    "pages/tool-idphoto/index",
+    "pages/tool-bg/index",
+    "pages/tool-suit/index",
+    "pages/tool-check/index",
+    "pages/tool-spec/index",
+    "pages/tool-print/index",
+    "pages/privacy/index"
+  ],
+  "title": "职业装换装",
+  "checkedFiles": 7
+}

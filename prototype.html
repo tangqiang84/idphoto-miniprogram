@@ -99,7 +99,7 @@
       <div class="toolgrid">
         <div class="toolcard" onclick="go('s_upload')"><div class="ico">🪪</div><div class="t">一键证件照</div><div class="d">从零做一张完整流程</div><div class="free">免费</div></div>
         <div class="toolcard" onclick="go('s_t2')"><div class="ico">🎨</div><div class="t">单独换底色</div><div class="d">已有照片只换背景</div><div class="free">免费</div></div>
-        <div class="toolcard" onclick="go('s_t3')"><div class="ico">👔</div><div class="t">单独 AI 换装</div><div class="d">已有照片换职业装</div><div class="free">可选</div></div>
+        <div class="toolcard" onclick="go('s_t3')"><div class="ico">👔</div><div class="t">职业装换装</div><div class="d">已有照片换职业装</div><div class="free">可选</div></div>
         <div class="toolcard" onclick="go('s_t4')"><div class="ico">🔍</div><div class="t">合规检测</div><div class="d">检测是否达标出报告</div><div class="free">免费</div></div>
         <div class="toolcard" onclick="go('s_t5')"><div class="ico">📐</div><div class="t">规格转换</div><div class="d">按规格裁剪/改dpi</div><div class="free">免费</div></div>
         <div class="toolcard" onclick="go('s_t6');t6update()"><div class="ico">🖨</div><div class="t">冲印排版</div><div class="d">证件照拼版打印</div><div class="free">免费</div></div>
@@ -175,7 +175,7 @@
     <div class="nav"><span class="back" onclick="go('s_beauty')">‹ 返回</span> 抠图换底（已按规格裁剪）</div>
     <div class="body">
       <div class="preview">人像预览</div>
-      <div class="card matting-status"><p class="tag">来源示意：本地传统算法（非AI模型）；实际产品按本次结果显示来源与原因。</p><p class="warn">复杂背景、浅色衣服和发丝可能不可靠；数值置信度不等于视觉质量，需人工核对或手动修补。</p></div>
+      <div class="card matting-status"><p class="tag">来源示意：本地传统算法；实际产品按本次结果显示来源与原因。</p><p class="warn">复杂背景、浅色衣服和发丝可能不可靠；数值置信度不等于视觉质量，需人工核对或手动修补。</p></div>
       <div class="colors">
         <div class="sw sel" style="background:#FFFFFF" onclick="selColor(this,'#FFFFFF')" title="白底"></div>
         <div class="sw" style="background:#438EDB" onclick="selColor(this,'#438EDB')" title="深蓝（标准蓝底）"></div>
@@ -212,7 +212,7 @@
 
   <!-- T1 换装 -->
   <div class="screen" id="s_dress">
-    <div class="nav"><span class="back" onclick="go('s_preview')">‹ 返回</span> <span id="dress-title">AI 换装（可选）</span></div>
+    <div class="nav"><span class="back" onclick="go('s_preview')">‹ 返回</span> <span id="dress-title">职业装换装（可选）</span></div>
     <div class="body">
       <div class="card"><h3>职业装模板</h3><div><span class="chip" onclick="selChip(this)">西装</span><span class="chip" onclick="selChip(this)">衬衫</span><span class="chip" onclick="selChip(this)">学院风</span><span class="chip" onclick="selChip(this)">职业女装</span></div><p class="tag" style="margin-top:8px;">仅换装，不改五官；只对 9 个标准规格生效（全身/多人/横图将被拒绝）</p></div>
       <button class="btn ghost" onclick="openSelfCheck()">应用换装并自检</button>
@@ -279,7 +279,7 @@
 
   <!-- T3 单独换装 -->
   <div class="screen" id="s_t3">
-    <div class="nav"><span class="back" onclick="go('s_home')">‹ 首页</span> 单独 AI 换装</div>
+    <div class="nav"><span class="back" onclick="go('s_home')">‹ 首页</span> 职业装换装</div>
     <div class="body">
       <div class="card" style="border:1px solid #e6a23c;">
         <label class="check" style="margin:0;"><input type="checkbox" id="t3-gate" onchange="gateToggle(this)"> <span><b>已阅读并勾选《人脸处理协议》</b><br><span class="tag">未勾选时不能上传/拍照（先同意，后收集）</span></span></label>
@@ -549,8 +549,8 @@
     // T3 单独换装：换装必选，无跳过；T1 内嵌换装：可选（可跳过）
     var skip = document.getElementById('dress-skip');
     var title = document.getElementById('dress-title');
-    if(tool === 't3'){ if(skip) skip.style.display = 'none'; if(title) title.textContent = 'AI 换装（必选）'; }
-    else { if(skip) skip.style.display = ''; if(title) title.textContent = 'AI 换装（可选）'; }
+    if(tool === 't3'){ if(skip) skip.style.display = 'none'; if(title) title.textContent = '职业装换装（必选）'; }
+    else { if(skip) skip.style.display = ''; if(title) title.textContent = '职业装换装（可选）'; }
     if(tool === 't2'){ go('s_check'); } else { go('s_dress'); }
   }
   function openPatch(){

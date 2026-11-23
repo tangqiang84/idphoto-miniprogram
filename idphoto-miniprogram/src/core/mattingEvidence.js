@@ -18,7 +18,7 @@ function mattingEvidence({backend,provider,modelId,modelRevision,artifactSha256,
   else if(provider==='shadow')kind='traditional';
   else if(['baidu','birefnet'].includes(provider))kind='model';
  }
- const labels={traditional:location==='edge'?'本地传统算法（非AI模型）':'云端传统算法（非AI模型）',simulation:'模拟实现（仅测试）',unknown:'处理来源待核验',model:location==='edge'?'端侧模型推理':'云端模型（服务自报）'};
+ const labels={traditional:location==='edge'?'本地传统算法':'云端传统算法',simulation:'模拟实现（仅测试）',unknown:'处理来源待核验',model:location==='edge'?'端侧模型推理':'云端模型（服务自报）'};
  const reasons=[...new Set(reasonCodes.map(safeId).filter(Boolean))];
  if(kind==='traditional'&&location==='cloud'&&!reasons.includes('CLOUD_SHADOW'))reasons.push('CLOUD_SHADOW');
  if(kind==='unknown')reasons.push('PROVIDER_UNVERIFIED');

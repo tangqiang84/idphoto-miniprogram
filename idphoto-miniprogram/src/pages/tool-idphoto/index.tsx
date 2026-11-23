@@ -121,7 +121,7 @@ export default function ToolIdPhoto() {
         <Text className='tag'>研究用途；仅换装、不改五官；首次需下载约16MB解析模型，请核对领口与双肩</Text>
         {state.preview?.suitEvidence ? <Text className='suit-evidence'>信号来源：{state.preview.suitEvidence.source}；肩线{state.preview.suitEvidence.measuredShoulders ? `实测 ${state.preview.suitEvidence.shoulderAngleDeg}°` : '未可靠实测'}；脸部像素{state.preview.suitEvidence.pixelProtectionPassed ? '核验通过' : '未通过或未执行'}；视觉质量待人工验收</Text> : null}
         {!suitAvailability.ok ? <Text className='suit-unavailable'>{suitAvailability.message}（{suitAvailability.code}）</Text> : null}
-        {suitAvailability.ok ? <View className='suit-consent' onClick={() => consent('suitSwap')}><Text>{p.consents.includes('suitSwap') ? '☑ ' : '☐ '}单独同意AI换装（可随时撤回）</Text></View> : null}
+        {suitAvailability.ok ? <View className='suit-consent' onClick={() => consent('suitSwap')}><Text>{p.consents.includes('suitSwap') ? '☑ ' : '☐ '}单独同意换装（可随时撤回）</Text></View> : null}
         <View className='suit-tpls'>{templates.map((tpl) => <View key={tpl.id} className={`suit-tpl${p.suit.templateId === tpl.id ? ' suit-tpl--sel' : ''}`}
           onClick={() => flow.update({ suit: { ...p.suit, templateId: tpl.id } })}>
           <Image src={tpl.src} className='suit-tpl__img' mode='aspectFit' /><Text>{tpl.name}</Text>

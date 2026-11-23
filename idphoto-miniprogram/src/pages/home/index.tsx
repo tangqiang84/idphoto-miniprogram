@@ -6,7 +6,7 @@ import './index.scss';
 const TOOLS = [
   { id: 'T1', title: '一键证件照', desc: '拍照/上传 → 抠图换底 → 选规格 → 导出', icon: '🪪', path: '/pages/tool-idphoto/index', tag: '完整流程' },
   { id: 'T2', title: '单独换底色', desc: '已有照片，只换红/蓝/白底', icon: '🎨', path: '/pages/tool-bg/index', tag: '换底' },
-  { id: 'T3', title: 'AI 换装', desc: '职业装一键合成（独立授权）', icon: '👔', path: '/pages/tool-suit/index', tag: '换装' },
+  { id: 'T3', title: '职业装换装', desc: '职业装一键合成（独立授权）', icon: '👔', path: '/pages/tool-suit/index', tag: '换装' },
   { id: 'T4', title: '合规检测', desc: '只读检测头部占比/像素/KB/底色', icon: '✅', path: '/pages/tool-check/index', tag: '检测' },
   { id: 'T5', title: '规格转换', desc: '按规格裁剪 / 改 dpi / 压 KB', icon: '📐', path: '/pages/tool-spec/index', tag: '转换' },
   // T6 冲印排版（PRD K1 独立工具）：首页入口此前缺失 → 任务 #49
@@ -20,7 +20,7 @@ export default function Home() {
     <View className='home'>
       <View className='home__hero'>
         <Text className='home__hero-title'>老唐标准照裁剪</Text>
-        <Text className='home__hero-sub'>本地优先 · 隐私合规 · 即用即走</Text>
+        <Text className='home__hero-sub'>优先在设备上处理照片</Text>
         {/* 免费承诺（owner 2026-10-23 决策：MVP 不设付费档，全部功能免费）
             竞品调研显示「透明定价、零套路」正是本产品相对同类的差异化信任信号；
             个人主体也无法开通微信支付（问题台账 #14），不做付费入口。 */}
@@ -43,9 +43,9 @@ export default function Home() {
       </View>
 
       <View className='home__privacy' onClick={() => go('/pages/privacy/index')}>
-        <Text className='home__privacy-title'>隐私承诺</Text>
+        <Text className='home__privacy-title'>隐私与授权</Text>
         <Text className='home__privacy-text'>
-          人脸仅在设备本地处理；上云增强仅上传裁剪后的人像区域，境内处理、用完即销毁、不训练。换装须单独授权。
+          涉及人脸的工具在取图前征求同意。云端增强和换装分别征求同意。
         </Text>
         <Text className='home__privacy-link'>查看〈隐私政策〉全文 ›</Text>
         <Text className='home__privacy-icp'>ICP 备案：苏ICP备2026082326号-1X</Text>

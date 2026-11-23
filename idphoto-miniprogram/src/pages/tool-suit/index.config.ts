@@ -1,3 +1,3 @@
 export default {
-  navigationBarTitleText: 'AI 换装',
+  navigationBarTitleText: '职业装换装',
 };

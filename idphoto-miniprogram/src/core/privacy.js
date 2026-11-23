@@ -1,21 +1,19 @@
 // 隐私同意契约（个保法敏感个人信息·单独同意）
 // 不同工具触发不同授权项；换装须独立单独授权。
 
+const CLOUD_MATTING_DESCRIPTION = '可选：将裁剪后的人像区域发送至腾讯云 CloudBase。抠图增强可调用百度智能云人像分割。';
 const CONSENT_ITEMS = {
   faceLocal: { id: 'faceLocal', label: '人脸本地处理', desc: '仅在设备端抠图，不上传', required: true },
   faceCloudEnhance: {
     id: 'faceCloudEnhance',
     label: '上云增强',
-    // ⚠️ 个保法第 23 条：向第三方提供个人信息，须告知**接收方名称**并取得单独同意。
-    // 2026-10-23 起云端增强由「百度智能云·人像分割」接口完成（云函数内调用，密钥不进包体），
-    // 故文案必须点名接收方；改 provider（如换自部署 BiRefNet）时此处须同步改。
-    desc: '可选：仅上传裁剪后的人像区域，由境内「百度智能云·人像分割」增强；换装时还可请求境内云函数姿态分析。处理完即销毁，不用于模型训练',
+    desc: CLOUD_MATTING_DESCRIPTION + '已另行同意换装时，云端会识别人脸关键点、双肩、原衣与领口，双肩识别可调用百度智能云人体关键点服务。',
     required: false,
   },
   suitSwap: {
     id: 'suitSwap',
-    label: 'AI换装',
-    desc: '本地合成职业装，仅换装不改五官；如需云端姿态分析，还须另行同意上云增强',
+    label: '职业装换装',
+    desc: '本地合成职业装，仅换装不改五官；使用云端关键点或衣物识别前，还须另行同意上云增强',
     required: false,
   },
 };
@@ -59,9 +57,6 @@ function buildConsentRecord(tool, granted = [], action = 'local') {
 // 把「有哪些撤回入口、撤回后哪些数据会被删」收敛到 core 一处，
 // 页面层只负责渲染，避免各页面各写一套文案导致口径漂移。
 //
-// 【重要】撤回**不等于**已删除历史数据：已上传到云端的数据按「处理完即销毁」承诺
-// 自动消失；本机临时文件由 core/localPurge.js 在处理完成后销毁。
-// 故此处文案必须如实区分「停止后续处理」与「删除历史数据」两件事，不能承诺做不到的事。
 const WITHDRAW_METHODS = [
   {
     id: 'pageToggle',
@@ -72,14 +67,14 @@ const WITHDRAW_METHODS = [
   {
     id: 'localPurge',
     label: '本地数据清理',
-    desc: '处理完成后本机会自动销毁本次处理产生的临时文件（原图与中间产物）',
-    scope: '自动执行，无需用户手动操作',
+    desc: '离开工具页会释放本次会话的照片及预览引用',
+    scope: '微信临时文件的实际清理由平台管理',
   },
   {
     id: 'cloudDestroy',
-    label: '云端数据销毁',
-    desc: '上传至境内第三方服务（如「百度智能云·人像分割」）的人像区域，处理完即销毁、不留存、不用于模型训练',
-    scope: '随处理流程自动完成',
+    label: '已发出的云端请求',
+    desc: '撤回后系统会丢弃仍在等待的结果，已发出的请求无法撤回',
+    scope: '停止后续相关上传',
   },
 ];
 
